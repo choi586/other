@@ -1,0 +1,215 @@
+
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>ランダム価格ジェネレーター</title>
+<style>
+  :root{
+    --bg:#0b0f14;
+    --card:#121926;
+    --accent:#2dd4bf;
+    --text:#e5e7eb;
+    --muted:#94a3b8;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;
+    font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Noto Sans, Helvetica, Arial, Apple Color Emoji, Segoe UI Emoji;
+    background: radial-gradient(1000px 600px at 70% -10%, #0f172a 0%, #0b0f14 50%, #0b0f14 100%);
+    color:var(--text);
+    display:flex;
+    min-height:100svh;
+    align-items:center;
+    justify-content:center;
+    padding:16px;
+  }
+  .wrap{
+    width:min(920px, 100%);
+  }
+  .card{
+    background: linear-gradient(180deg, #0f172a 0%, #0b1220 100%);
+    border:1px solid rgba(255,255,255,.06);
+    border-radius:24px;
+    box-shadow: 0 10px 40px rgba(0,0,0,.45);
+    padding:20px;
+  }
+  .controls{
+    display:flex;
+    gap:12px;
+    flex-wrap:wrap;
+    align-items:center;
+    justify-content:center;
+  }
+  .controls input{
+    background:#0b1220;
+    color:var(--text);
+    border:1px solid rgba(255,255,255,.1);
+    border-radius:12px;
+    padding:12px 14px;
+    width:120px;
+    font-size:16px;
+    text-align:center;
+  }
+  .controls .btn{
+    user-select:none;
+    border:none;
+    border-radius:14px;
+    padding:12px 16px;
+    background:var(--accent);
+    color:#002b28;
+    font-weight:700;
+    font-size:16px;
+    cursor:pointer;
+    transition: transform .04s ease;
+  }
+  .controls .btn:active{ transform: scale(.98); }
+  .presets{
+    display:flex; gap:8px; flex-wrap:wrap; justify-content:center; margin-top:8px;
+  }
+  .chip{
+    background:#0b1220; color:var(--muted); border:1px solid rgba(255,255,255,.08);
+    padding:8px 12px; border-radius:999px; cursor:pointer; font-size:14px;
+  }
+  .chip:hover{ color:var(--text); border-color:rgba(255,255,255,.18) }
+  .big{
+    margin-top:14px;
+    border-radius:18px;
+    border:1px dashed rgba(255,255,255,.14);
+    padding:28px 16px;
+    text-align:center;
+    user-select:none;
+    line-height:1.1;
+    cursor:pointer;
+    background: repeating-linear-gradient(45deg, rgba(255,255,255,.02) 0, rgba(255,255,255,.02) 10px, rgba(255,255,255,0) 10px, rgba(255,255,255,0) 20px);
+  }
+  .value{
+    font-variant-numeric: lining-nums tabular-nums;
+    font-weight:900;
+    font-size: clamp(64px, 14vw, 180px);
+    letter-spacing: .02em;
+    text-shadow: 0 10px 30px rgba(0,0,0,.6);
+  }
+  .unit{
+    display:block;
+    font-size: clamp(18px, 3.4vw, 32px);
+    color:var(--muted);
+    margin-top:4px;
+  }
+  .hint{
+    text-align:center; color:var(--muted); margin-top:8px; font-size:14px;
+  }
+  .row{display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin-top:10px}
+  .ghost{ background:#0b1220; color:var(--text); border:1px solid rgba(255,255,255,.08) }
+  .ghost:active{ transform: scale(.98); }
+  .footer{color:var(--muted); text-align:center; font-size:12px; margin-top:8px}
+  a { color: #7dd3fc; }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <div class="controls">
+        <input id="min" type="number" value="100" min="0" step="1" aria-label="最小値 (min)" />
+        <input id="max" type="number" value="10000" min="1" step="1" aria-label="最大値 (max)" />
+        <input id="step" type="number" value="100" min="1" step="1" aria-label="刻み幅 (step)" />
+        <input id="unit" type="text" value="円" aria-label="単位 (unit)" />
+        <button id="gen" class="btn">🎲 生成</button>
+        <button id="copy" class="btn ghost">📋 コピー</button>
+      </div>
+      <div class="presets">
+        <button class="chip" data-min="100" data-max="5000" data-step="100">100〜5,000（100刻み）</button>
+        <button class="chip" data-min="100" data-max="10000" data-step="100">100〜10,000（100刻み）</button>
+        <button class="chip" data-min="1" data-max="99" data-step="1">1〜99</button>
+        <button class="chip" data-min="100" data-max="999" data-step="1">100〜999</button>
+        <button class="chip" data-min="1000" data-max="9999" data-step="1">1,000〜9,999</button>
+      </div>
+      <div id="display" class="big" title="クリックでも新しい数字を生成できます">
+        <div class="value" id="value">0</div>
+        <span class="unit" id="unitLabel">円</span>
+      </div>
+      <div class="row">
+        <button id="minus" class="btn ghost">−</button>
+        <button id="plus" class="btn ghost">＋</button>
+        <button id="reset" class="btn ghost">↺ リセット</button>
+      </div>
+      <div class="hint">クリック・スペース・Enter・矢印（±10%）で操作できます</div>
+      <div class="footer">URL パラメータ例：<code>?min=100&max=5000&step=100&unit=%E5%86%86</code>（共有に便利）</div>
+    </div>
+  </div>
+
+<script>
+(function(){
+  const $ = (s)=>document.querySelector(s);
+  const minEl = $("#min"), maxEl=$("#max"), stepEl=$("#step"), unitEl=$("#unit");
+  const valueEl=$("#value"), unitLabel=$("#unitLabel");
+  const display=$("#display");
+  const genBtn=$("#gen"), copyBtn=$("#copy"), plus=$("#plus"), minus=$("#minus"), reset=$("#reset");
+
+  function parseParams(){
+    const p = new URLSearchParams(location.search);
+    if(p.has("min")) minEl.value = Number(p.get("min")) || 0;
+    if(p.has("max")) maxEl.value = Number(p.get("max")) || 100;
+    if(p.has("step")) stepEl.value = Number(p.get("step")) || 1;
+    if(p.has("unit")) unitEl.value = p.get("unit") || "円";
+    unitLabel.textContent = unitEl.value || "";
+  }
+
+  function clamp(v,min,max){ return Math.max(min, Math.min(max, v)); }
+  function format(n){
+    return n.toLocaleString(undefined, {maximumFractionDigits:0});
+  }
+  function rand(){
+    const min = Number(minEl.value);
+    const max = Number(maxEl.value);
+    const step = Math.max(1, Number(stepEl.value));
+    if(max < min){ [minEl.value, maxEl.value] = [max, min]; }
+    const count = Math.floor((Number(maxEl.value)-Number(minEl.value))/step)+1;
+    const idx = Math.floor(Math.random()*count);
+    const val = Number(minEl.value) + idx*step;
+    valueEl.textContent = format(val);
+    unitLabel.textContent = unitEl.value || "";
+  }
+
+  function adjust(plusSign=true){
+    let curr = parseInt(valueEl.textContent.replace(/,/g,'')) || 0;
+    const min = Number(minEl.value);
+    const max = Number(maxEl.value);
+    const delta = Math.max(1, Math.round((max-min)*0.1)); // 10% step for arrows
+    curr = curr + (plusSign? delta : -delta);
+    curr = clamp(curr, min, max);
+    valueEl.textContent = format(curr);
+  }
+
+  function copy(){
+    const text = valueEl.textContent + (unitEl.value ? unitEl.value : "");
+    navigator.clipboard.writeText(text).then(()=>{
+      copyBtn.textContent = "✅ コピー済み";
+      setTimeout(()=>copyBtn.textContent="📋 コピー", 800);
+    }).catch(()=>{});
+  }
+
+  // events
+  genBtn.addEventListener("click", rand);
+  display.addEventListener("click", rand);
+  copyBtn.addEventListener("click", copy);
+  plus.addEventListener("click", ()=>adjust(true));
+  minus.addEventListener("click", ()=>adjust(false));
+  reset.addEventListener("click", ()=>{ parseParams(); valueEl.textContent="0"; });
+
+  window.addEventListener("keydown", (e)=>{
+    if(e.code==="Space" || e.code==="Enter"){ e.preventDefault(); rand(); }
+    if(e.code==="ArrowRight" || e.code==="ArrowUp"){ e.preventDefault(); adjust(true); }
+    if(e.code==="ArrowLeft" || e.code==="ArrowDown"){ e.preventDefault(); adjust(false); }
+  });
+
+  // reflect unit change live
+  unitEl.addEventListener("input", ()=> unitLabel.textContent = unitEl.value || "");
+
+  parseParams();
+  rand(); // initial
+})();
+</script>
+</body>
+</html>
