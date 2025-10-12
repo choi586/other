@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>컬링 로봇 시뮬레이터 (v10.0 최종)</title>
+    <style>
+        body { 
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            background-color: #f0f2f5;
+            color: #333;
+        }
+        h1, h2, h3 {
+            color: #1a237e;
+            margin-top: 10px;
+            margin-bottom: 10px;
+        }
+        .main-container {
+            display: flex;
+            gap: 20px;
+            align-items: flex-start;
+            margin-top: 20px;
+        }
+        canvas { 
+            border: 3px solid #1a237e; 
+            background-color: #ffffff; 
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        .sidebar {
+            width: 350px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        .controls-panel {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        .control-group {
+            margin-bottom: 15px;
+            border-bottom: 1px solid #e0e0e0;
+            padding-bottom: 15px;
+        }
+        .control-group:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
+            margin-bottom: 0;
+        }
+        .control-group label { 
+            font-weight: bold; 
+            display: block;
+            margin-bottom: 5px;
+            color: #3f51b5;
+        }
+        .control-group input[type="number"] { 
+            width: calc(100% - 20px);
+            padding: 8px; 
+            border-radius: 4px; 
+            border: 1px solid #ccc;
+            font-size: 1.1em;
+            margin-bottom: 10px;
+        }
+        .button-grid button, .main-actions button {
+            width: 100%;
+            padding: 12px;
+            border-radius: 5px;
+            border: none;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: bold;
+            transition: background-color 0.2s;
+            color: white;
+        }
+        .button-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+        .main-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        #addMovementBtn { background-color: #4CAF50; }
+        #addMovementBtn:hover { background-color: #45a049; }
+        #resetBtn { background-color: #f44336; }
+        #resetBtn:hover { background-color: #d32f2f; }
+        .preset-btn { background-color: #2196F3; }
+        .preset-btn:hover { background-color: #1e88e5; }
+
+        #pathHistoryLog {
+            height: 150px;
+            background-color: #f5f5f5;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            padding: 10px;
+            overflow-y: auto;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        #log { 
+            width: 1390px;
+            height: 100px;
+            border: 1px solid #ccc; 
+            overflow-y: scroll; 
+            padding: 15px; 
+            background-color: #212121;
+            color: #00ff00;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 14px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>컬링 로봇 시뮬레이터 v10.0 (최종)</h1>
+    
+    <div class="main-container">
+        <canvas id="robotCanvas" width="1000" height="800"></canvas>
+        <div class="sidebar">
+            <div class="controls-panel">
+                <div class="control-group">
+                    <h2>기본 설정</h2>
+                    <label for="startXInput">시작 X 좌표 (px)</label>
+                    <input type="number" id="startXInput" value="500">
+                    <label for="startYInput">시작 Y 좌표 (px)</label>
+                    <input type="number" id="startYInput" value="750">
+                    <label for="baseTrimInput">BASE_TRIM</label>
+                    <input type="number" id="baseTrimInput" value="-1">
+                </div>
+                
+                <div class="control-group">
+                    <h2>수동 제어</h2>
+                    <label for="msInput">시간 (ms)</label>
+                    <input type="number" id="msInput" value="3000" min="100" step="100">
+                    <label for="currentTrimInput">Trim (휘는 강도)</label>
+                    <input type="number" id="currentTrimInput" value="50" step="1">
+                </div>
+                
+                <div class="control-group main-actions">
+                    <button id="addMovementBtn" onclick="addMovement()">현재 궤적에 주행 추가</button>
+                    <button id="resetBtn" onclick="resetCanvas()">캔버스 초기화 및 시작점으로</button>
+                </div>
+            </div>
+
+            <div class="controls-panel">
+                <h3>주행 기록</h3>
+                <div id="pathHistoryLog">기록이 여기에 표시됩니다.</div>
+            </div>
+
+            <div class="controls-panel">
+                <h2>프리셋 경로</h2>
+                <div class="button-grid">
+                    <button class="preset-btn" onclick="runPathA()">A: 직진 (4초)</button>
+                    <button class="preset-btn" onclick="runPathB()">B: 직진+우회전</button>
+                    <button class="preset-btn" onclick="runPathAB()">AB: 직진+좌회전</button>
+                    <button class="preset-btn" onclick="runPathLogo()">Logo: 직진+강한커브</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <h2>실행 로그</h2>
+    <div id="log">시뮬레이터 로그가 여기에 표시됩니다.</div>
+
+    <script>
+        const CANVAS_WIDTH = 1000;
+        const CANVAS_HEIGHT = 800;
+        const ROBOT_RADIUS = 8;
+        
+        const TARGET_Y = CANVAS_HEIGHT - 550 - 50;
+
+        const canvas = document.getElementById('robotCanvas');
+        const ctx = canvas.getContext('2d');
+        let robotX, robotY, robotAngle;
+        let pathHistory = [];
+
+        function updatePathHistoryDisplay() {
+            const historyDiv = document.getElementById('pathHistoryLog');
+            if (pathHistory.length === 0) {
+                historyDiv.innerHTML = '기록이 여기에 표시됩니다.';
+                return;
+            }
+            historyDiv.innerHTML = pathHistory.map((step, index) =>
+                `<div><span style="color: #999;">${index + 1}.</span> go(${step.ms}ms, Trim: ${step.trim})</div>`
+            ).join('');
+            historyDiv.scrollTop = historyDiv.scrollHeight;
+        }
+
+        function resetCanvas() {
+            ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+            
+            robotX = parseFloat(document.getElementById('startXInput').value);
+            robotY = parseFloat(document.getElementById('startYInput').value);
+            robotAngle = -Math.PI / 2;
+            
+            pathHistory = [];
+            updatePathHistoryDisplay();
+
+            drawGuides();
+            
+            ctx.beginPath();
+            ctx.arc(robotX, robotY, ROBOT_RADIUS, 0, 2 * Math.PI);
+            ctx.fillStyle = '#f44336';
+            ctx.fill();
+            
+            logMessage(`캔버스가 초기화되었습니다. 시작점: (X:${robotX}, Y:${robotY})`);
+        }
+        
+        function drawGuides() {
+            ctx.strokeStyle = '#e0e0e0';
+            ctx.setLineDash([5, 5]);
+            ctx.beginPath();
+            ctx.moveTo(CANVAS_WIDTH / 2, 0);
+            ctx.lineTo(CANVAS_WIDTH / 2, CANVAS_HEIGHT);
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            ctx.strokeStyle = 'green';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(0, TARGET_Y);
+            ctx.lineTo(CANVAS_WIDTH, TARGET_Y);
+            ctx.stroke();
+            ctx.font = '16px Arial';
+            ctx.fillStyle = 'green';
+            ctx.fillText('1.5m 목표 지점', 10, TARGET_Y - 10);
+        }
+
+        function logMessage(msg) {
+            const logDiv = document.getElementById('log');
+            logDiv.innerHTML += `> ${msg}<br>`;
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+
+        // ★★★ 관측 결과 기반 기하학 모델 (v10.0) ★★★
+        function getArcParameters(trim) {
+            const absTrim = Math.abs(trim);
+            
+            let totalAngleDeg_at_3s;
+            let radius_at_3s;
+
+            const R_25 = 350; // 넓은 90도 턴
+            const R_50 = 220; // 2배 넓어진 180도 턴
+            const R_100 = 175; // 좁은 190도 턴
+
+            if (absTrim <= 25) {
+                totalAngleDeg_at_3s = (absTrim / 25) * 90;
+                radius_at_3s = R_25;
+            } else if (absTrim <= 50) {
+                totalAngleDeg_at_3s = 90 + ((absTrim - 25) / 25) * 90; // 180도
+                radius_at_3s = R_50;
+            } else if (absTrim < 100) {
+                totalAngleDeg_at_3s = 180 + ((absTrim - 50) / 50) * 10; // 190도
+                radius_at_3s = R_100;
+            } else {
+                totalAngleDeg_at_3s = 190;
+                radius_at_3s = R_100;
+            }
+            
+            return {
+                totalAngleRad_at_3s: totalAngleDeg_at_3s * (Math.PI / 180),
+                radius: radius_at_3s
+            };
+        }
+
+        function simulateGo(totalMs, current_trim, color = '#00f') {
+            const BASE_TRIM = parseFloat(document.getElementById('baseTrimInput').value);
+            pathHistory.push({ ms: totalMs, trim: current_trim });
+            updatePathHistoryDisplay();
+            
+            const final_trim = BASE_TRIM + current_trim;
+            
+            // 직진은 별도 처리
+            if (Math.abs(final_trim) < 2) {
+                ctx.beginPath();
+                ctx.strokeStyle = color;
+                ctx.lineWidth = 3;
+                ctx.moveTo(robotX, robotY);
+                const distance = (550 / 4000) * totalMs;
+                robotX += distance * Math.cos(robotAngle);
+                robotY += distance * Math.sin(robotAngle);
+                ctx.lineTo(robotX, robotY);
+                ctx.stroke();
+
+            } else {
+                const { totalAngleRad_at_3s, radius } = getArcParameters(final_trim);
+                const turn_direction = Math.sign(final_trim);
+
+                // 시간에 비례하여 실제 회전할 각도 계산
+                const actualTotalAngle = totalAngleRad_at_3s * (totalMs / 3000);
+
+                const centerX = robotX + Math.cos(robotAngle + turn_direction * Math.PI / 2) * radius;
+                const centerY = robotY + Math.sin(robotAngle + turn_direction * Math.PI / 2) * radius;
+                const startAngle = Math.atan2(robotY - centerY, robotX - centerX);
+                
+                ctx.beginPath();
+                ctx.strokeStyle = color;
+                ctx.lineWidth = 3;
+                
+                // 원호를 직접 그림
+                ctx.arc(centerX, centerY, radius, startAngle, startAngle + turn_direction * actualTotalAngle, turn_direction < 0);
+                
+                // 최종 위치와 각도 업데이트
+                robotAngle += turn_direction * actualTotalAngle;
+                robotX = centerX + Math.cos(startAngle + turn_direction * actualTotalAngle) * radius;
+                robotY = centerY + Math.sin(startAngle + turn_direction * actualTotalAngle) * radius;
+                ctx.stroke();
+            }
+
+            ctx.beginPath();
+            ctx.arc(robotX, robotY, ROBOT_RADIUS, 0, 2 * Math.PI);
+            ctx.fillStyle = color;
+            ctx.fill();
+            
+            let finalAngleDeg = (robotAngle * 180 / Math.PI + 90);
+            while(finalAngleDeg < 0) finalAngleDeg += 360;
+            finalAngleDeg = Math.round(finalAngleDeg % 360);
+
+            logMessage(`주행 완료: ${totalMs}ms, Trim=${current_trim}. 최종 방향: ${finalAngleDeg}°`);
+        }
+
+        function addMovement() {
+            const ms = parseFloat(document.getElementById('msInput').value);
+            const currentTrim = parseFloat(document.getElementById('currentTrimInput').value);
+            if (isNaN(ms) || ms <= 0) {
+                logMessage("오류: 유효한 시간(ms)을 입력하세요.");
+                return;
+            }
+            logMessage(`수동 주행 추가: ${ms}ms, Trim=${currentTrim}`);
+            simulateGo(ms, currentTrim, '#3f51b5');
+        }
+        
+        function runPathA() {
+            logMessage("--- [프리셋 A] 4초 직진 테스트 시작 ---");
+            resetCanvas();
+            simulateGo(4000, 0, '#c62828');
+        }
+        
+        function runPathB() {
+            logMessage("--- [프리셋 B] 직진(2초) 후 우회전(3초, Trim 25) 시작 ---");
+            resetCanvas();
+            simulateGo(2000, 0, '#283593');
+            simulateGo(3000, 25, '#283593');
+        }
+        
+        function runPathAB() {
+            logMessage("--- [프리셋 AB] 직진(2초) 후 좌회전(3초, Trim -50) 시작 ---");
+            resetCanvas();
+            simulateGo(2000, 0, '#00695c');
+            simulateGo(3000, -50, '#00695c');
+        }
+
+        function runPathLogo() {
+            logMessage("--- [프리셋 Logo] 직진(3초) 후 강한 커브(3초, Trim 100) 시작 ---");
+            resetCanvas();
+            simulateGo(3000, 0, '#ad1457');
+            simulateGo(3000, 100, '#ad1457');
+        }
+
+        window.onload = resetCanvas;
+    </script>
+
+</body>
+</html>
