@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>빙고게임 (가로모드·트레이 하단·비정사각)</title>
+  <style>
+    :root{
+      --accent:#0b57d0;
+      --mark:#00c853;
+      --grid-gap:10px;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0;-webkit-text-size-adjust:100%;}
+    body{
+      font-family: "Malgun Gothic","Noto Sans KR","Nanum Gothic",Gulim,Dotum,sans-serif;
+      font-weight:700;
+      background:#f2f4f7;
+      color:#111;
+      display:flex;flex-direction:column;
+    }
+    header{display:flex;gap:10px;align-items:center;justify-content:flex-start;padding:10px 12px;border-bottom:1px solid #e5e7eb;background:#fff;flex-wrap:wrap}
+    .btn{border:0;cursor:pointer;border-radius:12px;padding:10px 14px;font-weight:800;background:#111;color:#fff;letter-spacing:.3px;box-shadow:0 2px 0 rgba(0,0,0,.2);}
+    .btn.secondary{background:#e8eefc;color:#0b57d0}
+    .btn.ghost{background:#fff;color:#111;border:1px solid #e5e7eb}
+    select, input[type="number"], input[type="text"]{font:inherit;font-weight:800;border-radius:10px;border:1px solid #d0d7e2;padding:8px 10px;background:#fff;}
+    main{flex:1;display:flex;flex-direction:column;gap:12px;min-height:0;padding:10px}
+    .board-wrap{
+      position:relative;min-width:0;display:flex;align-items:center;justify-content:center;
+      /* Board will expand to all available space via JS */
+      flex:1 1 auto;
+    }
+    .board{
+      display:grid;gap:var(--grid-gap);background:#eef2f7;padding:var(--grid-gap);
+      border-radius:16px;border:3px solid #1a237e22;
+      /* NO aspect-ratio: it can stretch wide in landscape */
+      width:100%; height:100%;
+    }
+    .cell{
+      user-select:none;background:#fff;border-radius:14px;border:2px solid #1a237e33;
+      display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;text-align:center;padding:6px;
+    }
+    .cell .label{
+      display:block; max-width:100%; max-height:100%;
+      white-space:nowrap; line-height:1.05; font-weight:800;
+    }
+    .cell[data-marked="true"]{background:var(--mark);color:#fff;border-color:#0a8f5b;}
+    .cell.drag-over{outline:4px dashed var(--accent);outline-offset:-6px;}
+    .tray{
+      background:#fff;border-top:1px solid #e5e7eb;padding:10px 12px;
+      padding-bottom:calc(12px + env(safe-area-inset-bottom));
+      flex:0 0 auto;
+    }
+    .tray-inner{display:grid;grid-template-columns:1fr max(140px);gap:10px;}
+    .card-form{display:flex;gap:8px;align-items:center;flex-wrap:nowrap;margin-bottom:8px;}
+    .card-form input{min-width:0;flex:1;}
+    .cards{overflow:auto;display:flex;gap:10px;align-items:flex-start;flex-wrap:wrap;padding:4px 2px 18px;}
+    .card{
+      cursor:grab;background:#0b57d0;color:#fff;border-radius:12px;
+      padding:12px 14px;font-size:28px;box-shadow:0 2px 0 rgba(0,0,0,.2);
+      line-height:1.2; white-space:nowrap; word-break:keep-all;
+      display:flex; align-items:center; justify-content:center;
+      flex:0 0 auto;
+    }
+    .trash{
+      align-self:start;
+      display:flex; flex-direction:column; gap:4px; 
+      border:2px dashed #c9d3e6; border-radius:16px; background:#f8fafc; 
+      padding:10px; justify-content:center; align-items:center;
+      text-align:center; height:fit-content;
+    }
+    .trash h3{margin:0; font-size:15px;}
+    .trash .icon{font-size:28px; opacity:.8;}
+    .trash.drag{border-color:#e11d48; background:#fff0f3;}
+    .toast{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.45);}
+    .toast.show{display:flex;}
+    .toast-box{background:#fff;border-radius:18px;padding:26px 28px;text-align:center;max-width:min(86vw,820px);}
+    .toast-box h2{font-size:clamp(32px,7vmin,100px);margin-bottom:10px;}
+    .toast-box p{font-size:clamp(22px,6vmin,80px);margin:0;font-weight:800;}
+  </style>
+</head>
+<body>
+  <header>
+    <div>
+      <label>가로×세로
+        <select id="sizeSel">
+          <option value="3" selected>3×3</option>
+          <option value="4">4×4</option>
+          <option value="5">5×5</option>
+        </select>
+      </label>
+      <label>성공 줄 수
+        <input type="number" id="winLines" min="1" max="12" value="3" style="width:80px">
+      </label>
+      <button class="btn ghost" id="clearText">칸 글자 지우기</button>
+      <button class="btn secondary" id="clearMarks">표시 초기화</button>
+    </div>
+  </header>
+  <main>
+    <div class="board-wrap">
+      <div id="board" class="board"></div>
+    </div>
+    <div class="tray">
+      <div class="tray-inner">
+        <div>
+          <form class="card-form" id="cardForm" onsubmit="return false;">
+            <input type="text" id="cardText" placeholder="카드 내용 입력">
+            <button class="btn" id="addCard">카드 추가</button>
+          </form>
+          <div class="cards" id="cards"></div>
+        </div>
+        <div class="trash" id="trash">
+          <div class="icon">🗑️</div>
+          <h3>휴지통</h3>
+        </div>
+      </div>
+    </div>
+  </main>
+  <div class="toast" id="toast">
+    <div class="toast-box">
+      <h2>🎉🎉</h2>
+      <p id="toastMsg">성공! 축하합니다</p>
+      <button class="btn" id="closeToast" style="margin-top:16px;font-size:22px;">닫기</button>
+    </div>
+  </div>
+  <script>
+  document.addEventListener("DOMContentLoaded", () => {
+    const board=document.getElementById('board');
+    const toast=document.getElementById('toast');
+    const closeToast=document.getElementById('closeToast');
+    const toastMsg=document.getElementById('toastMsg');
+    const winLines=document.getElementById('winLines');
+    const clearText=document.getElementById('clearText');
+    const clearMarks=document.getElementById('clearMarks');
+    const cardText=document.getElementById('cardText');
+    const addCard=document.getElementById('addCard');
+    const cards=document.getElementById('cards');
+    const sizeSel=document.getElementById('sizeSel');
+    const trash=document.getElementById('trash');
+    const boardWrap=document.querySelector('.board-wrap');
+    let N=3,cells=[],marked=[],done=false;
+    let currentDragEl=null;
+
+    function layoutBoard(){
+      // Use all available space: boardWrap size is already flex-filled
+      // Just ensure board's grid gets correct rows/columns
+      const rect = boardWrap.getBoundingClientRect();
+      board.style.width = Math.max(320, rect.width - 4) + 'px';
+      board.style.height = Math.max(220, rect.height - 4) + 'px';
+    }
+
+    function build(){
+      N=parseInt(sizeSel.value);
+      board.style.gridTemplateColumns=`repeat(${N},1fr)`;
+      board.innerHTML='';
+      marked=Array(N*N).fill(false);
+      cells=[];
+      for(let i=0;i<N*N;i++){
+        const d=document.createElement('div');
+        d.className='cell';
+        const span=document.createElement('span');
+        span.className='label';
+        d.appendChild(span);
+        d.addEventListener('click',()=>toggle(i));
+        d.addEventListener('dragover',e=>{e.preventDefault();d.classList.add('drag-over')});
+        d.addEventListener('dragleave',()=>d.classList.remove('drag-over'));
+        d.addEventListener('drop',e=>{
+          e.preventDefault();
+          d.classList.remove('drag-over');
+          const text = e.dataTransfer.getData('text/plain');
+          if (text){ setCellText(d, text); }
+        });
+        board.appendChild(d);
+        cells.push(d);
+      }
+      done=false;
+      layoutBoard();
+      refitUniform();
+    }
+
+    function toggle(i){
+      marked[i]=!marked[i];
+      cells[i].dataset.marked=marked[i];
+      const lines = count();
+      if(lines>=parseInt(winLines.value)&&!done){
+        done=true; show(lines);
+      }
+    }
+
+    function count(){
+      let lines=0;
+      for(let r=0;r<N;r++) if(marked.slice(r*N,r*N+N).every(v=>v)) lines++;
+      for(let c=0;c<N;c++) if(Array.from({length:N},(_,r)=>marked[r*N+c]).every(v=>v)) lines++;
+      if(Array.from({length:N},(_,i)=>marked[i*N+i]).every(v=>v)) lines++;
+      if(Array.from({length:N},(_,i)=>marked[i*N+(N-1-i)]).every(v=>v)) lines++;
+      return lines;
+    }
+
+    function show(lines){ 
+      toastMsg.textContent = `${lines}줄 빙고 성공! 축하합니다 폭죽폭죽 🎉🎉`; 
+      toast.classList.add('show'); 
+    }
+    closeToast.onclick=()=>toast.classList.remove('show');
+
+    clearMarks.onclick=()=>{marked.fill(false);cells.forEach(c=>c.dataset.marked='false');done=false;};
+    clearText.onclick=()=>{cells.forEach(c=>setCellText(c,'')); refitUniform();};
+
+    function createCard(text){
+      const c=document.createElement('div');
+      c.className='card';
+      c.textContent=text;
+      c.draggable=true;
+      c.addEventListener('dragstart',e=>{
+        currentDragEl=c;
+        e.dataTransfer.effectAllowed='copyMove';
+        e.dataTransfer.setData('text/plain', c.textContent);
+      });
+      c.addEventListener('dragend',()=>{ currentDragEl=null; });
+      cards.appendChild(c);
+    }
+
+    ['dragenter','dragover'].forEach(ev=>{
+      trash.addEventListener(ev, e=>{
+        e.preventDefault();
+        trash.classList.add('drag');
+      });
+    });
+    ['dragleave','drop'].forEach(ev=>{
+      trash.addEventListener(ev, ()=> trash.classList.remove('drag'));
+    });
+    trash.addEventListener('drop', e=>{
+      e.preventDefault();
+      if(currentDragEl && currentDragEl.classList.contains('card')){
+        currentDragEl.remove();
+        currentDragEl=null;
+      }
+    });
+
+    addCard.onclick=()=>{
+      const t=cardText.value.trim();
+      if(!t) return;
+      createCard(t);
+      cardText.value='';
+      cardText.focus();
+    };
+
+    sizeSel.onchange=()=>{ build(); };
+    window.addEventListener('resize', ()=>{ layoutBoard(); refitUniform(); });
+    if(window.visualViewport){
+      visualViewport.addEventListener('resize', ()=>{ layoutBoard(); refitUniform(); });
+      visualViewport.addEventListener('scroll', ()=>{ layoutBoard(); });
+    }
+    window.addEventListener('orientationchange', ()=>{ setTimeout(()=>{ layoutBoard(); refitUniform(); }, 200); });
+
+    function setCellText(cell, text){
+      const label = cell.querySelector('.label');
+      label.textContent = text;
+      refitUniform();
+    }
+
+    function refitUniform(){
+      const filled = cells.map(c=>c.querySelector('.label')).filter(l=>l && l.textContent.trim().length>0);
+      if(filled.length===0){ return; }
+      const cw = cells[0].clientWidth - 12;
+      const ch = cells[0].clientHeight - 12;
+      // In wide landscape boards, we can allow larger height usage
+      const MAX_H_RATIO = 0.6;   // up to 60% of cell height
+      const MAX_W_RATIO = 0.96;
+      const ABS_MAX = 160;       // big cap for visibility
+      let globalHi = Math.floor(Math.min(ch*MAX_H_RATIO, cw*MAX_W_RATIO, ABS_MAX));
+      let globalLo = 16;
+      let minAcross = globalHi;
+      for(const label of filled){
+        let lo = globalLo, hi = globalHi;
+        for(let i=0;i<12;i++){
+          const mid = Math.floor((lo+hi)/2);
+          label.style.fontSize = mid+'px';
+          const fits = label.scrollWidth <= cw && label.scrollHeight <= ch;
+          if(fits) lo = mid+1; else hi = mid-1;
+        }
+        minAcross = Math.min(minAcross, Math.max(globalLo, hi));
+      }
+      const finalSize = Math.max(globalLo, Math.min(minAcross, globalHi));
+      for(const label of filled){ label.style.fontSize = finalSize+'px'; }
+    }
+
+    // init
+    build();
+    ['문워크','만세','트위스트','만세트위스트','호잇','청기백기','걷기','놀람'].forEach(createCard);
+  });
+  </script>
+</body>
+</html>
