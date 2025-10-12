@@ -98,10 +98,10 @@
         </form>
         <div class="cards" id="cards"></div>
       </div>
-      <div class="trash" id="trash" aria-label="휴지통 (카드를 끌어다 버리세요)">
+      <div class="trash" id="trash" aria-label="휴지통">
         <div class="icon">🗑️</div>
         <h3>휴지통</h3>
-        <p>드롭시 삭제</p>
+        <p></p>
       </div>
     </div>
   </div>
@@ -176,7 +176,7 @@
     }
 
     function show(lines){ 
-      toastMsg.textContent = `${lines}줄 빙고 성공! 축하합니다 폭죽폭죽 🎉🎉`; 
+      toastMsg.textContent = `빙고 성공! 축하합니다🎉🎉`; 
       toast.classList.add('show'); 
     }
     closeToast.onclick=()=>toast.classList.remove('show');
