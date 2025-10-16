@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>카드 가챠 — 재고 전용 (탭)</title>
+<title>카드 가챠 </title>
 <style>
   :root{--bg:#0f172a;--panel:#111827;--glass:rgba(255,255,255,.08);--accent:#f59e0b;--muted:#9ca3af}
   *{box-sizing:border-box}
@@ -58,7 +58,6 @@
 <body>
   <header>
     <h1>📦 카드 가챠 </h1>
-    <p class="subtitle">가중치/모드 없이, <b>남은 재고 수</b>가 곧 확률이에요. (예: A 5개, B 1개 → A가 5/6)</p>
   </header>
 
   <div class="container">
@@ -72,7 +71,6 @@
     <section class="panel" id="tab-settings">
       <h2 style="margin:0 0 8px">목록 입력</h2>
       <textarea id="stockText" placeholder="이름|재고 형식. 예) 초콜릿|5&#10;음료 쿠폰|3&#10;꽝|999"></textarea>
-      <p class="hint">※ 예전 형식(<code>이름|가중치|재고</code>)도 지원하지만, 여기선 <b>가중치는 무시</b>돼요.</p>
       <div class="row">
         <button class="btn" id="saveBtn">저장</button>
         <button class="btn ghost" id="sampleBtn">샘플</button>
@@ -97,7 +95,7 @@
     <!-- GAME -->
     <section class="panel" id="tab-game" style="display:none">
       <div class="row" style="justify-content:space-between;align-items:center">
-        <div class="hint">카드를 뒤집는 순간 뽑힌 결과를 카드 앞면에 채우고, 재고가 1 줄어듭니다.</div>
+        <div class="hint"></div>
         <div class="row">
           <button class="btn" id="newBoard">새 보드</button>
           <button class="btn ghost" id="resetBoard">리셋</button>
