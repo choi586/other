@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>카드 가챠 — 재고 전용 (탭)</title>
+<style>
+  :root{--bg:#0f172a;--panel:#111827;--glass:rgba(255,255,255,.08);--accent:#f59e0b;--muted:#9ca3af}
+  *{box-sizing:border-box}
+  body{margin:0;background:linear-gradient(135deg,#6a11cb 0%,#2575fc 100%);min-height:100vh;color:#fff;font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Apple SD Gothic Neo","Noto Sans KR",sans-serif}
+  header{padding:18px 16px;text-align:center}
+  h1{margin:0;font-size:26px}
+  .subtitle{opacity:.9}
+  .container{max-width:1100px;margin:0 auto;padding:16px}
+  /* tabs */
+  .tabs{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-bottom:14px}
+  .tab{border:none;border-radius:999px;padding:10px 16px;font-weight:700;cursor:pointer;background:var(--glass);color:#fff}
+  .tab.active{background:#111827}
+  .panel{background:rgba(255,255,255,.12);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.2);border-radius:14px;padding:16px}
+  textarea{width:100%;min-height:140px;border-radius:12px;border:1px solid rgba(255,255,255,.25);background:rgba(0,0,0,.2);color:#fff;padding:12px;font-family:ui-monospace,Menlo,Consolas,monospace}
+  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  .btn{border:none;border-radius:10px;padding:10px 14px;font-weight:800;cursor:pointer;background:linear-gradient(to right,#ffcc00,#ff9900);color:#222;box-shadow:0 4px 15px rgba(0,0,0,.25)}
+  .btn.ghost{background:rgba(255,255,255,.15);color:#fff;box-shadow:none}
+  .hint{font-size:12px;color:#fde68a}
+  /* table */
+  table{width:100%;border-collapse:separate;border-spacing:0 8px}
+  th,td{padding:8px 10px;text-align:left}
+  th{color:#ffe08a}
+  td{background:rgba(0,0,0,.25);border:1px solid rgba(255,255,255,.12)}
+  tr td:first-child{border-radius:8px 0 0 8px}
+  tr td:last-child{border-radius:0 8px 8px 0}
+  input[type="text"],input[type="number"]{width:100%;padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.07);color:#fff}
+  .qty{display:flex;gap:6px;align-items:center}
+  .qty button{padding:6px 10px;border-radius:8px}
+  /* board */
+  .board{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(120px,1fr))}
+  .flip{perspective:1000px}
+  .card{position:relative;width:100%;padding-top:135%;cursor:pointer}
+  .card-inner{position:absolute;inset:0;transform-style:preserve-3d;transition:transform .5s ease}
+  .card.flipped .card-inner{transform:rotateY(180deg)}
+  .face{position:absolute;inset:0;border-radius:14px;border:1px solid rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;flex-direction:column;backface-visibility:hidden;box-shadow:0 8px 20px rgba(0,0,0,.3);padding:10px;text-align:center}
+  .back{background:linear-gradient(135deg,#ff9a9e 0%,#fad0c4 100%);color:#222;font-weight:900;font-size:26px;letter-spacing:1px}
+  .front{transform:rotateY(180deg);background:linear-gradient(135deg,#a1c4fd 0%,#c2e9fb 100%);color:#222}
+  .front .emoji{font-size:34px}
+  .front .name{margin-top:6px;font-weight:800}
+  .disabled{opacity:.55;pointer-events:none}
+  /* stats & modal */
+  .stats{display:flex;gap:14px;flex-wrap:wrap;justify-content:space-evenly;margin:14px 0}
+  .stat{background:rgba(0,0,0,.25);border:1px solid rgba(255,255,255,.15);border-radius:12px;padding:10px 14px;text-align:center}
+  .stat .v{font-size:22px;color:#ffcc00;font-weight:900}
+  .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;z-index:50}
+  .modal{width:min(90vw,480px);background:#fff;border-radius:16px;padding:24px;text-align:center;transform:scale(.85);opacity:0;transition:.2s ease}
+  .modal.open{transform:scale(1);opacity:1}
+  .modal .title{font-size:22px;margin:0;color:#111}
+  .modal .big{font-weight:900;font-size:34px;margin:10px 0;color:#111}
+</style>
+</head>
+<body>
+  <header>
+    <h1>📦 카드 가챠 — 재고만으로 확률 결정</h1>
+    <p class="subtitle">가중치/모드 없이, <b>남은 재고 수</b>가 곧 확률이에요. (예: A 5개, B 1개 → A가 5/6)</p>
+  </header>
+
+  <div class="container">
+    <!-- tabs -->
+    <div class="tabs">
+      <button class="tab active" data-tab="settings">재고 설정</button>
+      <button class="tab" data-tab="game">카드 게임</button>
+    </div>
+
+    <!-- SETTINGS -->
+    <section class="panel" id="tab-settings">
+      <h2 style="margin:0 0 8px">목록 입력</h2>
+      <textarea id="stockText" placeholder="이름|재고 형식. 예) 초콜릿|5&#10;음료 쿠폰|3&#10;꽝|999"></textarea>
+      <p class="hint">※ 예전 형식(<code>이름|가중치|재고</code>)도 지원하지만, 여기선 <b>가중치는 무시</b>돼요.</p>
+      <div class="row">
+        <button class="btn" id="saveBtn">저장</button>
+        <button class="btn ghost" id="sampleBtn">샘플</button>
+        <button class="btn ghost" id="clearBtn">비우기</button>
+      </div>
+
+      <div class="panel" style="margin-top:16px">
+        <h2 style="margin:0 0 6px">재고 편집기</h2>
+        <p class="hint">표에서 바로 수정하면 위 입력창과 동기화됩니다. 끝나면 <b>저장</b>을 눌러요.</p>
+        <div style="overflow:auto">
+          <table>
+            <thead>
+              <tr><th>이름</th><th style="width:200px">재고</th><th style="width:100px">삭제</th></tr>
+            </thead>
+            <tbody id="stockBody"></tbody>
+          </table>
+        </div>
+        <button class="btn ghost" id="addRow">행 추가</button>
+      </div>
+    </section>
+
+    <!-- GAME -->
+    <section class="panel" id="tab-game" style="display:none">
+      <div class="row" style="justify-content:space-between;align-items:center">
+        <div class="hint">카드를 뒤집는 순간 뽑힌 결과를 카드 앞면에 채우고, 재고가 1 줄어듭니다.</div>
+        <div class="row">
+          <button class="btn" id="newBoard">새 보드</button>
+          <button class="btn ghost" id="resetBoard">리셋</button>
+          <button class="btn ghost" id="exportCSV">CSV</button>
+        </div>
+      </div>
+
+      <div class="stats">
+        <div class="stat"><div class="v" id="uniqueItems">0</div><div>아이템 종류</div></div>
+        <div class="stat"><div class="v" id="remainTotal">0</div><div>남은 총 재고</div></div>
+        <div class="stat"><div class="v" id="totalPulls">0</div><div>총 뽑기</div></div>
+      </div>
+
+      <div class="board" id="board"></div>
+
+      <div class="panel" style="margin-top:14px">
+        <h3 style="margin:0 0 8px">결과 기록</h3>
+        <ul id="history" style="list-style:none;padding:0;margin:0;display:grid;gap:6px"></ul>
+      </div>
+    </section>
+  </div>
+
+  <!-- Modal -->
+  <div class="modal-bg" id="backdrop">
+    <div class="modal" id="modal">
+      <p class="title">🎉 당첨!</p>
+      <p class="big" id="modalText">-</p>
+      <button class="btn" id="closeModal">닫기</button>
+    </div>
+  </div>
+
+<script>
+(() => {
+  // ======= State =======
+  const $ = s => document.querySelector(s);
+  const stockBody = $('#stockBody');
+  const boardEl = $('#board');
+  const historyEl = $('#history');
+  const uniqueItemsEl = $('#uniqueItems');
+  const remainTotalEl = $('#remainTotal');
+  const totalPullsEl = $('#totalPulls');
+
+  let items = [];          // {name, stock}  (stock: number >=0)
+  let draws = [];          // [{name}]
+  let boardState = [];     // [{flipped:boolean, name:string|null}]
+
+  // ======= Tabs =======
+  document.querySelectorAll('.tab').forEach(btn=>{
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      const t = btn.dataset.tab;
+      $('#tab-settings').style.display = (t==='settings'?'block':'none');
+      $('#tab-game').style.display = (t==='game'?'block':'none');
+      localStorage.setItem('stock_tab', t);
+    });
+  });
+  const lastTab = localStorage.getItem('stock_tab');
+  if (lastTab && lastTab !== 'settings') document.querySelector('.tab[data-tab="game"]').click();
+
+  // ======= Emoji =======
+  const EMOJI = {'금':'💰','은':'🪙','보석':'💎','다이아':'💠','상자':'🎁','레어':'✨','꽝':'💣','초콜릿':'🍫','스티커':'🎟️','음료':'🥤'};
+  const iconOf = (name) => { for (const k in EMOJI) if (name.includes(k)) return EMOJI[k]; return '🎉'; };
+
+  // ======= Parse & Build =======
+  const parseText = (text) => {
+    const lines = text.split(/\r?\n/).map(s=>s.trim()).filter(Boolean);
+    const out = [];
+    for (const line of lines) {
+      const p = line.split('|').map(s=>s.trim());
+      if (!p[0]) continue;
+      const name = p[0];
+      // support old "name|weight|stock" but ignore weight
+      const stockStr = p.length>=3 ? p[2] : p[1];
+      let stock = stockStr!==undefined && stockStr!=='' ? parseInt(stockStr,10) : 0;
+      if (isNaN(stock) || stock<0) stock = 0;
+      out.push({name, stock});
+    }
+    return out;
+  };
+
+  const syncTableToTextarea = () => {
+    const rows = [];
+    stockBody.querySelectorAll('tr').forEach(tr=>{
+      const name = tr.querySelector('td:nth-child(1) input').value.trim();
+      const stock = tr.querySelector('td:nth-child(2) input').value.trim();
+      if (name) rows.push(`${name}|${stock || 0}`);
+    });
+    $('#stockText').value = rows.join('\n');
+    rebuild();
+    save();
+  };
+
+  const renderStockTable = () => {
+    stockBody.innerHTML = '';
+    items.forEach(it=>{
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td><input type="text" value="${it.name}"></td>
+        <td>
+          <div class="qty">
+            <button class="btn ghost" type="button">-</button>
+            <input type="number" min="0" value="${it.stock}">
+            <button class="btn ghost" type="button">+</button>
+          </div>
+        </td>
+        <td><button class="btn ghost" type="button">삭제</button></td>
+      `;
+      const nameI = tr.querySelector('td:nth-child(1) input');
+      const stockI = tr.querySelector('td:nth-child(2) input');
+      const [minus, plus] = tr.querySelectorAll('button.btn.ghost');
+      const del = tr.querySelectorAll('button.btn.ghost')[2];
+
+      nameI.addEventListener('input', syncTableToTextarea);
+      stockI.addEventListener('input', syncTableToTextarea);
+      minus.addEventListener('click', ()=>{ const v=parseInt(stockI.value||'0',10); stockI.value = String(Math.max(0, v-1)); syncTableToTextarea(); });
+      plus.addEventListener('click', ()=>{ const v=parseInt(stockI.value||'0',10); stockI.value = String(Math.max(0, v+1)); syncTableToTextarea(); });
+      del.addEventListener('click', ()=>{ tr.remove(); syncTableToTextarea(); });
+
+      stockBody.appendChild(tr);
+    });
+  };
+
+  const rebuild = () => {
+    items = parseText($('#stockText').value);
+    if (items.length===0) {
+      items = [
+        {name:'초콜릿', stock:5},
+        {name:'음료 쿠폰', stock:3},
+        {name:'스티커', stock:10},
+        {name:'꽝', stock:999},
+      ];
+    }
+    renderStockTable();
+    updateStats();
+  };
+
+  // ======= Choose (pure stock) =======
+  const totalRemain = () => items.reduce((s,x)=> s + Math.max(0,x.stock||0), 0);
+  const choose = () => {
+    const total = totalRemain();
+    if (total<=0) return null;
+    let r = Math.random() * total;
+    for (const it of items) {
+      const c = Math.max(0, it.stock||0);
+      if (c<=0) continue;
+      if (r < c) return it;
+      r -= c;
+    }
+    return null;
+  };
+
+  const afterPick = (pick) => {
+    if (!pick) return;
+    // decrement in textarea text
+    const lines = $('#stockText').value.split(/\r?\n/);
+    for (let i=0;i<lines.length;i++) {
+      const p = lines[i].trim().split('|').map(s=>s.trim());
+      if (!p[0]) continue;
+      const name = p[0];
+      const stockStr = p.length>=3 ? p[2] : p[1];
+      let stock = stockStr!==undefined && stockStr!=='' ? parseInt(stockStr,10) : 0;
+      if (name===pick.name) {
+        stock = Math.max(0,(isNaN(stock)?0:stock)-1);
+        if (p.length>=3) { p[2] = String(stock); }
+        else { p[1] = String(stock); }
+        lines[i] = p.join('|');
+        break;
+      }
+    }
+    $('#stockText').value = lines.join('\n');
+    rebuild();
+    save();
+  };
+
+  // ======= Board =======
+  const cardCount = () => {
+    const w = window.innerWidth;
+    if (w < 560) return 12;
+    if (w < 900) return 16;
+    return 20;
+  };
+
+  const newBoard = () => {
+    rebuild();
+    const n = cardCount();
+    boardState = Array.from({length:n}, ()=>({flipped:false, name:null}));
+    renderBoard();
+    save();
+  };
+
+  const renderBoard = () => {
+    boardEl.innerHTML = '';
+    const order = Array.from(boardState.keys());
+    // simple shuffle each render for variety
+    for (let i=order.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [order[i],order[j]]=[order[j],order[i]]; }
+    order.forEach(idx=>{
+      const cell = document.createElement('div');
+      cell.className = 'flip';
+      const card = document.createElement('div');
+      card.className = 'card'+(boardState[idx].flipped?' flipped disabled':'');
+      const inner = document.createElement('div'); inner.className='card-inner';
+
+      const back = document.createElement('div'); back.className='face back'; back.textContent='FLIP';
+
+      const front = document.createElement('div'); front.className='face front';
+      if (boardState[idx].name) {
+        const em = document.createElement('div'); em.className='emoji'; em.textContent = iconOf(boardState[idx].name);
+        const nm = document.createElement('div'); nm.className='name'; nm.textContent = boardState[idx].name;
+        front.appendChild(em); front.appendChild(nm);
+      } else {
+        const placeholder = document.createElement('div'); placeholder.className='name'; placeholder.textContent=' ';
+        front.appendChild(placeholder);
+      }
+
+      inner.appendChild(back); inner.appendChild(front);
+      card.appendChild(inner); cell.appendChild(card); boardEl.appendChild(cell);
+
+      if (!boardState[idx].flipped) {
+        card.addEventListener('click', () => onFlip(idx, card, front));
+      }
+    });
+    updateStats();
+  };
+
+  const onFlip = (idx, cardEl, frontEl) => {
+    const pick = choose();
+    if (!pick) { alert('남은 재고가 없습니다.'); return; }
+
+    // set front to actual pick
+    frontEl.innerHTML = '';
+    const em = document.createElement('div'); em.className='emoji'; em.textContent = iconOf(pick.name);
+    const nm = document.createElement('div'); nm.className='name'; nm.textContent = pick.name;
+    frontEl.appendChild(em); frontEl.appendChild(nm);
+
+    requestAnimationFrame(()=> cardEl.classList.add('flipped'));
+    boardState[idx].flipped = true;
+    boardState[idx].name = pick.name;
+    cardEl.classList.add('disabled');
+
+    draws.push({name: pick.name});
+    renderHistory();
+    afterPick(pick);
+    openModal(pick.name);
+    save();
+  };
+
+  // ======= History / Stats =======
+  const renderHistory = () => {
+    historyEl.innerHTML = '';
+    draws.slice().reverse().forEach(d=>{
+      const li = document.createElement('li');
+      li.textContent = d.name;
+      historyEl.appendChild(li);
+    });
+  };
+
+  const updateStats = () => {
+    uniqueItemsEl.textContent = items.length;
+    remainTotalEl.textContent = totalRemain();
+    totalPullsEl.textContent = draws.length;
+  };
+
+  // ======= Modal =======
+  const openModal = (text) => {
+    $('#modalText').textContent = text;
+    $('#backdrop').style.display = 'flex';
+    setTimeout(()=> $('#modal').classList.add('open'), 10);
+  };
+  const closeModal = () => {
+    $('#modal').classList.remove('open');
+    setTimeout(()=> $('#backdrop').style.display='none', 160);
+  };
+  $('#backdrop').addEventListener('click', e=>{ if (e.target.id==='backdrop') closeModal(); });
+  $('#closeModal').addEventListener('click', closeModal);
+
+  // ======= CSV =======
+  const exportCSV = () => {
+    if (draws.length===0){ alert('내보낼 결과가 없습니다.'); return; }
+    const rows = [['order','name']].concat(draws.map((d,i)=>[i+1,d.name]));
+    const csv = rows.map(r=>r.map(x=>String(x).replace(/"/g,'""')).map(s=>`"${s}"`).join(',')).join('\n');
+    const blob = new Blob([csv],{type:'text/csv;charset=utf-8'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href=url; a.download='gacha_stock_results.csv'; a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  // ======= Persistence =======
+  const save = () => {
+    const state = { text: $('#stockText').value, draws, board: boardState };
+    localStorage.setItem('gacha_stock_tabs_v1', JSON.stringify(state));
+  };
+  const load = () => {
+    try {
+      const raw = localStorage.getItem('gacha_stock_tabs_v1');
+      if (!raw) {
+        $('#stockText').value = '초콜릿|5\n음료 쿠폰|3\n스티커|10\n꽝|999';
+        return;
+      }
+      const s = JSON.parse(raw);
+      $('#stockText').value = s.text ?? '';
+      draws = s.draws ?? [];
+      boardState = s.board ?? [];
+    } catch(e) { console.warn(e); }
+  };
+
+  // ======= Events =======
+  $('#saveBtn').addEventListener('click', ()=>{ rebuild(); save(); alert('저장 완료'); });
+  $('#sampleBtn').addEventListener('click', ()=>{
+    $('#stockText').value = '초콜릿|5\n음료 쿠폰|3\n스티커|10\n꽝|999';
+    rebuild(); save();
+  });
+  $('#clearBtn').addEventListener('click', ()=>{ $('#stockText').value = ''; rebuild(); save(); });
+
+  $('#addRow').addEventListener('click', ()=>{
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><input type="text" placeholder="이름"></td>
+      <td><div class="qty">
+            <button class="btn ghost" type="button">-</button>
+            <input type="number" min="0" placeholder="재고">
+            <button class="btn ghost" type="button">+</button>
+          </div></td>
+      <td><button class="btn ghost" type="button">삭제</button></td>`;
+    const stockI = tr.querySelector('input[placeholder="재고"]');
+    const [minus, plus] = tr.querySelectorAll('button.btn.ghost');
+    const del = tr.querySelectorAll('button.btn.ghost')[2];
+    tr.querySelectorAll('input').forEach(inp=>inp.addEventListener('input', syncTableToTextarea));
+    minus.addEventListener('click', ()=>{ const v=parseInt(stockI.value||'0',10); stockI.value=String(Math.max(0,v-1)); syncTableToTextarea(); });
+    plus.addEventListener('click', ()=>{ const v=parseInt(stockI.value||'0',10); stockI.value=String(Math.max(0,v+1)); syncTableToTextarea(); });
+    del.addEventListener('click', ()=>{ tr.remove(); syncTableToTextarea(); });
+    stockBody.appendChild(tr);
+  });
+
+  $('#newBoard').addEventListener('click', newBoard);
+  $('#resetBoard').addEventListener('click', ()=>{
+    draws = [];
+    boardState.forEach(c=>{ c.flipped=false; c.name=null; });
+    renderHistory(); renderBoard(); save();
+  });
+  $('#exportCSV').addEventListener('click', exportCSV);
+
+  // ======= Init =======
+  load();
+  rebuild();
+  renderHistory();
+  if (boardState.length===0) newBoard(); else renderBoard();
+})();
+</script>
+</body>
+</html>
