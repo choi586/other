@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>🔐 시저(Caesar) 암호 체험 – HTML v3</title>
+  <style>
+    :root{ --bg:#0b0f19; --panel:#121826; --card:#0d1422; --text:#e6ebff; --muted:#aab3d6; --accent:#7aa2ff; --border:#1f2a44; }
+    *{box-sizing:border-box}
+    body{margin:0; font-family: ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Apple SD Gothic Neo,Noto Sans KR,Helvetica,Arial;
+      background: radial-gradient(1200px 800px at 20% -10%, #1b2540 0%, #0b0f19 50%), var(--bg); color:var(--text)}
+    header{padding:20px 16px 8px; text-align:center}
+    h1{margin:0; font-size: clamp(20px, 3.2vw, 30px)}
+    .sub{color:var(--muted); font-size:13px}
+    .wrap{max-width:1000px; margin:0 auto; padding:14px 16px}
+    .tabs{display:flex; gap:8px; flex-wrap:wrap; margin:12px 0}
+    .tab{padding:8px 12px; border:1px solid var(--border); border-radius:999px; cursor:pointer; user-select:none;
+      background:linear-gradient(180deg,#1a2443,#131c33)}
+    .tab.active{outline:2px solid var(--accent)}
+    .card{background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.08)); border:1px solid var(--border); border-radius:16px; padding:14px; margin-bottom:14px}
+    .row{display:flex; gap:10px; flex-wrap:wrap; align-items:center}
+    .label{color:var(--muted); font-size:13px}
+    textarea, input[type="text"], input[type="number"]{ background: var(--card); border:1px solid var(--border); color:var(--text); padding:10px 12px; border-radius:10px; outline:none }
+    textarea{width:100%; min-height:120px; resize:vertical}
+    input[type="range"]{ width:220px }
+    .btn{ background:linear-gradient(180deg,#22315c,#1b2750); border:1px solid #2b3a6e; color:var(--text); padding:9px 12px; border-radius:12px; cursor:pointer; user-select:none }
+    .btn.secondary{ background:linear-gradient(180deg,#1a223e,#141c34); border-color:var(--border) }
+    .code{white-space:pre-wrap; background:#0e1629; border:1px solid var(--border); padding:10px; border-radius:12px}
+    table{ width:100%; border-collapse:collapse; font-size:14px }
+    th, td{ border-bottom:1px solid #223155; padding:8px 6px; text-align:left }
+    th{ color:#b9c3e6; font-weight:600 }
+    .mono{font-family: ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; font-variant-numeric: tabular-nums}
+    .hint{ color:var(--muted); font-size:12px; margin-top:6px }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>🔐 시저(Caesar) 암호 – 브라우저 전용</h1>
+    <div class="sub">원본 Streamlit 구조처럼 <b>암호화 → 복호화 → 브루트포스</b> 3탭, 그리고 <b>암호문 자동 전달</b>을 구현했습니다.</div>
+  </header>
+
+  <div class="wrap">
+    <div class="tabs">
+      <div class="tab active" data-tab="enc">암호화</div>
+      <div class="tab" data-tab="dec">복호화</div>
+      <div class="tab" data-tab="brute">브루트포스</div>
+    </div>
+
+    <section id="enc" class="card">
+      <div class="label">평문 입력</div>
+      <textarea id="enc_in" placeholder="예: Attack at dawn!"></textarea>
+      <div class="row" style="margin-top:8px">
+        <div class="label">키(시프트)</div>
+        <input id="k_enc" type="range" min="0" max="25" value="3" />
+        <input id="k_enc_num" class="mono" type="number" min="0" max="25" value="3" style="width:80px" />
+      </div>
+      <div class="row" style="margin-top:8px">
+        <button class="btn" id="btn_do_enc">암호화</button>
+        <button class="btn secondary" id="btn_copy_c">암호문 복사</button>
+      </div>
+      <div class="label" style="margin-top:10px">암호문</div>
+      <textarea id="enc_out" readonly placeholder="암호문이 여기에 표시됩니다."></textarea>
+      <div class="hint">암호화하면, 이 암호문은 자동으로 <b>복호화 탭 입력</b>과 <b>브루트포스 탭 입력</b>에 붙습니다.</div>
+    </section>
+
+    <section id="dec" class="card" style="display:none">
+      <div class="label">암호문 입력</div>
+      <textarea id="dec_in" placeholder="예: KHOOR ZRUOG"></textarea>
+      <div class="row" style="margin-top:8px">
+        <div class="label">키(시프트)</div>
+        <input id="k_dec" type="range" min="0" max="25" value="3" />
+        <input id="k_dec_num" class="mono" type="number" min="0" max="25" value="3" style="width:80px" />
+      </div>
+      <div class="row" style="margin-top:8px">
+        <button class="btn" id="btn_do_dec">복호화</button>
+        <button class="btn secondary" id="btn_copy_m">복호문 복사</button>
+      </div>
+      <div class="label" style="margin-top:10px">복호문</div>
+      <textarea id="dec_out" readonly placeholder="복호화 결과가 여기에 표시됩니다."></textarea>
+    </section>
+
+    <section id="brute" class="card" style="display:none">
+      <div class="label">암호문 입력</div>
+      <textarea id="brute_in" placeholder="예: KHOOR ZRUOG"></textarea>
+      <div class="row" style="margin-top:8px">
+        <button class="btn" id="btn_run_brute">모든 키 시도하기 (1~25)</button>
+      </div>
+      <div id="tableWrap" style="margin-top:10px"></div>
+      <div class="code mono" style="margin-top:8px">설명: 시저 암호는 키가 25개뿐이라 전수조사가 쉽게 됩니다.</div>
+    </section>
+  </div>
+
+<script>
+// ---------- Tabs ----------
+document.querySelectorAll(".tab").forEach(t=>t.addEventListener("click",()=>{
+  document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));
+  t.classList.add("active");
+  document.querySelectorAll("section.card").forEach(sec=>sec.style.display="none");
+  document.getElementById(t.dataset.tab).style.display="";
+}));
+
+// ---------- Helpers ----------
+function clamp(v,min,max){ v=Number(v||min); if(v<min)v=min; if(v>max)v=max; return v; }
+async function copy(text){ try{ await navigator.clipboard.writeText(text); alert("복사됨"); }catch(e){ alert("복사 실패"); } }
+
+// ---------- Caesar core (A-Z/a-z만 순환, 나머지는 보존) ----------
+function shiftChar(code, base, k){ return String.fromCharCode(base + ((code-base + k) % 26)); }
+function caesarEncrypt(text, k){
+  k = clamp(k,0,25);
+  let out = "";
+  for(const ch of text){
+    const c = ch.codePointAt(0);
+    if(c>=65 && c<=90) out += shiftChar(c,65,k);
+    else if(c>=97 && c<=122) out += shiftChar(c,97,k);
+    else out += ch;
+  }
+  return out;
+}
+function caesarDecrypt(text, k){
+  k = clamp(k,0,25);
+  const inv = (26 - (k % 26)) % 26;
+  return caesarEncrypt(text, inv);
+}
+
+// ---------- ENC tab ----------
+const enc_in = document.getElementById("enc_in");
+const enc_out = document.getElementById("enc_out");
+const k_enc = document.getElementById("k_enc");
+const k_enc_num = document.getElementById("k_enc_num");
+function syncEncFromRange(){ k_enc_num.value = k_enc.value; }
+function syncEncFromNum(){ k_enc.value = clamp(k_enc_num.value,0,25); }
+k_enc.addEventListener("input", syncEncFromRange);
+k_enc_num.addEventListener("input", syncEncFromNum);
+
+document.getElementById("btn_do_enc").addEventListener("click", ()=>{
+  const k = Number(k_enc.value);
+  const c = caesarEncrypt(enc_in.value, k);
+  enc_out.value = c;
+
+  // 자동 전달: 복호화/브루트포스 입력에 붙이기
+  document.getElementById("dec_in").value = c;
+  document.getElementById("brute_in").value = c;
+});
+
+document.getElementById("btn_copy_c").addEventListener("click", ()=> copy(enc_out.value));
+
+// ---------- DEC tab ----------
+const dec_in = document.getElementById("dec_in");
+const dec_out = document.getElementById("dec_out");
+const k_dec = document.getElementById("k_dec");
+const k_dec_num = document.getElementById("k_dec_num");
+function syncDecFromRange(){ k_dec_num.value = k_dec.value; }
+function syncDecFromNum(){ k_dec.value = clamp(k_dec_num.value,0,25); }
+k_dec.addEventListener("input", syncDecFromRange);
+k_dec_num.addEventListener("input", syncDecFromNum);
+
+document.getElementById("btn_do_dec").addEventListener("click", ()=>{
+  const k = Number(k_dec.value);
+  const m = caesarDecrypt(dec_in.value, k);
+  dec_out.value = m;
+});
+document.getElementById("btn_copy_m").addEventListener("click", ()=> copy(dec_out.value));
+
+// ---------- BRUTE tab ----------
+document.getElementById("btn_run_brute").addEventListener("click", ()=>{
+  const s = (document.getElementById("brute_in").value || "").trim();
+  const wrap = document.getElementById("tableWrap");
+  if(!s){ wrap.innerHTML = '<div class="code">먼저 암호문을 입력하세요.</div>'; return; }
+  let rows = '<table><thead><tr><th>키(k)</th><th>해독 결과</th></tr></thead><tbody>';
+  for(let k=1;k<=25;k++){
+    const dec = caesarDecrypt(s, k);
+    rows += `<tr><td class="mono">${k}</td><td>${escapeHTML(dec)}</td></tr>`;
+  }
+  rows += '</tbody></table>';
+  wrap.innerHTML = rows;
+});
+
+function escapeHTML(s){ return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+</script>
+</body>
+</html>
