@@ -392,7 +392,7 @@
     try {
       const raw = localStorage.getItem('gacha_stock_tabs_v1');
       if (!raw) {
-        $('#stockText').value = '초콜릿|5\n음료 쿠폰|3\n스티커|10\n꽝|999';
+        $('#stockText').value = '초콜릿|5\n음료 쿠폰|3\n스티커|10\n꽝|10';
         return;
       }
       const s = JSON.parse(raw);
@@ -405,7 +405,7 @@
   // ======= Events =======
   $('#saveBtn').addEventListener('click', ()=>{ rebuild(); save(); alert('저장 완료'); });
   $('#sampleBtn').addEventListener('click', ()=>{
-    $('#stockText').value = '초콜릿|5\n음료 쿠폰|3\n스티커|10\n꽝|999';
+    $('#stockText').value = '초콜릿|5\n음료 쿠폰|3\n스티커|10\n꽝|10';
     rebuild(); save();
   });
   $('#clearBtn').addEventListener('click', ()=>{ $('#stockText').value = ''; rebuild(); save(); });
