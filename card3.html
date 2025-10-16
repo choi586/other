@@ -1,0 +1,301 @@
+
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>박람회 경품 뽑기</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; padding: 20px; }
+        .container { max-width: 900px; margin: 0 auto; background: white; border-radius: 20px; box-shadow: 0 20px 40px rgba(0,0,0,0.1); overflow: hidden; }
+        .tabs { display: flex; background: #f8f9fa; }
+        .tab-btn { flex: 1; padding: 20px; text-align: center; background: none; border: none; font-size: 18px; font-weight: bold; cursor: pointer; transition: all 0.3s; }
+        .tab-btn.active { background: #667eea; color: white; }
+        .tab-content { display: none; padding: 30px; }
+        .tab-content.active { display: block; }
+        
+        /* 재고 관리 */
+        .inventory-form { display: flex; gap: 10px; margin-bottom: 20px; }
+        .inventory-form input { flex: 1; padding: 15px; font-size: 16px; border: 2px solid #ddd; border-radius: 10px; }
+        .inventory-form button { padding: 15px 20px; background: #28a745; color: white; border: none; border-radius: 10px; font-size: 16px; cursor: pointer; }
+        .inventory-table { width: 100%; border-collapse: collapse; }
+        .inventory-table th, .inventory-table td { padding: 15px; text-align: left; border-bottom: 1px solid #ddd; }
+        .inventory-table th { background: #f8f9fa; }
+        .btn-small { padding: 5px 10px; margin: 0 5px; border: none; border-radius: 5px; cursor: pointer; font-size: 14px; }
+        .btn-edit { background: #007bff; color: white; }
+        .btn-delete { background: #dc3545; color: white; }
+        .empty { text-align: center; color: #999; font-style: italic; }
+        
+        /* 뽑기 */
+        .lottery-header { text-align: center; margin-bottom: 20px; }
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr); /* 7열 그리드 */
+            gap: 10px;
+            perspective: 1000px; /* 3D 효과를 위한 원근감 */
+            margin: 20px 0;
+        }
+        .card {
+            position: relative;
+            width: 100%;
+            padding-bottom: 140%; /* 1:1.4 비율 유지 */
+            transform-style: preserve-3d;
+            transition: transform 0.8s;
+            cursor: pointer;
+        }
+        .card.flipped {
+            transform: rotateY(180deg);
+            pointer-events: none; /* 뒤집힌 카드는 더 이상 클릭 불가 */
+        }
+        .card-face {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden; /* 뒷면 숨김 */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            font-size: 16px;
+            font-weight: bold;
+            text-align: center;
+            padding: 5px;
+        }
+        .front {
+            background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%);
+            color: #333;
+        }
+        .back {
+            background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+            transform: rotateY(180deg);
+            color: #333;
+            flex-direction: column;
+        }
+        .back.lose {
+             background: linear-gradient(135deg, #e0e0e0 0%, #bdbdbd 100%);
+             color: #555;
+        }
+        
+        .reset-btn {
+            display: block;
+            margin: 20px auto 0;
+            padding: 15px 30px;
+            background: #ff6b6b;
+            color: white;
+            border: none;
+            border-radius: 50px;
+            font-size: 18px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .reset-btn:hover {
+            transform: scale(1.05);
+        }
+        .sold-out { color: #dc3545; font-size: 24px; text-align: center; margin-top: 20px; }
+        
+        @media (max-width: 768px) {
+            .card-grid { grid-template-columns: repeat(4, 1fr); } /* 모바일에서는 4열로 변경 */
+            .card-face { font-size: 14px; }
+        }
+        @media (max-width: 480px) {
+            .card-grid { grid-template-columns: repeat(3, 1fr); } /* 작은 모바일에서는 3열로 변경 */
+            .card-face { font-size: 12px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab('inventory')">📦 재고 관리</button>
+            <button class="tab-btn" onclick="switchTab('lottery')">🎰 경품 뽑기</button>
+        </div>
+        
+        <!-- 재고 관리 탭 -->
+        <div id="inventory" class="tab-content active">
+            <h2>경품 재고 등록</h2>
+            <div class="inventory-form">
+                <input type="text" id="prizeName" placeholder="경품 이름 (예: 아이폰15)" />
+                <input type="number" id="prizeQty" placeholder="수량" min="1" />
+                <button onclick="addPrize()">추가</button>
+            </div>
+            <table class="inventory-table">
+                <thead><tr><th>경품 이름</th><th>재고 수량</th><th>관리</th></tr></thead>
+                <tbody id="inventoryList"></tbody>
+            </table>
+            <div id="emptyInventory" class="empty" style="display:none;">등록된 경품이 없습니다.</div>
+        </div>
+        
+        <!-- 뽑기 탭 -->
+        <div id="lottery" class="tab-content">
+            <div class="lottery-header">
+                <h2>카드를 클릭하여 경품을 확인하세요!</h2>
+            </div>
+            <div class="card-grid" id="cardGrid">
+                <!-- JavaScript로 카드가 동적으로 생성됩니다 -->
+            </div>
+            <button class="reset-btn" onclick="resetGame()">게임 초기화</button>
+            <div id="soldOut" class="sold-out" style="display:none;">😢 모든 경품이 소진되었습니다!</div>
+        </div>
+    </div>
+
+    <script>
+        let prizes = JSON.parse(localStorage.getItem('prizes')) || [];
+        
+        // 경품 목록이 변경될 때 호출 (추가, 수정, 삭제)
+        function savePrizes() {
+            localStorage.setItem('prizes', JSON.stringify(prizes));
+            renderInventory();
+            updateLottery(); // 목록이 바뀌면 카드도 새로 생성
+        }
+
+        // 경품 당첨 시 재고만 차감할 때 호출
+        function updateStockOnly() {
+            localStorage.setItem('prizes', JSON.stringify(prizes));
+            renderInventory(); // 재고 관리 표만 업데이트
+        }
+        
+        function renderInventory() {
+            const tbody = document.getElementById('inventoryList');
+            const empty = document.getElementById('emptyInventory');
+            if (prizes.length === 0) {
+                empty.style.display = 'block';
+                tbody.innerHTML = '';
+                return;
+            }
+            empty.style.display = 'none';
+            tbody.innerHTML = prizes.map((p, i) => `
+                <tr>
+                    <td>${p.name}</td>
+                    <td>${p.quantity}</td>
+                    <td>
+                        <button class="btn-small btn-edit" onclick="editPrize(${i})">수정</button>
+                        <button class="btn-small btn-delete" onclick="deletePrize(${i})">삭제</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+        
+        function addPrize() {
+            const name = document.getElementById('prizeName').value.trim();
+            const qty = parseInt(document.getElementById('prizeQty').value);
+            if (!name || qty < 1) return alert('이름과 수량을 입력하세요!');
+            const existing = prizes.find(p => p.name === name);
+            if (existing) {
+                existing.quantity += qty;
+            } else {
+                prizes.push({ name, quantity: qty });
+            }
+            document.getElementById('prizeName').value = '';
+            document.getElementById('prizeQty').value = '';
+            savePrizes();
+        }
+        
+        function editPrize(index) {
+            const newQty = prompt('새 수량:', prizes[index].quantity);
+            if (newQty !== null && parseInt(newQty) >= 0) {
+                prizes[index].quantity = parseInt(newQty);
+                savePrizes();
+            }
+        }
+        
+        function deletePrize(index) {
+            if (confirm('삭제하시겠어요?')) {
+                prizes.splice(index, 1);
+                savePrizes();
+            }
+        }
+        
+        function switchTab(tab) {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            event.target.classList.add('active');
+            document.getElementById(tab).classList.add('active');
+        }
+
+        function handleCardClick(cardElement) {
+            if (cardElement.classList.contains('flipped')) {
+                return; // 이미 뒤집힌 카드는 무시
+            }
+
+            const prizeName = cardElement.dataset.prizeName;
+            cardElement.classList.add('flipped');
+
+            if (prizeName !== '꽝') {
+                const prizeIndex = prizes.findIndex(p => p.name === prizeName);
+                if (prizeIndex > -1) {
+                    prizes[prizeIndex].quantity--;
+                    // ★★★ 변경된 부분 ★★★
+                    // 카드를 새로 그리지 않고 재고만 업데이트
+                    updateStockOnly(); 
+                }
+            }
+        }
+        
+        function updateLottery() {
+            const cardGrid = document.getElementById('cardGrid');
+            const soldOutMessage = document.getElementById('soldOut');
+            cardGrid.innerHTML = ''; // 기존 카드 삭제
+
+            const availablePrizes = prizes.filter(p => p.quantity > 0);
+            if (availablePrizes.length === 0) {
+                soldOutMessage.style.display = 'block';
+                return;
+            }
+            soldOutMessage.style.display = 'none';
+
+            let cardPool = [];
+            // 1. 경품 카드 추가
+            availablePrizes.forEach(p => {
+                for (let i = 0; i < p.quantity; i++) {
+                    cardPool.push(p.name);
+                }
+            });
+
+            // 2. 꽝 카드 추가하여 총 21장으로 맞추기
+            const loseCardCount = 21 - cardPool.length;
+            for (let i = 0; i < loseCardCount; i++) {
+                cardPool.push('꽝');
+            }
+            
+            // 3. 카드 섞기 (Fisher-Yates Shuffle)
+            for (let i = cardPool.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [cardPool[i], cardPool[j]] = [cardPool[j], cardPool[i]];
+            }
+
+            // 4. 카드 DOM 생성
+            cardPool.forEach(prizeName => {
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.dataset.prizeName = prizeName; // 결과값을 data 속성에 저장
+                card.onclick = function() { handleCardClick(this); };
+
+                const front = document.createElement('div');
+                front.className = 'card-face front';
+                front.innerHTML = '🎁<br>CLICK!';
+
+                const back = document.createElement('div');
+                back.className = `card-face back ${prizeName === '꽝' ? 'lose' : ''}`;
+                back.textContent = prizeName;
+
+                card.appendChild(front);
+                card.appendChild(back);
+                cardGrid.appendChild(card);
+            });
+        }
+
+        function resetGame() {
+            updateLottery();
+        }
+        
+        // 초기 로드
+        renderInventory();
+        updateLottery();
+    </script>
+</body>
+</html>
+```
