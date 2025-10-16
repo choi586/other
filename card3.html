@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -18,8 +17,8 @@
         /* 재고 관리 */
         .inventory-form { display: flex; gap: 10px; margin-bottom: 20px; }
         .inventory-form input { flex: 1; padding: 15px; font-size: 16px; border: 2px solid #ddd; border-radius: 10px; }
-        .inventory-form button { padding: 15px 20px; background: #28a745; color: white; border: none; border-radius: 10px; font-size: 16px; cursor: pointer; }
-        .inventory-table { width: 100%; border-collapse: collapse; }
+        .inventory-form button { padding: 15px 20px; background: #28a745; color: white; border: none; border-radius: 10px; font-size: 16px; cursor: pointer; white-space: nowrap; }
+        .inventory-table { width: 100%; border-collapse: collapse; overflow-x: auto; }
         .inventory-table th, .inventory-table td { padding: 15px; text-align: left; border-bottom: 1px solid #ddd; }
         .inventory-table th { background: #f8f9fa; }
         .btn-small { padding: 5px 10px; margin: 0 5px; border: none; border-radius: 5px; cursor: pointer; font-size: 14px; }
@@ -97,13 +96,67 @@
         }
         .sold-out { color: #dc3545; font-size: 24px; text-align: center; margin-top: 20px; }
         
+        /* ★★★ 모바일 반응형 처리 개선 ★★★ */
         @media (max-width: 768px) {
-            .card-grid { grid-template-columns: repeat(4, 1fr); } /* 모바일에서는 4열로 변경 */
+            body { padding: 10px; }
+            .container { border-radius: 15px; }
+            .tab-content { padding: 20px; }
+            .tab-btn { padding: 15px; font-size: 16px; }
+            
+            /* 재고 관리 폼을 세로로 배치 */
+            .inventory-form { 
+                flex-direction: column; 
+                gap: 15px; 
+            }
+            .inventory-form input, 
+            .inventory-form button { 
+                width: 100%; 
+                padding: 12px; 
+                font-size: 16px; 
+            }
+            
+            /* 테이블 반응형 처리 */
+            .inventory-table-wrapper {
+                overflow-x: auto;
+                margin: 0 -20px;
+                padding: 0 20px;
+            }
+            .inventory-table th, 
+            .inventory-table td { 
+                padding: 10px 8px; 
+                font-size: 14px; 
+            }
+            
+            /* 카드 그리드 조정 */
+            .card-grid { 
+                grid-template-columns: repeat(4, 1fr); 
+                gap: 8px; 
+            }
             .card-face { font-size: 14px; }
+            .reset-btn { font-size: 16px; padding: 12px 24px; }
         }
+        
         @media (max-width: 480px) {
-            .card-grid { grid-template-columns: repeat(3, 1fr); } /* 작은 모바일에서는 3열로 변경 */
+            .tab-btn { padding: 12px; font-size: 14px; }
+            .tab-content { padding: 15px; }
+            
+            /* 매우 작은 화면에서는 카드를 3열로 */
+            .card-grid { 
+                grid-template-columns: repeat(3, 1fr); 
+                gap: 6px; 
+            }
             .card-face { font-size: 12px; }
+            
+            .inventory-table th, 
+            .inventory-table td { 
+                padding: 8px 6px; 
+                font-size: 13px; 
+            }
+            .btn-small { 
+                padding: 4px 8px; 
+                font-size: 12px; 
+                margin: 0 2px; 
+            }
         }
     </style>
 </head>
@@ -122,10 +175,12 @@
                 <input type="number" id="prizeQty" placeholder="수량" min="1" />
                 <button onclick="addPrize()">추가</button>
             </div>
-            <table class="inventory-table">
-                <thead><tr><th>경품 이름</th><th>재고 수량</th><th>관리</th></tr></thead>
-                <tbody id="inventoryList"></tbody>
-            </table>
+            <div class="inventory-table-wrapper">
+                <table class="inventory-table">
+                    <thead><tr><th>경품 이름</th><th>재고 수량</th><th>관리</th></tr></thead>
+                    <tbody id="inventoryList"></tbody>
+                </table>
+            </div>
             <div id="emptyInventory" class="empty" style="display:none;">등록된 경품이 없습니다.</div>
         </div>
         
@@ -228,7 +283,6 @@
                 const prizeIndex = prizes.findIndex(p => p.name === prizeName);
                 if (prizeIndex > -1) {
                     prizes[prizeIndex].quantity--;
-                    // ★★★ 변경된 부분 ★★★
                     // 카드를 새로 그리지 않고 재고만 업데이트
                     updateStockOnly(); 
                 }
@@ -298,4 +352,3 @@
     </script>
 </body>
 </html>
-```
