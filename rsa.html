@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🗝️ RSA 암호 체험부스 – HTML 버전</title>
+  <style>
+    :root{
+      --bg:#0b0f19; --panel:#121826; --card:#0d1422; --text:#e6ebff; --muted:#aab3d6;
+      --accent:#7aa2ff; --border:#1f2a44; --good:#22c55e; --warn:#f59e0b; --bad:#ef4444;
+    }
+    *{box-sizing:border-box}
+    body{margin:0; font-family: ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Apple SD Gothic Neo,Noto Sans KR,Helvetica,Arial;
+      background: radial-gradient(1200px 800px at 20% -10%, #1b2540 0%, #0b0f19 50%), var(--bg);
+      color:var(--text); -webkit-font-smoothing:antialiased}
+    header{padding:24px 16px 8px; text-align:center}
+    h1{margin:0 0 6px; font-size: clamp(20px, 3.2vw, 30px)}
+    .sub{color:var(--muted); font-size:13px}
+    .wrap{max-width:1100px; margin:0 auto; padding:12px 16px}
+    .tabs{display:flex; gap:8px; flex-wrap:wrap; margin:12px 0}
+    .tab{padding:8px 12px; border:1px solid var(--border); border-radius:999px; cursor:pointer; user-select:none;
+      background:linear-gradient(180deg,#1a2443,#131c33)}
+    .tab.active{outline:2px solid var(--accent)}
+    .grid{display:grid; gap:16px; grid-template-columns: 1.1fr 1fr}
+    @media (max-width: 900px){ .grid{ grid-template-columns: 1fr } }
+    .card{background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.08));
+      border:1px solid var(--border); border-radius:16px; padding:16px}
+    .row{display:flex; gap:12px; flex-wrap:wrap; align-items:center}
+    .label{color:var(--muted); font-size:13px}
+    input[type="text"], input[type="number"], select, textarea{
+      background: var(--card); border:1px solid var(--border); color:var(--text);
+      padding:8px 10px; border-radius:10px; outline:none
+    }
+    textarea{width:100%; min-height:90px; resize:vertical}
+    input[type="range"]{ width:220px }
+    .btn{ background:linear-gradient(180deg,#22315c,#1b2750); border:1px solid #2b3a6e; color:var(--text);
+      padding:9px 12px; border-radius:12px; cursor:pointer; user-select:none }
+    .btn.secondary{ background:linear-gradient(180deg,#1a223e,#141c34); border-color:var(--border) }
+    .btn.warn{ background:linear-gradient(180deg,#6b4c0d,#533a09); border-color:#8a6514 }
+    .btn:disabled{ opacity:.6; cursor:not-allowed }
+    .mono{font-variant-numeric: tabular-nums; font-family: ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+    .code{white-space:pre-wrap; background:#0e1629; border:1px solid var(--border); padding:10px; border-radius:12px}
+    .pill{display:inline-block; padding:2px 8px; border-radius:999px; font-size:12px; border:1px solid var(--border); background:#101727; color:var(--muted)}
+    .ok{color:var(--good)} .warn{color:var(--warn)} .err{color:var(--bad)}
+    .doors{ display:flex; gap:12px; justify-content:center; flex-wrap:wrap; padding:6px 0 2px }
+    .door{ width:110px; aspect-ratio:3/5; border-radius:10px; position:relative;
+      background: linear-gradient(180deg,#2a3556,#1b2542); border:1px solid #2b3a6e }
+    .door .knob{ position:absolute; right:12px; top:50%; width:12px; height:12px; background:#d4a72c; border-radius:50% }
+    .door .tag{ position:absolute; left:8px; top:8px; font-size:12px; padding:2px 6px; border-radius:8px; background:#101727; border:1px solid var(--border); color:var(--muted) }
+    .sep{ height:1px; background:linear-gradient(90deg, transparent, #1e2a47, transparent); margin:10px 0 }
+    footer{ text-align:center; color:var(--muted); font-size:12px; padding:16px 0 24px }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>🗝️ RSA 암호 체험부스 – HTML만으로 실행</h1>
+    <div class="sub">작은 소수(8~24비트)로 시연합니다. <b class="warn">실전 보안에는 절대 사용 금지</b>.</div>
+  </header>
+
+  <div class="wrap">
+    <div class="tabs">
+      <div class="tab active" data-tab="host">출제자용</div>
+      <div class="tab" data-tab="player">참가자용</div>
+      <div class="tab" data-tab="explain">원리 설명</div>
+    </div>
+
+    <section id="host" class="card">
+      <h2>📢 출제자용</h2>
+      <div class="row">
+        <div>
+          <div class="label">p 비트수</div>
+          <input type="range" id="bitsP" min="8" max="24" step="2" value="16">
+          <input type="number" id="bitsPNum" min="8" max="24" step="2" value="16" style="width:80px">
+        </div>
+        <div>
+          <div class="label">q 비트수</div>
+          <input type="range" id="bitsQ" min="8" max="24" step="2" value="16">
+          <input type="number" id="bitsQNum" min="8" max="24" step="2" value="16" style="width:80px">
+        </div>
+        <div>
+          <div class="label">공개 지수 e</div>
+          <select id="selE">
+            <option>3</option><option>5</option><option>17</option><option>257</option><option selected>65537</option>
+          </select>
+        </div>
+        <div style="align-self:end">
+          <button class="btn" id="btnGen">🆕 RSA 키 생성/교체</button>
+        </div>
+      </div>
+      <div class="sep"></div>
+      <div id="pubArea" style="display:none">
+        <h3>📣 참가자에게 공개할 정보</h3>
+        <div class="label">공개키 (e, n)</div>
+        <div class="code mono" id="pubKey"></div>
+        <span class="pill">참가자는 공개키로 암호화합니다.</span>
+        <details style="margin-top:8px">
+          <summary>🔏 출제자 전용(비밀값 보기)</summary>
+          <div class="code mono" id="privKey"></div>
+        </details>
+      </div>
+    </section>
+
+    <section id="player" class="card" style="display:none">
+      <h2>🧩 참가자용</h2>
+      <div id="warnNoKey" class="label warn">출제자가 아직 키를 만들지 않았습니다. ‘출제자용’에서 먼저 키를 생성하세요.</div>
+      <div id="okKey" style="display:none">
+        <div class="code mono" id="pubKey2"></div>
+        <div class="tabs" style="margin:10px 0 0">
+          <div class="tab active" data-sub="enc">암호화</div>
+          <div class="tab" data-sub="dec">복호화</div>
+        </div>
+
+        <div id="enc" class="card" style="margin-top:10px; padding:12px">
+          <div class="label">평문(짧은 영문/숫자 권장)</div>
+          <input type="text" id="plain" placeholder="예: hello123" style="width:100%">
+          <div class="row" style="margin-top:8px">
+            <button class="btn" id="btnEnc">🔒 공개키로 암호화</button>
+          </div>
+          <div id="encOut" style="margin-top:10px"></div>
+        </div>
+
+        <div id="dec" class="card" style="margin-top:10px; padding:12px; display:none">
+          <div class="label">암호문 c (정수)</div>
+          <input type="text" id="cipher" placeholder="예: 123456789" style="width:100%">
+          <div class="row" style="margin-top:8px; align-items:center">
+            <label class="row" style="gap:6px"><input type="checkbox" id="autoText" checked> 복호화 후 텍스트로 변환</label>
+            <button class="btn" id="btnDec">🔓 개인키로 복호화</button>
+          </div>
+          <div id="decOut" style="margin-top:10px"></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="explain" class="card" style="display:none">
+      <h2>📚 원리 설명</h2>
+      <div class="label">
+        <p><b>p, q</b>: 비밀 소수 두 개 &nbsp; | &nbsp; <b>n</b>=p×q (공개)</p>
+        <p><b>φ(n)</b>=(p−1)(q−1): 1부터 n−1 사이에서 n과 서로소인 수의 개수</p>
+        <p><b>암호화</b>: c = m^e mod n &nbsp;&nbsp; <b>복호화</b>: m = c^d mod n</p>
+        <p class="warn">실전은 2048비트 이상을 사용합니다. 이 데모의 작은 키는 학습용입니다.</p>
+      </div>
+      <h3>🔍 초간단 숫자 예시</h3>
+      <div class="code mono" id="toy"></div>
+    </section>
+  </div>
+
+  <footer>HTML + CSS + JS만 사용. GitHub Pages에 올리면 바로 공유 가능합니다.</footer>
+
+<script>
+// ---------- BigInt helpers ----------
+const ZERO=0n, ONE=1n, TWO=2n;
+const toBig = (x)=> (typeof x==="bigint"? x : BigInt(x));
+
+function egcd(a,b){
+  a=toBig(a); b=toBig(b);
+  if(b===ZERO) return [a, ONE, ZERO];
+  const [g,x1,y1] = egcd(b, a%b);
+  return [g, y1, x1 - (a/b)*y1];
+}
+function modInv(a,m){
+  a=((a%m)+m)%m; m=toBig(m);
+  const [g,x,_] = egcd(a,m);
+  if(g!==ONE) throw new Error("역원이 존재하지 않습니다.");
+  return (x % m + m) % m;
+}
+function modPow(base, exp, mod){
+  base=((toBig(base)%mod)+mod)%mod; exp=toBig(exp); mod=toBig(mod);
+  let res=ONE;
+  while(exp>ZERO){
+    if(exp & ONE) res = (res*base)%mod;
+    base = (base*base)%mod;
+    exp >>= ONE;
+  }
+  return res;
+}
+function gcd(a,b){
+  a=(a<ZERO? -a:a); b=(b<ZERO? -b:b);
+  while(b!==ZERO){ const t=a%b; a=b; b=t; } return a;
+}
+
+// ---------- Random BigInt with n bits ----------
+function randBits(bits){
+  const bytes = Math.ceil(bits/8);
+  const arr = new Uint8Array(bytes);
+  crypto.getRandomValues(arr);
+  // force msb and lsb (odd)
+  arr[0] |= (1 << ((bits-1)%8));
+  arr[arr.length-1] |= 1;
+  // mask extra bits off if bits not multiple of 8
+  const extra = bytes*8 - bits;
+  if(extra>0){ arr[0] &= (0xff >>> extra); arr[0] |= (1 << (8-extra-1)); }
+  let n=ZERO;
+  for(const v of arr){ n = (n<<8n) + BigInt(v); }
+  return n;
+}
+
+// ---------- Miller-Rabin (deterministic for < 2^64; fine here) ----------
+function isProbablePrime(n){
+  n = toBig(n);
+  if(n<2n) return false;
+  for(const p of [2n,3n,5n,7n,11n,13n,17n,19n,23n,29n,31n,37n]){
+    if(n===p) return true;
+    if(n%p===ZERO) return false;
+  }
+  // write n-1 = d * 2^s
+  let d=n-ONE, s=0n;
+  while((d & 1n)===ZERO){ d >>= ONE; s++; }
+  const bases = [2n,3n,5n,7n,11n];
+  for(const a of bases){
+    if(a%(n-2n)+2n >= n) continue;
+    let x = modPow(a, d, n);
+    if(x===ONE || x===n-ONE) continue;
+    let cont=false;
+    for(let r=1n; r<s; r++){
+      x = (x*x)%n;
+      if(x===n-ONE){ cont=true; break; }
+    }
+    if(cont) continue;
+    return false;
+  }
+  return true;
+}
+function genPrime(bits){
+  if(bits<8) bits=8;
+  while(true){
+    const cand = randBits(bits);
+    if(isProbablePrime(cand)) return cand;
+  }
+}
+
+// ---------- Text <-> BigInt ----------
+function textToBigInt(txt){
+  const enc = new TextEncoder(); const bytes = enc.encode(txt);
+  let n=ZERO; for(const b of bytes){ n = (n<<8n) + BigInt(b); }
+  return n;
+}
+function bigIntToText(n){
+  n = toBig(n);
+  if(n===ZERO) return "";
+  const bytes = [];
+  while(n>ZERO){ bytes.push(Number(n & 0xffn)); n >>= 8n; }
+  bytes.reverse();
+  try{
+    return new TextDecoder().decode(new Uint8Array(bytes));
+  }catch(e){
+    return "(디코딩 실패) 0x" + bigToHex(n);
+  }
+}
+function bigToHex(n){
+  n=toBig(n);
+  if(n===ZERO) return "0";
+  const hex=[]; const digits="0123456789abcdef";
+  while(n>ZERO){ const d = Number(n & 0xfn); hex.push(digits[d]); n >>= 4n; }
+  return hex.reverse().join("");
+}
+
+// ---------- RSA ----------
+function genRSA(bitsP=16, bitsQ=16, eSel=65537){
+  let p = genPrime(bitsP);
+  let q = genPrime(bitsQ);
+  while(q===p) q = genPrime(bitsQ);
+  const n = p*q;
+  const phi = (p-1n)*(q-1n);
+  let e = BigInt(eSel);
+  if(gcd(e, phi)!==ONE){
+    for(const cand of [3n,5n,17n,257n,65537n]){
+      if(gcd(cand, phi)===ONE){ e=cand; break; }
+    }
+  }
+  const d = modInv(e, phi);
+  return {p,q,n,e,d,phi};
+}
+function rsaEncryptInt(m,e,n){ return modPow(m,e,n); }
+function rsaDecryptInt(c,d,n){ return modPow(c,d,n); }
+
+// ---------- UI State ----------
+let RSA = null;
+
+// bindings
+const tabs = document.querySelectorAll(".tab[data-tab]");
+tabs.forEach(t=>t.addEventListener("click", ()=>switchTab(t.dataset.tab)));
+function switchTab(name){
+  document.querySelectorAll(".tab[data-tab]").forEach(t=>t.classList.toggle("active", t.dataset.tab===name));
+  document.querySelectorAll("section.card").forEach(sec=>sec.style.display="none");
+  document.getElementById(name).style.display="";
+}
+
+const bitsP = document.getElementById("bitsP");
+const bitsPNum = document.getElementById("bitsPNum");
+const bitsQ = document.getElementById("bitsQ");
+const bitsQNum = document.getElementById("bitsQNum");
+bitsP.addEventListener("input", ()=> bitsPNum.value = bitsP.value);
+bitsPNum.addEventListener("input", ()=> bitsP.value = clamp(bitsPNum.value,8,24));
+bitsQ.addEventListener("input", ()=> bitsQNum.value = bitsQ.value);
+bitsQNum.addEventListener("input", ()=> bitsQ.value = clamp(bitsQNum.value,8,24));
+function clamp(v,min,max){ v=Number(v||min); if(v<min)v=min; if(v>max)v=max; return v; }
+
+document.getElementById("btnGen").addEventListener("click", ()=>{
+  try{
+    const bP = clamp(bitsP.value,8,24);
+    const bQ = clamp(bitsQ.value,8,24);
+    const e = Number(document.getElementById("selE").value);
+    RSA = genRSA(bP, bQ, e);
+    document.getElementById("pubArea").style.display = "";
+    document.getElementById("pubKey").textContent = `e = ${RSA.e}\nn = ${RSA.n}`;
+    document.getElementById("privKey").textContent = `p = ${RSA.p}\nq = ${RSA.q}\nφ(n) = ${RSA.phi}\nd = ${RSA.d}`;
+
+    // player section
+    document.getElementById("warnNoKey").style.display = "none";
+    document.getElementById("okKey").style.display = "";
+    document.getElementById("pubKey2").textContent = `e = ${RSA.e}\nn = ${RSA.n}`;
+    alert("새 키가 생성되었습니다. 참가자용 화면에서 체험하세요.");
+  }catch(e){
+    alert("키 생성 실패: "+e.message);
+  }
+});
+
+// player sub-tabs
+document.querySelectorAll(".tab[data-sub]").forEach(t=>t.addEventListener("click", ()=>{
+  document.querySelectorAll(".tab[data-sub]").forEach(x=>x.classList.remove("active"));
+  t.classList.add("active");
+  document.getElementById("enc").style.display = (t.dataset.sub==="enc")? "": "none";
+  document.getElementById("dec").style.display = (t.dataset.sub==="dec")? "": "none";
+}));
+
+document.getElementById("btnEnc").addEventListener("click", ()=>{
+  if(!RSA){ alert("키가 없습니다. 출제자용에서 먼저 생성하세요."); return; }
+  const msg = document.getElementById("plain").value ?? "";
+  const m = textToBigInt(msg);
+  const n = RSA.n;
+  const out = document.getElementById("encOut");
+  out.innerHTML = "";
+  const pre = (s)=> `<div class="code mono">${s}</div>`;
+
+  if(m >= n){
+    out.innerHTML = `<div class="err">평문을 정수로 바꾼 값이 n보다 큽니다. 더 짧게 입력하거나 키를 더 크게 생성하세요.</div>`;
+    return;
+  }
+  const c = rsaEncryptInt(m, RSA.e, n);
+  out.innerHTML = pre(`평문 m (정수) = int.from_bytes('${escapeHTML(msg)}'.encode()) = ${m}`)
+                + pre(`c = m^e mod n = ${m}^${RSA.e} mod ${n} = ${c}`)
+                + `<div class="ok">암호문 c = <span class="mono">${c}</span></div>
+                   <div class="label">이 숫자를 출제자에게 전달해, 개인키 d로 복호화해보세요.</div>`;
+});
+
+document.getElementById("btnDec").addEventListener("click", ()=>{
+  if(!RSA){ alert("키가 없습니다."); return; }
+  const cStr = document.getElementById("cipher").value.trim();
+  const auto = document.getElementById("autoText").checked;
+  const out = document.getElementById("decOut");
+  out.innerHTML = "";
+  const pre = (s)=> `<div class="code mono">${s}</div>`;
+  try{
+    if(!/^\d+$/.test(cStr)) throw new Error("정수만 입력하세요.");
+    const c = BigInt(cStr);
+    const m = rsaDecryptInt(c, RSA.d, RSA.n);
+    out.innerHTML = pre(`m = c^d mod n = ${c}^${RSA.d} mod ${RSA.n} = ${m}`)
+                  + `<div class="ok">복호문 m = <span class="mono">${m}</span></div>`;
+    if(auto){
+      const guess = bigIntToText(m);
+      out.innerHTML += `<div class="label">문자열 추정:</div><div class="code mono">${escapeHTML(guess)}</div>`;
+    }
+  }catch(e){
+    out.innerHTML = `<div class="err">입력 오류: ${escapeHTML(e.message||String(e))}</div>`;
+  }
+});
+
+// toy example
+(function toy(){
+  const p=3n, q=11n, n=p*q, phi=(p-1n)*(q-1n), e=3n;
+  const d = modInv(e, phi);
+  const m = 4n;
+  const c = modPow(m,e,n);
+  const m2 = modPow(c,d,n);
+  document.getElementById("toy").textContent =
+    `p=${p}, q=${q} → n=${n}, φ(n)=${phi}, e=${e}, d=${d}\n`
+  + `암호화: c = ${m}^${e} mod ${n} = ${c}\n`
+  + `복호화: m = ${c}^${d} mod ${n} = ${m2}`;
+})();
+
+// helpers
+function escapeHTML(s){ return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+</script>
+</body>
+</html>
