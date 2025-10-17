@@ -327,15 +327,22 @@
       const idx = Number(e.currentTarget.dataset.idx);
       if(revealed!==null || finished) return;
       chosen = idx;
-      // Monty reveals a goat among the remaining two, never the car, never the chosen
-      const candidates = [0,1,2].filter(i => i!==chosen && prizes[i]==="goat");
-      revealed = candidates[Math.floor(Math.random()*candidates.length)];
-      hintEl.innerHTML = `2단계: <b>${chosen+1}번</b>을 처음 선택했습니다. 사회자가 염소 문 하나를 열었습니다. 이제 다른 문으로 <b>바꾸시겠습니까?</b> (문을 직접 클릭해 선택)`;
-      kStep.textContent = "바꾸기/유지 결정";
+  
+      // 우선 "선택했습니다" 안내만 띄우기
+      hintEl.innerHTML = `👏 <b>${chosen+1}번</b> 문을 고르셨습니다.<br>이제 사회자가 염소 문 하나를 보여드리겠습니다...`;
+      kStep.textContent = "사회자 멘트";
       renderDoors();
-    }
 
-    function finalDecision(mode){ // "switch" or "stay"
+      // 1초 후 염소 문 열기
+      setTimeout(() => {
+        const candidates = [0,1,2].filter(i => i!==chosen && prizes[i]==="goat");
+        revealed = candidates[Math.floor(Math.random()*candidates.length)];
+        hintEl.innerHTML = `2단계: <b>${chosen+1}번</b>을 처음 선택했습니다. 사회자가 염소 문 하나를 열었습니다.<br>이제 다른 문으로 <b>바꾸시겠습니까?</b> (문을 직접 클릭해 선택)`;
+        kStep.textContent = "바꾸기/유지 결정";
+        renderDoors();
+      }, 1000); // ← 1초(1000ms) 후 염소 문 오픈
+    }
+function finalDecision(mode){ // "switch" or "stay"
       if(finished || revealed===null) return;
       let finalIdx;
       if(mode==="stay"){
