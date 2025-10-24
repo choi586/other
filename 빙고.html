@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>빙고 게임</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: #f0f4f8;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
+    }
+    h1 {
+      margin-top: 40px;
+      color: #333;
+    }
+    #bingo-board {
+      display: grid;
+      grid-template-columns: repeat(5, 60px);
+      grid-template-rows: repeat(5, 60px);
+      gap: 8px;
+      margin: 30px 0;
+    }
+    .cell {
+      background: #fff;
+      border: 2px solid #4a90e2;
+      border-radius: 8px;
+      font-size: 1.5rem;
+      color: #333;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: background 0.2s, color 0.2s;
+      user-select: none;
+      position: relative;
+    }
+    .cell.checked {
+      background: #4a90e2;
+      color: #fff;
+      font-weight: bold;
+    }
+    #reset-btn {
+      padding: 10px 24px;
+      font-size: 1rem;
+      background: #4a90e2;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      margin-bottom: 20px;
+      transition: background 0.2s;
+    }
+    #reset-btn:hover {
+      background: #357ab8;
+    }
+  </style>
+</head>
+<body>
+  <h1>빙고 게임</h1>
+  <button id="reset-btn">빙고판 새로고침</button>
+  <div id="bingo-board"></div>
+
+  <script>
+    const SIZE = 5;
+    let board = [];
+    let checked = [];
+    let bingoCount = 0;
+
+    // 빙고판 숫자 랜덤 생성
+    function generateBoard() {
+      let numbers = [];
+      for (let i = 1; i <= SIZE * SIZE; i++) numbers.push(i);
+      numbers = shuffle(numbers);
+
+      board = [];
+      for (let i = 0; i < SIZE; i++) {
+        board.push(numbers.slice(i * SIZE, (i + 1) * SIZE));
+      }
+    }
+
+    // Fisher-Yates shuffle
+    function shuffle(array) {
+      for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+      }
+      return array;
+    }
+
+    // 빙고판 렌더링
+    function renderBoard() {
+      const boardDiv = document.getElementById('bingo-board');
+      boardDiv.innerHTML = '';
+      checked = Array.from({length: SIZE}, () => Array(SIZE).fill(false));
+      bingoCount = 0;
+
+      for (let i = 0; i < SIZE; i++) {
+        for (let j = 0; j < SIZE; j++) {
+          const cell = document.createElement('div');
+          cell.className = 'cell';
+          cell.textContent = board[i][j];
+          cell.dataset.row = i;
+          cell.dataset.col = j;
+          cell.addEventListener('click', onCellClick);
+          boardDiv.appendChild(cell);
+        }
+      }
+    }
+
+    // 셀 클릭 이벤트
+    function onCellClick(e) {
+      const row = parseInt(this.dataset.row);
+      const col = parseInt(this.dataset.col);
+
+      if (checked[row][col]) return; // 이미 체크된 셀은 무시
+
+      checked[row][col] = true;
+      this.classList.add('checked');
+      this.textContent = '✔';
+
+      if (checkBingo()) {
+        setTimeout(() => {
+          alert('빙고! 축하합니다!');
+        }, 100);
+      }
+    }
+
+    // 빙고 체크
+    function checkBingo() {
+      let bingo = 0;
+
+      // 가로
+      for (let i = 0; i < SIZE; i++) {
+        if (checked[i].every(v => v)) bingo++;
+      }
+      // 세로
+      for (let j = 0; j < SIZE; j++) {
+        let colChecked = true;
+        for (let i = 0; i < SIZE; i++) {
+          if (!checked[i][j]) {
+            colChecked = false;
+            break;
+          }
+        }
+        if (colChecked) bingo++;
+      }
+      // 대각선 \
+      let diag1 = true;
+      for (let i = 0; i < SIZE; i++) {
+        if (!checked[i][i]) diag1 = false;
+      }
+      if (diag1) bingo++;
+      // 대각선 /
+      let diag2 = true;
+      for (let i = 0; i < SIZE; i++) {
+        if (!checked[i][SIZE - 1 - i]) diag2 = false;
+      }
+      if (diag2) bingo++;
+
+      // 이전보다 빙고 줄이 늘었을 때만 true 반환
+      if (bingo > bingoCount) {
+        bingoCount = bingo;
+        return true;
+      }
+      return false;
+    }
+
+    // 초기화
+    function resetGame() {
+      generateBoard();
+      renderBoard();
+    }
+
+    document.getElementById('reset-btn').addEventListener('click', resetGame);
+
+    // 최초 실행
+    resetGame();
+  </script>
+</body>
+</html>
