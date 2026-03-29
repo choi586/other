@@ -30,15 +30,16 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            background: rgba(2, 6, 23, 0.9);
-            backdrop-filter: blur(10px);
-            padding: 3rem;
+            background: rgba(2, 6, 23, 0.95);
+            backdrop-filter: blur(15px);
+            padding: 2.5rem;
             border-radius: 2rem;
-            border: 1px solid rgba(249, 115, 22, 0.5);
+            border: 2px solid rgba(249, 115, 22, 0.5);
             text-align: center;
             display: none;
             z-index: 100;
             box-shadow: 0 20px 50px rgba(0,0,0,1);
+            min-width: 320px;
         }
         .neon-text {
             text-shadow: 0 0 10px rgba(249, 115, 22, 0.8), 0 0 20px rgba(249, 115, 22, 0.5);
@@ -73,36 +74,43 @@
     </div>
 
     <div id="messageBox">
-        <h2 id="msgTitle" class="text-5xl font-black mb-4 neon-text text-orange-500">FIRE BREAKER</h2>
-        <p id="msgStats" class="text-orange-200/60 mb-8 font-mono tracking-widest"></p>
-        <button id="mainBtn" onclick="handleMainBtn()" class="bg-orange-600 hover:bg-orange-400 text-white font-black py-4 px-12 rounded-full transition-all transform hover:scale-110 shadow-[0_0_20px_rgba(249,115,22,0.6)]">
-            IGNITE ENGINE
+        <h2 id="msgTitle" class="text-4xl font-black mb-4 neon-text text-orange-500 uppercase">FIRE BREAKER</h2>
+        <p id="msgStats" class="text-orange-200/60 mb-8 font-mono tracking-widest text-sm"></p>
+        <button id="mainBtn" onclick="handleMainBtn()" class="bg-orange-600 hover:bg-orange-500 text-white font-black py-4 px-12 rounded-full transition-all transform hover:scale-105 active:scale-95 shadow-[0_0_20px_rgba(249,115,22,0.6)]">
+            INITIALIZE
         </button>
     </div>
 
-    <div class="mt-8 grid grid-cols-2 sm:grid-cols-4 gap-6 text-[10px] font-bold text-slate-500 tracking-widest">
-        <div class="flex items-center gap-2"><span class="w-2 h-2 bg-indigo-500 rounded-full shadow-[0_0_8px_#6366f1]"></span> PADDLE WIDE</div>
-        <div class="flex items-center gap-2"><span class="w-2 h-2 bg-emerald-500 rounded-full shadow-[0_0_8px_#10b981]"></span> SLOW TIME</div>
-        <div class="flex items-center gap-2"><span class="w-2 h-2 bg-amber-500 rounded-full shadow-[0_0_8px_#f59e0b]"></span> POWER BALL</div>
-        <div class="flex items-center gap-2"><span class="w-2 h-2 bg-fuchsia-500 rounded-full shadow-[0_0_8px_#d946ef]"></span> MULTI BALL</div>
+    <!-- 아이템 설명 가이드 -->
+    <div class="mt-8 grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 gap-4 text-[9px] font-bold text-slate-500 tracking-tighter uppercase">
+        <div class="flex items-center gap-2"><span class="w-2 h-2 bg-indigo-500 rounded-full"></span> Wide</div>
+        <div class="flex items-center gap-2"><span class="w-2 h-2 bg-emerald-500 rounded-full"></span> Slow</div>
+        <div class="flex items-center gap-2"><span class="w-2 h-2 bg-amber-500 rounded-full"></span> Power</div>
+        <div class="flex items-center gap-2"><span class="w-2 h-2 bg-fuchsia-500 rounded-full"></span> Multi</div>
+        <div class="flex items-center gap-2"><span class="w-2 h-2 bg-red-500 rounded-full"></span> Laser</div>
+        <div class="flex items-center gap-2"><span class="w-2 h-2 bg-cyan-400 rounded-full"></span> Magnet</div>
+        <div class="flex items-center gap-2"><span class="w-2 h-2 bg-rose-600 rounded-full"></span> Life</div>
+        <div class="flex items-center gap-2"><span class="w-2 h-2 bg-purple-500 rounded-full"></span> Gravity</div>
     </div>
 
     <script>
-        // --- AUDIO ENGINE ---
+        // --- 오디오 엔진 ---
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         function playSound(freq, type, duration, vol = 0.1) {
-            if (audioCtx.state === 'suspended') audioCtx.resume();
-            const osc = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
-            osc.type = type;
-            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
-            osc.frequency.exponentialRampToValueAtTime(10, audioCtx.currentTime + duration);
-            gain.gain.setValueAtTime(vol, audioCtx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
-            osc.connect(gain);
-            gain.connect(audioCtx.destination);
-            osc.start();
-            osc.stop(audioCtx.currentTime + duration);
+            try {
+                if (audioCtx.state === 'suspended') audioCtx.resume();
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = type;
+                osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(10, audioCtx.currentTime + duration);
+                gain.gain.setValueAtTime(vol, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start();
+                osc.stop(audioCtx.currentTime + duration);
+            } catch(e) {}
         }
 
         const SFX = {
@@ -112,6 +120,7 @@
             item: () => playSound(800, 'sine', 0.3, 0.15),
             explode: () => playSound(100, 'sawtooth', 0.5, 0.2),
             lose: () => playSound(150, 'sawtooth', 0.8, 0.2),
+            laser: () => playSound(1200, 'square', 0.1, 0.05),
             win: () => {
                 playSound(523, 'sine', 0.2);
                 setTimeout(() => playSound(659, 'sine', 0.2), 100);
@@ -119,7 +128,7 @@
             }
         };
 
-        // --- GAME ENGINE ---
+        // --- 게임 엔진 변수 ---
         const canvas = document.getElementById("gameCanvas");
         const ctx = canvas.getContext("2d");
         const scoreEl = document.getElementById("scoreDisplay");
@@ -127,13 +136,27 @@
         const livesEl = document.getElementById("livesDisplay");
         const messageBox = document.getElementById("messageBox");
 
-        let score = 0, level = 1, lives = 3, gameRunning = false;
         const canvasWidth = 600, canvasHeight = 450;
         canvas.width = canvasWidth;
         canvas.height = canvasHeight;
 
+        let score = 0, level = 1, lives = 3, gameRunning = false;
         let particles = [];
         let shakeTime = 0;
+        let balls = [], bricks = [], items = [], lasers = [];
+        let paddleX, paddleWidth = 100, paddleHeight = 12;
+        let rightPressed = false, leftPressed = false;
+        let activeEffects = { expand: 0, power: 0, laser: 0, magnet: 0 };
+        let currentSequence = 1;
+        let laserTimer = 0;
+
+        const levelSettings = [
+            { rows: 3, cols: 6, speed: 4, puzzles: ['normal'] },
+            { rows: 4, cols: 7, speed: 4.5, puzzles: ['shield'] },
+            { rows: 5, cols: 8, speed: 5, puzzles: ['sequence'] },
+            { rows: 6, cols: 8, speed: 5.5, puzzles: ['shield', 'sequence'] },
+            { rows: 7, cols: 9, speed: 6, puzzles: ['all'] }
+        ];
 
         class Particle {
             constructor(x, y, color) {
@@ -163,75 +186,55 @@
             constructor(x, y, dx, dy) {
                 this.x = x; this.y = y;
                 this.dx = dx; this.dy = dy;
-                this.radius = 8; // 불꽃 느낌을 위해 약간 키움
+                this.radius = 7;
                 this.history = [];
+                this.isStuck = false; // Magnet 효과용
+                this.stuckXOffset = 0;
             }
             update() {
-                // 불꽃 잔상 데이터 저장
-                this.history.push({x: this.x, y: this.y, r: Math.random() * 5 + 2});
-                if(this.history.length > 12) this.history.shift();
-                this.x += this.dx; this.y += this.dy;
+                if(this.isStuck) {
+                    this.x = paddleX + this.stuckXOffset;
+                    this.y = canvas.height - 25 - this.radius;
+                    return;
+                }
+                this.history.push({x: this.x, y: this.y});
+                if(this.history.length > 8) this.history.shift();
+                this.x += this.dx; 
+                this.y += this.dy;
             }
             draw() {
-                // 1. 불꽃 꼬리 (Flame Tail)
                 this.history.forEach((pos, i) => {
                     const ratio = i / this.history.length;
-                    const alpha = ratio * 0.5;
-                    const size = pos.r * ratio * 1.5;
-                    
                     ctx.beginPath();
-                    // 위치에 약간의 랜덤성을 주어 일렁이는 느낌 부여
-                    ctx.arc(pos.x + (Math.random()-0.5)*4, pos.y + (Math.random()-0.5)*4, size, 0, Math.PI*2);
-                    
-                    if (activeEffects.power > 0) {
-                        ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
-                    } else {
-                        // 빨간색 -> 주황색 -> 노란색 순서로 그라데이션 느낌
-                        const r = 255;
-                        const g = Math.floor(100 + ratio * 155);
-                        const b = Math.floor(ratio * 50);
-                        ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${alpha})`;
-                    }
+                    ctx.arc(pos.x, pos.y, this.radius * ratio, 0, Math.PI*2);
+                    ctx.fillStyle = activeEffects.power > 0 ? `rgba(147, 197, 253, ${ratio * 0.3})` : `rgba(249, 115, 22, ${ratio * 0.3})`;
                     ctx.fill();
                 });
 
-                // 2. 공 본체 (Flame Core)
                 const grad = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, this.radius);
                 if (activeEffects.power > 0) {
-                    grad.addColorStop(0, "#fff");
-                    grad.addColorStop(1, "#3b82f6");
+                    grad.addColorStop(0, "#fff"); grad.addColorStop(1, "#3b82f6");
                     ctx.shadowColor = "#60a5fa";
                 } else {
-                    grad.addColorStop(0, "#fff7ed"); // 노란 중심
-                    grad.addColorStop(0.4, "#fbbf24"); // 오렌지
-                    grad.addColorStop(1, "#ef4444"); // 빨강 외곽
+                    grad.addColorStop(0, "#fff"); grad.addColorStop(0.5, "#fbbf24"); grad.addColorStop(1, "#ef4444");
                     ctx.shadowColor = "#f97316";
                 }
-
                 ctx.beginPath();
                 ctx.arc(this.x, this.y, this.radius, 0, Math.PI*2);
                 ctx.fillStyle = grad;
-                ctx.shadowBlur = 15;
+                ctx.shadowBlur = 10;
                 ctx.fill();
                 ctx.shadowBlur = 0;
             }
+            launch() {
+                if(!this.isStuck) return;
+                this.isStuck = false;
+                this.dy = -Math.abs(this.dy);
+                SFX.paddle();
+            }
         }
 
-        let balls = [], bricks = [], items = [];
-        let paddleX, paddleWidth = 100, paddleHeight = 12;
-        let rightPressed = false, leftPressed = false;
-        let activeEffects = { expand: 0, power: 0 };
-        let currentSequence = 1, gateOpen = false;
-
-        const levelSettings = [
-            { rows: 3, cols: 6, speed: 4, puzzles: ['sequence'] },
-            { rows: 4, cols: 7, speed: 5, puzzles: ['portal'] },
-            { rows: 5, cols: 8, speed: 6, puzzles: ['gate'] },
-            { rows: 6, cols: 8, speed: 6.5, puzzles: ['sequence', 'portal'] },
-            { rows: 7, cols: 9, speed: 7, puzzles: ['sequence', 'gate', 'portal'] }
-        ];
-
-        function createExplosion(x, y, color, count = 10) {
+        function createExplosion(x, y, color, count = 12) {
             for(let i=0; i<count; i++) particles.push(new Particle(x, y, color));
         }
 
@@ -241,8 +244,9 @@
             const bw = (canvas.width - (offsetLeft * 2) - (config.cols - 1) * brickPadding) / config.cols;
             const bh = 22;
 
-            bricks = []; currentSequence = 1; gateOpen = false;
-            let seq = 1, portA = false, portB = false;
+            bricks = []; 
+            currentSequence = 1;
+            let seqNum = 1;
 
             for(let c=0; c<config.cols; c++) {
                 bricks[c] = [];
@@ -250,13 +254,15 @@
                     let type = "normal", hits = 1, extra = null;
                     const rand = Math.random();
 
-                    if(config.puzzles.includes('sequence') && rand < 0.15 && seq <= 4) { type = "seq"; extra = seq++; }
-                    else if(config.puzzles.includes('gate') && c === 0 && r === 0) type = "switch";
-                    else if(config.puzzles.includes('gate') && c === config.cols-1 && r === 0) type = "gate";
-                    else if(config.puzzles.includes('portal') && rand < 0.08 && !portA) { type = "portal"; extra = "A"; portA = true; }
-                    else if(config.puzzles.includes('portal') && rand < 0.08 && !portB) { type = "portal"; extra = "B"; portB = true; }
-                    else if(rand < 0.1) { type = "hard"; hits = 2; }
-                    else if(rand < 0.12) type = "explosive";
+                    if(config.puzzles.includes('shield') && rand < 0.15) {
+                        type = "shield"; hits = 3;
+                    } else if(config.puzzles.includes('sequence') && rand < 0.1 && seqNum <= 3) {
+                        type = "seq"; extra = seqNum++;
+                    } else if(rand < 0.1) {
+                        type = "explosive";
+                    } else if(rand < 0.05) {
+                        type = "bonus";
+                    }
 
                     bricks[c][r] = { x: c*(bw+brickPadding)+offsetLeft, y: r*(bh+brickPadding)+offsetTop, w: bw, h: bh, status: hits, type, extra };
                 }
@@ -266,22 +272,91 @@
 
         function resetPositions() {
             const s = levelSettings[level-1].speed;
-            balls = [new Ball(canvas.width/2, canvas.height-50, s, -s)];
+            balls = [new Ball(canvas.width/2, canvas.height-50, s * (Math.random() > 0.5 ? 1 : -1), -s)];
             paddleX = (canvas.width - paddleWidth)/2;
             items = [];
-            activeEffects = { expand: 0, power: 0 };
+            lasers = [];
+            activeEffects = { expand: 0, power: 0, laser: 0, magnet: 0 };
             paddleWidth = 100;
         }
 
-        function collisionDetection(ball) {
-            const config = levelSettings[level - 1];
-            for(let c=0; c < config.cols; c++) {
-                for(let r=0; r < config.rows; r++) {
+        function updatePhysics() {
+            if(rightPressed && paddleX < canvas.width - paddleWidth) paddleX += 8;
+            if(leftPressed && paddleX > 0) paddleX -= 8;
+
+            // 레이저 업데이트
+            for(let i=lasers.length-1; i>=0; i--) {
+                lasers[i].y -= 10;
+                if(lasers[i].y < 0) { lasers.splice(i, 1); continue; }
+                
+                // 레이저 벽돌 충돌
+                let hit = false;
+                bricks.flat().forEach(b => {
+                    if(b.status > 0 && lasers[i] &&
+                       lasers[i].x > b.x && lasers[i].x < b.x + b.w &&
+                       lasers[i].y > b.y && lasers[i].y < b.y + b.h) {
+                        handleHit(null, b, 0, 0, true);
+                        hit = true;
+                    }
+                });
+                if(hit) lasers.splice(i, 1);
+            }
+
+            // 공 업데이트
+            for(let i=balls.length-1; i>=0; i--) {
+                const b = balls[i];
+                b.update();
+
+                if(b.isStuck) continue;
+
+                if(b.x + b.radius > canvas.width || b.x - b.radius < 0) {
+                    b.dx *= -1; 
+                    b.x = b.x < b.radius ? b.radius : canvas.width - b.radius;
+                    SFX.wall();
+                }
+                if(b.y - b.radius < 0) {
+                    b.dy *= -1; 
+                    b.y = b.radius;
+                    SFX.wall();
+                }
+
+                if(b.y + b.radius > canvas.height - 25 && b.y - b.radius < canvas.height - 10) {
+                    if(b.x > paddleX && b.x < paddleX + paddleWidth) {
+                        if(activeEffects.magnet > 0) {
+                            b.isStuck = true;
+                            b.stuckXOffset = b.x - paddleX;
+                        } else {
+                            SFX.paddle();
+                            let hitPos = (b.x - (paddleX + paddleWidth/2)) / (paddleWidth/2);
+                            let speed = Math.sqrt(b.dx**2 + b.dy**2);
+                            b.dx = hitPos * speed * 0.9;
+                            b.dy = -Math.sqrt(Math.abs(speed**2 - b.dx**2));
+                            b.y = canvas.height - 25 - b.radius;
+                        }
+                    }
+                }
+
+                if(b.y - b.radius > canvas.height) {
+                    balls.splice(i, 1);
+                    if(balls.length === 0) {
+                        lives--; livesEl.innerText = lives; SFX.lose();
+                        if(lives <= 0) gameOver(); else resetPositions();
+                    }
+                    continue;
+                }
+
+                checkBrickCollision(b);
+            }
+        }
+
+        function checkBrickCollision(ball) {
+            for(let c=0; c < bricks.length; c++) {
+                for(let r=0; r < bricks[c].length; r++) {
                     const b = bricks[c][r];
                     if(b.status > 0) {
                         if(ball.x + ball.radius > b.x && ball.x - ball.radius < b.x + b.w &&
                            ball.y + ball.radius > b.y && ball.y - ball.radius < b.y + b.h) {
-                            handleBrickCollision(ball, b, c, r);
+                            handleHit(ball, b, c, r);
                             return;
                         }
                     }
@@ -289,54 +364,43 @@
             }
         }
 
-        function handleBrickCollision(ball, b, c, r) {
-            if(b.type === "portal") {
-                teleport(ball, b); return;
-            }
-            if(b.type === "gate" && !gateOpen) {
-                ball.dy *= -1; SFX.wall(); return;
-            }
-            if(b.type === "seq") {
+        function handleHit(ball, b, c, r, isLaser = false) {
+            if(!isLaser && b.type === "seq") {
                 if(b.extra === currentSequence) {
-                    currentSequence++; b.status = 0; score += 50; 
-                    createExplosion(b.x + b.w/2, b.y + b.h/2, "#fff");
-                    SFX.hit(); ball.dy *= -1;
-                } else { ball.dy *= -1; SFX.wall(); }
-                return;
+                    currentSequence++;
+                } else {
+                    ball.dy *= -1; SFX.wall(); return;
+                }
             }
 
-            if(activeEffects.power <= 0) ball.dy *= -1;
+            if (!isLaser && ball && activeEffects.power <= 0) {
+                const overlapX = Math.min(ball.x + ball.radius - b.x, b.x + b.w - (ball.x - ball.radius));
+                const overlapY = Math.min(ball.y + ball.radius - b.y, b.y + b.h - (ball.y - ball.radius));
+                if (overlapX < overlapY) ball.dx *= -1; else ball.dy *= -1;
+            }
+
             b.status--;
-            score += 10;
+            score += b.type === "bonus" ? 50 : 10;
+            scoreEl.innerText = score;
             SFX.hit();
             createExplosion(b.x + b.w/2, b.y + b.h/2, getBrickColor(b));
 
             if(b.status === 0) {
                 if(b.type === "explosive") {
-                    SFX.explode(); shakeTime = 15;
-                    explodeBricks(c, r);
+                    SFX.explode(); shakeTime = 12;
+                    explodeNearby(c, r);
                 }
-                if(b.type === "switch") { gateOpen = true; SFX.win(); }
-                if(Math.random() < 0.2) dropItem(b.x + b.w/2, b.y + b.h/2);
-            }
-            scoreEl.innerText = score;
-        }
-
-        function teleport(ball, startPortal) {
-            const other = bricks.flat().find(b => b.type === "portal" && b !== startPortal);
-            if (other) {
-                ball.x = other.x + other.w/2;
-                ball.y = other.y + other.h/2;
-                SFX.item();
+                // 아이템 드롭률 상향 (20%)
+                if(Math.random() < 0.20) dropItem(b.x + b.w/2, b.y + b.h/2);
             }
         }
 
-        function explodeBricks(c, r) {
+        function explodeNearby(c, r) {
             for(let i=c-1; i<=c+1; i++) {
                 for(let j=r-1; j<=r+1; j++) {
-                    if(bricks[i]?.[j] && bricks[i][j].status > 0 && bricks[i][j].type !== "gate" && bricks[i][j].type !== "seq") {
+                    if(bricks[i] && bricks[i][j] && bricks[i][j].status > 0) {
                         createExplosion(bricks[i][j].x + bricks[i][j].w/2, bricks[i][j].y + bricks[i][j].h/2, "#f97316");
-                        bricks[i][j].status = 0; score += 15;
+                        bricks[i][j].status = 0; score += 10;
                     }
                 }
             }
@@ -344,20 +408,20 @@
 
         function dropItem(x, y) {
             const types = [
-                {t:'expand', c:'#6366f1', l:'WIDE'}, {t:'slow', c:'#10b981', l:'SLOW'},
-                {t:'power', c:'#f59e0b', l:'POWER'}, {t:'multi', c:'#d946ef', l:'MULTI'}
+                {t:'expand', c:'#6366f1', l:'W'}, {t:'slow', c:'#10b981', l:'S'},
+                {t:'power', c:'#f59e0b', l:'P'}, {t:'multi', c:'#d946ef', l:'M'},
+                {t:'laser', c:'#ef4444', l:'L'}, {t:'magnet', c:'#22d3ee', l:'G'},
+                {t:'life', c:'#e11d48', l:'H'}, {t:'gravity', c:'#a855f7', l:'V'}
             ];
             items.push({ x, y, dy: 2, ...types[Math.floor(Math.random()*types.length)] });
         }
 
         function getBrickColor(b) {
-            if(b.type === "seq") return "#fff";
-            if(b.type === "switch") return "#22d3ee";
-            if(b.type === "gate") return gateOpen ? "#475569" : "#ef4444";
-            if(b.type === "portal") return b.extra === "A" ? "#3b82f6" : "#f97316";
-            if(b.type === "hard") return "#94a3b8";
+            if(b.type === "seq") return "#ffffff";
+            if(b.type === "shield") return b.status === 3 ? "#3b82f6" : (b.status === 2 ? "#60a5fa" : "#93c5fd");
+            if(b.type === "bonus") return "#facc15";
             if(b.type === "explosive") return "#f97316";
-            return `hsl(${(b.y * 0.5 + level * 50) % 360}, 70%, 60%)`;
+            return `hsl(${(b.y * 0.4 + level * 50) % 360}, 70%, 60%)`;
         }
 
         function draw() {
@@ -369,7 +433,7 @@
                 shakeTime--;
             }
 
-            ctx.fillStyle = "rgba(0,0,0,0.4)";
+            ctx.fillStyle = "rgba(2, 6, 23, 0.4)";
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
             bricks.flat().forEach(b => {
@@ -377,80 +441,89 @@
                 ctx.beginPath();
                 ctx.roundRect(b.x, b.y, b.w, b.h, 4);
                 ctx.fillStyle = getBrickColor(b);
-                if(b.type === "gate" && !gateOpen) {
-                    ctx.shadowBlur = 10; ctx.shadowColor = "#ef4444";
+                if(b.type === "shield") {
+                    ctx.shadowBlur = 8; ctx.shadowColor = "#3b82f6";
                 }
                 ctx.fill();
                 ctx.shadowBlur = 0;
                 if(b.type === "seq") {
-                    ctx.fillStyle = "#000"; ctx.font = "bold 12px Orbitron";
-                    ctx.textAlign="center"; ctx.fillText(b.extra, b.x+b.w/2, b.y+b.h/2+5);
+                    ctx.fillStyle = "#000"; ctx.font = "bold 10px Orbitron";
+                    ctx.textAlign="center"; ctx.fillText(b.extra, b.x+b.w/2, b.y+b.h/2+4);
                 }
             });
 
+            // 패들 그리기
             ctx.beginPath();
             ctx.roundRect(paddleX, canvas.height-25, paddleWidth, paddleHeight, 6);
-            ctx.fillStyle = activeEffects.expand > 0 ? "#818cf8" : "#6366f1";
-            ctx.shadowBlur = 15; ctx.shadowColor = "#6366f1";
+            ctx.fillStyle = activeEffects.laser > 0 ? "#ef4444" : (activeEffects.magnet > 0 ? "#22d3ee" : "#6366f1");
+            ctx.shadowBlur = 15; ctx.shadowColor = ctx.fillStyle;
             ctx.fill();
             ctx.shadowBlur = 0;
 
-            items.forEach((it, i) => {
+            // 레이저 그리기
+            lasers.forEach(l => {
+                ctx.fillStyle = "#ef4444";
+                ctx.fillRect(l.x - 2, l.y, 4, 15);
+                ctx.shadowBlur = 10; ctx.shadowColor = "#ef4444";
+            });
+
+            // 아이템 처리
+            for(let i=items.length-1; i>=0; i--) {
+                const it = items[i];
                 it.y += it.dy;
                 ctx.beginPath();
-                ctx.arc(it.x, it.y, 10, 0, Math.PI*2);
+                ctx.arc(it.x, it.y, 11, 0, Math.PI*2);
                 ctx.fillStyle = it.c;
                 ctx.fill();
-                ctx.fillStyle = "#fff"; ctx.font = "bold 8px Orbitron";
-                ctx.textAlign="center"; ctx.fillText(it.l[0], it.x, it.y+3);
+                ctx.fillStyle = "#fff"; ctx.font = "bold 12px Orbitron";
+                ctx.textAlign="center"; ctx.fillText(it.l, it.x, it.y+4);
                 
                 if(it.y > canvas.height-35 && it.x > paddleX && it.x < paddleX+paddleWidth) {
                     SFX.item();
                     if(it.t==='expand') { activeEffects.expand = 10; paddleWidth = 160; }
                     if(it.t==='slow') balls.forEach(bl => { bl.dx*=0.7; bl.dy*=0.7; });
                     if(it.t==='power') activeEffects.power = 8;
-                    if(it.t==='multi') balls.push(new Ball(it.x, canvas.height-50, 4, -4));
-                    items.splice(i, 1);
-                } else if(it.y > canvas.height) {
-                    items.splice(i, 1);
-                }
-            });
-
-            for(let i=balls.length-1; i>=0; i--) {
-                const bl = balls[i];
-                bl.update();
-                bl.draw();
-                collisionDetection(bl);
-
-                if(bl.x + bl.dx > canvas.width - bl.radius || bl.x + bl.dx < bl.radius) { bl.dx *= -1; SFX.wall(); }
-                if(bl.y + bl.dy < bl.radius) { bl.dy *= -1; SFX.wall(); }
-                else if(bl.y + bl.dy > canvas.height - 25) {
-                    if(bl.x > paddleX && bl.x < paddleX + paddleWidth) {
-                        SFX.paddle();
-                        let hitPos = (bl.x - (paddleX + paddleWidth/2)) / (paddleWidth/2);
-                        let speed = Math.sqrt(bl.dx**2 + bl.dy**2);
-                        bl.dx = hitPos * speed;
-                        bl.dy = -Math.sqrt(Math.abs(speed**2 - bl.dx**2));
-                    } else {
-                        balls.splice(i, 1);
-                        if(balls.length === 0) {
-                            lives--; livesEl.innerText = lives; SFX.lose();
-                            if(lives <= 0) gameOver(); else resetPositions();
-                        }
+                    if(it.t==='multi') balls.push(new Ball(it.x, canvas.height-50, 3, -3));
+                    if(it.t==='laser') activeEffects.laser = 8;
+                    if(it.t==='magnet') activeEffects.magnet = 10;
+                    if(it.t==='life') { lives++; livesEl.innerText = lives; }
+                    if(it.t==='gravity') {
+                        balls.forEach(bl => {
+                            bl.dx = (paddleX + paddleWidth/2 - bl.x) * 0.05;
+                            bl.dy = 5;
+                        });
                     }
+                    items.splice(i, 1);
+                } else if(it.y > canvas.height) items.splice(i, 1);
+            }
+
+            // 공 그리기
+            balls.forEach(bl => bl.draw());
+
+            // 파티클 업데이트
+            for(let i=particles.length-1; i>=0; i--) {
+                particles[i].update();
+                particles[i].draw();
+                if(particles[i].life <= 0) particles.splice(i, 1);
+            }
+
+            // 레이저 발사 로직
+            if(activeEffects.laser > 0) {
+                laserTimer++;
+                if(laserTimer % 20 === 0) {
+                    lasers.push({x: paddleX + 10, y: canvas.height - 30});
+                    lasers.push({x: paddleX + paddleWidth - 10, y: canvas.height - 30});
+                    SFX.laser();
                 }
             }
 
-            particles.forEach((p, i) => {
-                p.update(); p.draw();
-                if(p.life <= 0) particles.splice(i, 1);
-            });
-
+            // 효과 타이머
             if(activeEffects.expand > 0) activeEffects.expand -= 0.016; else paddleWidth = 100;
             if(activeEffects.power > 0) activeEffects.power -= 0.016;
+            if(activeEffects.laser > 0) activeEffects.laser -= 0.016;
+            if(activeEffects.magnet > 0) activeEffects.magnet -= 0.016;
 
-            if(rightPressed && paddleX < canvas.width - paddleWidth) paddleX += 10;
-            if(leftPressed && paddleX > 0) paddleX -= 10;
+            updatePhysics();
 
             if(bricks.flat().filter(b => b.status > 0).length === 0) levelUp();
 
@@ -462,12 +535,14 @@
             gameRunning = false; SFX.win();
             if(level < 5) {
                 showModal("LEVEL COMPLETE", `SCORE: ${score}`, "NEXT LEVEL", () => { level++; levelEl.innerText = level; startGame(); });
-            } else showModal("LEGENDARY!", "YOU CONQUERED ALL LEVELS", "RESTART", () => location.reload());
+            } else {
+                showModal("CONGRATULATIONS!", "YOU ARE THE BREAKER", "RESTART", () => location.reload());
+            }
         }
 
         function gameOver() {
             gameRunning = false;
-            showModal("SYSTEM HALT", `FINAL SCORE: ${score}`, "RETRY", () => location.reload());
+            showModal("GAME OVER", `FINAL SCORE: ${score}`, "RETRY", () => location.reload());
         }
 
         function showModal(title, stats, btn, action) {
@@ -484,6 +559,7 @@
         document.addEventListener("keydown", e => {
             if(e.key === "ArrowRight") rightPressed = true;
             if(e.key === "ArrowLeft") leftPressed = true;
+            if(e.key === " " || e.key === "ArrowUp") balls.forEach(b => b.launch());
         });
         document.addEventListener("keyup", e => {
             if(e.key === "ArrowRight") rightPressed = false;
@@ -491,19 +567,17 @@
         });
         canvas.addEventListener("mousemove", e => {
             const rect = canvas.getBoundingClientRect();
-            paddleX = e.clientX - rect.left - paddleWidth/2;
-            if(paddleX < 0) paddleX = 0;
-            if(paddleX > canvas.width - paddleWidth) paddleX = canvas.width - paddleWidth;
+            paddleX = (e.clientX - rect.left) * (canvas.width / rect.width) - paddleWidth/2;
         });
+        canvas.addEventListener("mousedown", () => balls.forEach(b => b.launch()));
         canvas.addEventListener("touchmove", e => {
             const rect = canvas.getBoundingClientRect();
-            paddleX = e.touches[0].clientX - rect.left - paddleWidth/2;
-            if(paddleX < 0) paddleX = 0;
-            if(paddleX > canvas.width - paddleWidth) paddleX = canvas.width - paddleWidth;
+            paddleX = (e.touches[0].clientX - rect.left) * (canvas.width / rect.width) - paddleWidth/2;
             e.preventDefault();
         }, {passive:false});
+        canvas.addEventListener("touchstart", () => balls.forEach(b => b.launch()));
 
-        window.onload = () => showModal("NEON BREAKER", "USE LOGIC & REFLEXES", "INITIALIZE", startGame);
+        window.onload = () => showModal("NEON BREAKER", "INITIALIZING SYSTEMS...", "START GAME", startGame);
     </script>
 </body>
 </html>
