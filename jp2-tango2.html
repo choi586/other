@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>일본어 뜻 맞추기 배치형 퀴즈</title>
+  <style>
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: "Arial", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+      background: linear-gradient(135deg, #f7f4ff, #eef6ff);
+      color: #222;
+    }
+
+    .wrap {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 10px;
+      font-size: 32px;
+    }
+
+    .sub {
+      text-align: center;
+      color: #555;
+      margin-bottom: 20px;
+      line-height: 1.6;
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 24px;
+    }
+
+    .info {
+      background: white;
+      padding: 10px 16px;
+      border-radius: 14px;
+      font-weight: bold;
+      box-shadow: 0 6px 16px rgba(0,0,0,0.08);
+    }
+
+    button {
+      border: none;
+      border-radius: 14px;
+      padding: 12px 18px;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      background: #6f7cff;
+      color: white;
+      box-shadow: 0 6px 14px rgba(111,124,255,0.25);
+      transition: transform 0.15s ease;
+    }
+
+    button:hover { transform: translateY(-2px); }
+
+    .panel {
+      background: rgba(255,255,255,0.78);
+      border-radius: 24px;
+      padding: 20px;
+      box-shadow: 0 10px 24px rgba(0,0,0,0.08);
+      margin-bottom: 24px;
+    }
+
+    .panel h2 {
+      margin: 0 0 16px;
+      text-align: center;
+    }
+
+    .word-bank {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+    }
+
+    .jp-chip {
+      background: #f3e0b8;
+      border: none;
+      border-radius: 18px;
+      min-height: 72px;
+      font-size: 28px;
+      font-weight: bold;
+      padding: 10px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .jp-chip:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 18px rgba(0,0,0,0.1);
+    }
+
+    .jp-chip.selected {
+      outline: 4px solid #6f7cff;
+      transform: scale(1.03);
+    }
+
+    .jp-chip.used {
+      background: #cfd3df;
+      color: #777;
+      cursor: default;
+      opacity: 0.8;
+    }
+
+    .quiz-list {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+    }
+
+    .quiz-row {
+      display: grid;
+      grid-template-columns: 1.2fr 1fr 110px;
+      gap: 12px;
+      align-items: center;
+      background: #f8f9ff;
+      border-radius: 18px;
+      padding: 12px;
+    }
+
+    .ko-label {
+      font-size: 24px;
+      font-weight: bold;
+      padding-left: 8px;
+    }
+
+    .drop-box {
+      min-height: 68px;
+      border-radius: 16px;
+      border: 3px dashed #b8c0ff;
+      background: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      padding: 8px;
+      text-align: center;
+    }
+
+    .drop-box:hover {
+      background: #f5f7ff;
+    }
+
+    .drop-box.filled {
+      border-style: solid;
+      background: #fff8e7;
+    }
+
+    .drop-box.correct {
+      background: #d9f7df;
+      border-color: #57b26a;
+      color: #185f2a;
+    }
+
+    .drop-box.wrong {
+      background: #ffdede;
+      border-color: #e06a6a;
+    }
+
+    .row-btn {
+      padding: 10px 12px;
+      font-size: 14px;
+      background: #8c97ff;
+    }
+
+    .message {
+      text-align: center;
+      font-size: 22px;
+      font-weight: bold;
+      min-height: 32px;
+      margin-top: 10px;
+    }
+
+    .success {
+      color: #157a2f;
+    }
+
+    @media (max-width: 900px) {
+      .word-bank {
+        grid-template-columns: repeat(3, 1fr);
+      }
+
+      .quiz-row {
+        grid-template-columns: 1fr;
+      }
+
+      .ko-label,
+      .drop-box {
+        font-size: 22px;
+      }
+    }
+
+    @media (max-width: 600px) {
+      .word-bank {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .jp-chip {
+        font-size: 24px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>🧩 일본어 뜻 맞추기 배치형 퀴즈</h1>
+    <div class="sub">
+      위의 일본어 단어를 먼저 선택한 뒤,<br>
+      아래 한국어 뜻 옆의 빈칸을 눌러 넣어보세요 😊
+    </div>
+
+    <div class="topbar">
+      <div class="info">정답: <span id="score">0</span> / <span id="total">0</span></div>
+      <button id="checkBtn">채점하기</button>
+      <button id="shuffleBtn">문제 섞기</button>
+      <button id="resetBtn">다시하기</button>
+    </div>
+
+    <section class="panel">
+      <h2>🇯🇵 일본어 단어 블록</h2>
+      <div class="word-bank" id="wordBank"></div>
+    </section>
+
+    <section class="panel">
+      <h2>🇰🇷 뜻에 맞는 일본어를 옆에 놓아보세요</h2>
+      <div class="quiz-list" id="quizList"></div>
+    </section>
+
+    <div class="message" id="message"></div>
+  </div>
+
+  <script>
+    const vocab = [
+      { id: 1, jp: "すし", ko: "초밥" },
+      { id: 2, jp: "ねこ", ko: "고양이" },
+      { id: 3, jp: "きもの", ko: "기모노" },
+      { id: 4, jp: "そば", ko: "소바" },
+      { id: 5, jp: "かつ", ko: "커틀릿" },
+      { id: 6, jp: "さくら", ko: "벚꽃" },
+      { id: 7, jp: "ゆめ", ko: "꿈" },
+      { id: 8, jp: "たこ", ko: "문어" },
+      { id: 9, jp: "つなみ", ko: "쓰나미" },
+      { id: 10, jp: "いぬ", ko: "강아지" },
+      { id: 11, jp: "やま", ko: "산" },
+      { id: 12, jp: "くるま", ko: "자동차" },
+      { id: 13, jp: "はな", ko: "꽃" },
+      { id: 14, jp: "あめ", ko: "비" },
+      { id: 15, jp: "りんご", ko: "사과" },
+      { id: 16, jp: "みず", ko: "물" },
+      { id: 17, jp: "うた", ko: "노래" },
+      { id: 18, jp: "やさい", ko: "채소" },
+      { id: 19, jp: "みかん", ko: "귤" },
+      { id: 20, jp: "いちご", ko: "딸기" },
+      { id: 21, jp: "ぶどう", ko: "포도" },
+      { id: 22, jp: "もも", ko: "복숭아" },
+      { id: 23, jp: "すいか", ko: "수박" },
+      { id: 24, jp: "なし", ko: "배" },
+      { id: 25, jp: "ばなな", ko: "바나나" },
+      { id: 26, jp: "メロン", ko: "멜론" },
+      { id: 27, jp: "らーめん", ko: "라면" },
+      { id: 28, jp: "からあげ", ko: "가라아게" },
+      { id: 29, jp: "うどん", ko: "우동" },
+      { id: 30, jp: "カレー", ko: "카레" },
+      { id: 31, jp: "たこやき", ko: "타코야키" },
+      { id: 32, jp: "やきにく", ko: "야키니쿠" },
+      { id: 33, jp: "とんかつ", ko: "돈가스" },
+      { id: 34, jp: "おにぎり", ko: "주먹밥" }
+    ];
+
+    const wordBank = document.getElementById("wordBank");
+    const quizList = document.getElementById("quizList");
+    const scoreEl = document.getElementById("score");
+    const totalEl = document.getElementById("total");
+    const messageEl = document.getElementById("message");
+    const checkBtn = document.getElementById("checkBtn");
+    const shuffleBtn = document.getElementById("shuffleBtn");
+    const resetBtn = document.getElementById("resetBtn");
+
+    let selectedWordId = null;
+    let placedMap = {};
+
+    totalEl.textContent = vocab.length;
+
+    function shuffle(arr) {
+      const a = [...arr];
+      for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+      }
+      return a;
+    }
+
+    function renderWordBank() {
+      wordBank.innerHTML = "";
+      const shuffledWords = shuffle(vocab);
+
+      shuffledWords.forEach(item => {
+        const btn = document.createElement("button");
+        btn.className = "jp-chip";
+        btn.textContent = item.jp;
+        btn.dataset.id = item.id;
+
+        if (Object.values(placedMap).includes(String(item.id))) {
+          btn.classList.add("used");
+          btn.disabled = true;
+        }
+
+        if (selectedWordId === String(item.id)) {
+          btn.classList.add("selected");
+        }
+
+        btn.addEventListener("click", () => {
+          if (btn.classList.contains("used")) return;
+
+          document.querySelectorAll(".jp-chip").forEach(chip => {
+            chip.classList.remove("selected");
+          });
+
+          selectedWordId = String(item.id);
+          btn.classList.add("selected");
+          messageEl.textContent = `선택한 단어: ${item.jp}`;
+          messageEl.className = "message";
+        });
+
+        wordBank.appendChild(btn);
+      });
+    }
+
+    function renderQuizList() {
+      quizList.innerHTML = "";
+      const shuffledMeaning = shuffle(vocab);
+
+      shuffledMeaning.forEach(item => {
+        const row = document.createElement("div");
+        row.className = "quiz-row";
+
+        const ko = document.createElement("div");
+        ko.className = "ko-label";
+        ko.textContent = item.ko;
+
+        const box = document.createElement("div");
+        box.className = "drop-box";
+        box.dataset.answerId = item.id;
+        box.dataset.rowId = item.id;
+
+        if (placedMap[item.id]) {
+          const matchedWord = vocab.find(v => String(v.id) === placedMap[item.id]);
+          box.textContent = matchedWord.jp;
+          box.classList.add("filled");
+        } else {
+          box.textContent = "여기를 눌러 넣기";
+        }
+
+        box.addEventListener("click", () => {
+          if (!selectedWordId) {
+            messageEl.textContent = "먼저 위에서 일본어 단어를 선택하세요 😊";
+            messageEl.className = "message";
+            return;
+          }
+
+          const previousWordId = placedMap[item.id];
+
+          if (previousWordId) {
+            delete placedMap[item.id];
+          }
+
+          for (const key in placedMap) {
+            if (placedMap[key] === selectedWordId) {
+              delete placedMap[key];
+            }
+          }
+
+          placedMap[item.id] = selectedWordId;
+          selectedWordId = null;
+          renderAll();
+        });
+
+        const clearBtn = document.createElement("button");
+        clearBtn.className = "row-btn";
+        clearBtn.textContent = "지우기";
+        clearBtn.addEventListener("click", () => {
+          if (placedMap[item.id]) {
+            delete placedMap[item.id];
+            renderAll();
+          }
+        });
+
+        row.appendChild(ko);
+        row.appendChild(box);
+        row.appendChild(clearBtn);
+        quizList.appendChild(row);
+      });
+    }
+
+    function renderAll() {
+      renderWordBank();
+      renderQuizList();
+      scoreEl.textContent = "0";
+      document.querySelectorAll(".drop-box").forEach(box => {
+        box.classList.remove("correct", "wrong");
+      });
+      messageEl.textContent = "";
+      messageEl.className = "message";
+    }
+
+    function gradeQuiz() {
+      let correct = 0;
+      const boxes = document.querySelectorAll(".drop-box");
+
+      boxes.forEach(box => {
+        box.classList.remove("correct", "wrong");
+
+        const answerId = String(box.dataset.answerId);
+        const userId = placedMap[answerId];
+
+        if (!userId) return;
+
+        if (userId === answerId) {
+          correct++;
+          box.classList.add("correct");
+        } else {
+          box.classList.add("wrong");
+        }
+      });
+
+      scoreEl.textContent = correct;
+
+      if (correct === vocab.length) {
+        messageEl.textContent = "🎉 모두 정답이에요! 정말 잘했어요!";
+        messageEl.className = "message success";
+      } else {
+        messageEl.textContent = `현재 정답은 ${correct}개예요. 틀린 곳을 다시 찾아보세요 😊`;
+        messageEl.className = "message";
+      }
+    }
+
+    function resetGame() {
+      selectedWordId = null;
+      placedMap = {};
+      scoreEl.textContent = "0";
+      messageEl.textContent = "";
+      messageEl.className = "message";
+      renderWordBank();
+      renderQuizList();
+    }
+
+    checkBtn.addEventListener("click", gradeQuiz);
+
+    shuffleBtn.addEventListener("click", () => {
+      selectedWordId = null;
+      renderWordBank();
+      renderQuizList();
+      messageEl.textContent = "🔀 문제 순서를 섞었어요!";
+      messageEl.className = "message";
+    });
+
+    resetBtn.addEventListener("click", resetGame);
+
+    resetGame();
+  </script>
+</body>
+</html>
