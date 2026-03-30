@@ -2,456 +2,272 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>일본어-한국어 매칭 퍼즐 퀴즈</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>일본어 마스터 - 스테이지 퀴즈</title>
+  <script src="https://cdn.tailwindcss.com"></script>
   <style>
-    * {
-      box-sizing: border-box;
-    }
-
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&family=Noto+Sans+JP:wght@400;700&display=swap');
+    
     body {
-      margin: 0;
-      font-family: "Arial", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
-      background: linear-gradient(135deg, #f7f4ff, #eef6ff);
-      color: #222;
+      font-family: 'Noto Sans KR', 'Noto Sans JP', sans-serif;
+      touch-action: manipulation;
+      background-color: #f8fafc;
     }
 
-    .wrap {
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 24px;
-    }
-
-    h1 {
-      margin: 0 0 10px;
-      font-size: 32px;
-      text-align: center;
-    }
-
-    .sub {
-      text-align: center;
-      margin-bottom: 20px;
-      color: #555;
-      line-height: 1.6;
-    }
-
-    .topbar {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 12px;
-      justify-content: center;
-      align-items: center;
-      margin-bottom: 24px;
-    }
-
-    .info {
-      background: #fff;
-      border-radius: 16px;
-      padding: 10px 16px;
-      box-shadow: 0 6px 16px rgba(0,0,0,0.08);
-      font-weight: bold;
-    }
-
-    button {
-      border: none;
-      border-radius: 14px;
-      padding: 12px 18px;
-      font-size: 16px;
-      font-weight: bold;
-      cursor: pointer;
-      background: #6f7cff;
-      color: white;
-      box-shadow: 0 6px 14px rgba(111,124,255,0.25);
-      transition: transform 0.15s ease, opacity 0.15s ease;
-    }
-
-    button:hover {
-      transform: translateY(-2px);
-    }
-
-    button:active {
-      transform: translateY(0);
-    }
-
-    .boards {
+    .card-grid {
       display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 24px;
-    }
-
-    .panel {
-      background: rgba(255,255,255,0.75);
-      backdrop-filter: blur(8px);
-      border-radius: 24px;
-      padding: 18px;
-      box-shadow: 0 10px 24px rgba(0,0,0,0.08);
-    }
-
-    .panel h2 {
-      margin: 0 0 14px;
-      text-align: center;
-      font-size: 24px;
-    }
-
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 12px;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
     }
 
     .card {
-      min-height: 88px;
-      border: none;
-      border-radius: 20px;
-      font-size: 28px;
-      font-weight: bold;
-      cursor: pointer;
-      transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
+      aspect-ratio: 2 / 1;
       display: flex;
-      justify-content: center;
       align-items: center;
+      justify-content: center;
       text-align: center;
-      padding: 10px;
-      line-height: 1.2;
-      user-select: none;
+      padding: 8px;
+      border-radius: 12px;
+      font-weight: 700;
+      transition: all 0.2s ease;
+      font-size: 1.1rem;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+      border: 2px solid transparent;
       word-break: keep-all;
     }
 
-    .jp-card {
-      background: #f3e0b8;
-    }
-
-    .ko-card {
-      background: #dfe4ff;
-    }
-
-    .card:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 8px 18px rgba(0,0,0,0.1);
-    }
-
-    .card.selected {
-      outline: 5px solid #6f7cff;
-      transform: scale(1.03);
-    }
-
-    .card.matched {
-      background: #c8f7d2 !important;
-      color: #1f6a33;
-      cursor: default;
-      opacity: 0.9;
-    }
-
-    .card.wrong {
-      animation: shake 0.3s;
-      background: #ffd7d7 !important;
-    }
-
-    .message {
-      margin-top: 20px;
-      text-align: center;
-      font-size: 22px;
-      font-weight: bold;
-      min-height: 32px;
-    }
-
-    .success {
-      color: #157a2f;
-    }
+    .jp-card { background-color: #fef3c7; color: #92400e; }
+    .ko-card { background-color: #e0e7ff; color: #3730a3; }
+    
+    .card.selected { border-color: #6366f1; transform: scale(1.05); z-index: 10; box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3); }
+    .card.matched { background-color: #d1fae5 !important; color: #065f46 !important; opacity: 0.6; pointer-events: none; transform: scale(0.95); }
+    .card.wrong { animation: shake 0.4s; background-color: #fee2e2 !important; color: #991b1b !important; }
 
     @keyframes shake {
-      0% { transform: translateX(0); }
-      25% { transform: translateX(-5px); }
-      50% { transform: translateX(5px); }
-      75% { transform: translateX(-5px); }
-      100% { transform: translateX(0); }
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-4px); }
+      75% { transform: translateX(4px); }
     }
 
-    @media (max-width: 900px) {
-      .boards {
-        grid-template-columns: 1fr;
-      }
-
-      .grid {
-        grid-template-columns: repeat(2, 1fr);
-      }
-
-      .card {
-        font-size: 24px;
-        min-height: 80px;
-      }
-    }
-
-    @media (max-width: 520px) {
-      .grid {
-        grid-template-columns: 1fr;
-      }
-
-      .card {
-        font-size: 22px;
-      }
-    }
+    .progress-bar { transition: width 0.5s ease-in-out; }
   </style>
 </head>
-<body>
-  <div class="wrap">
-    <h1>🧩 일본어-한국어 매칭 퍼즐 퀴즈</h1>
-    <div class="sub">
-      일본어 카드 1개와 한국어 카드 1개를 차례대로 눌러서 짝을 맞춰보세요 😊
+<body class="p-4 max-w-md mx-auto">
+
+  <!-- Header -->
+  <header class="mb-6 text-center">
+    <h1 class="text-2xl font-bold text-slate-800 mb-1">🧩 일본어 단어 맞추기</h1>
+    <div class="flex justify-between items-center px-2 text-sm text-slate-500">
+      <span id="stageIndicator" class="font-bold text-indigo-600">STAGE 1 / 6</span>
+      <span id="scoreDisplay">완료: 0 / 34</span>
+    </div>
+    <div class="w-full bg-slate-200 h-2 rounded-full mt-2 overflow-hidden">
+      <div id="progressBar" class="progress-bar bg-indigo-500 h-full w-0"></div>
+    </div>
+  </header>
+
+  <!-- Game Boards -->
+  <main id="gameArea">
+    <div class="mb-6">
+      <h2 class="text-sm font-bold text-amber-600 mb-2 ml-1">🇯🇵 일본어</h2>
+      <div id="jpGrid" class="card-grid"></div>
     </div>
 
-    <div class="topbar">
-      <div class="info">점수: <span id="score">0</span> / <span id="total">0</span></div>
-      <div class="info">시도: <span id="tries">0</span></div>
-      <button id="shuffleBtn">섞기</button>
-      <button id="resetBtn">다시하기</button>
+    <div class="mb-8">
+      <h2 class="text-sm font-bold text-indigo-600 mb-2 ml-1">🇰🇷 한국어</h2>
+      <div id="koGrid" class="card-grid"></div>
     </div>
+  </main>
 
-    <div class="boards">
-      <section class="panel">
-        <h2>🇯🇵 일본어</h2>
-        <div class="grid" id="jpGrid"></div>
-      </section>
+  <!-- Result / Overlay -->
+  <div id="msgBox" class="text-center min-h-[40px] mb-4 font-bold text-lg transition-all"></div>
 
-      <section class="panel">
-        <h2>🇰🇷 한국어 뜻</h2>
-        <div class="grid" id="koGrid"></div>
-      </section>
-    </div>
-
-    <div class="message" id="message"></div>
-  </div>
+  <!-- Controls -->
+  <footer class="flex gap-2">
+    <button id="nextBtn" class="hidden w-full bg-indigo-600 text-white py-4 rounded-xl font-bold shadow-lg active:bg-indigo-700 transition-colors">
+      다음 단계로 가기
+    </button>
+    <button id="resetBtn" class="w-full bg-slate-200 text-slate-600 py-4 rounded-xl font-bold active:bg-slate-300 transition-colors">
+      처음부터 다시
+    </button>
+  </footer>
 
   <script>
-    const vocab = [
-      { id: 1, jp: "すし", ko: "초밥" },
-      { id: 2, jp: "ねこ", ko: "고양이" },
-      { id: 3, jp: "きもの", ko: "기모노" },
-      { id: 4, jp: "そば", ko: "소바" },
-      { id: 5, jp: "かつ", ko: "커틀릿" },
-      { id: 6, jp: "さくら", ko: "벚꽃" },
-      { id: 7, jp: "ゆめ", ko: "꿈" },
-      { id: 8, jp: "たこ", ko: "문어" },
-      { id: 9, jp: "つなみ", ko: "쓰나미" },
-      { id: 10, jp: "いぬ", ko: "강아지" },
-      { id: 11, jp: "やま", ko: "산" },
-      { id: 12, jp: "くるま", ko: "자동차" },
-      { id: 13, jp: "はな", ko: "꽃" },
-      { id: 14, jp: "あめ", ko: "비" },
-      { id: 15, jp: "りんご", ko: "사과" },
-      { id: 16, jp: "みず", ko: "물" },
-      { id: 17, jp: "うた", ko: "노래" },
-      { id: 18, jp: "やさい", ko: "채소" },
-      { id: 19, jp: "みかん", ko: "귤" },
-      { id: 20, jp: "いちご", ko: "딸기" },
-      { id: 21, jp: "ぶどう", ko: "포도" },
-      { id: 22, jp: "もも", ko: "복숭아" },
-      { id: 23, jp: "すいか", ko: "수박" },
-      { id: 24, jp: "なし", ko: "배" },
-      { id: 25, jp: "ばなな", ko: "바나나" },
-      { id: 26, jp: "メロン", ko: "멜론" },
-      { id: 27, jp: "らーめん", ko: "라면" },
-      { id: 28, jp: "からあげ", ko: "가라아게" },
-      { id: 29, jp: "うどん", ko: "우동" },
-      { id: 30, jp: "カレー", ko: "카레" },
-      { id: 31, jp: "たこやき", ko: "타코야키" },
-      { id: 32, jp: "やきにく", ko: "야키니쿠" },
-      { id: 33, jp: "とんかつ", ko: "돈가스" },
-      { id: 34, jp: "おにぎり", ko: "주먹밥" }
+    const allVocab = [
+      { id: 1, jp: "すし", ko: "초밥" }, { id: 2, jp: "ねこ", ko: "고양이" },
+      { id: 3, jp: "きもの", ko: "기모노" }, { id: 4, jp: "そば", ko: "소바" },
+      { id: 7, jp: "ゆめ", ko: "꿈" }, { id: 8, jp: "たこ", ko: "문어" },
+      { id: 9, jp: "つなみ", ko: "쓰나미" }, { id: 10, jp: "いぬ", ko: "강아지" },
+      { id: 11, jp: "やま", ko: "산" }, { id: 12, jp: "くるま", ko: "자동차" },
+      { id: 13, jp: "はな", ko: "꽃" }, { id: 14, jp: "あめ", ko: "비" },
+      { id: 15, jp: "りんご", ko: "사과" }, { id: 16, jp: "みず", ko: "물" },
+      { id: 17, jp: "うた", ko: "노래" }, { id: 18, jp: "やさい", ko: "채소" },
+      { id: 19, jp: "みかん", ko: "귤" }, { id: 20, jp: "いちご", ko: "딸기" },
+      { id: 21, jp: "ぶどう", ko: "포도" }, { id: 22, jp: "もも", ko: "복숭아" },
+      { id: 23, jp: "すいか", ko: "수박" }, { id: 24, jp: "なし", ko: "배" },
+      { id: 25, jp: "ばなな", ko: "바나나" }, { id: 26, jp: "メロン", ko: "멜론" },
+      { id: 27, jp: "らーめん", ko: "라면" }, { id: 28, jp: "からあげ", ko: "가라아게" },
+      { id: 29, jp: "うどん", ko: "우동" }, { id: 30, jp: "カレー", ko: "카레" },
+      { id: 31, jp: "たこやき", ko: "타코야키" }, { id: 32, jp: "やきにく", ko: "야키니쿠" },
+      { id: 33, jp: "とんかつ", ko: "돈가스" }, { id: 34, jp: "おにぎり", ko: "주먹밥" }
     ];
 
-    const jpGrid = document.getElementById("jpGrid");
-    const koGrid = document.getElementById("koGrid");
-    const scoreEl = document.getElementById("score");
-    const totalEl = document.getElementById("total");
-    const triesEl = document.getElementById("tries");
-    const messageEl = document.getElementById("message");
-    const shuffleBtn = document.getElementById("shuffleBtn");
-    const resetBtn = document.getElementById("resetBtn");
-
+    const ITEMS_PER_STAGE = 6;
+    let currentStage = 0;
     let selectedJP = null;
     let selectedKO = null;
-    let score = 0;
-    let tries = 0;
-    let lockBoard = false;
+    let matchedCount = 0;
+    let stageMatchedCount = 0;
+    let isLock = false;
 
-    totalEl.textContent = vocab.length;
+    const jpGrid = document.getElementById('jpGrid');
+    const koGrid = document.getElementById('koGrid');
+    const stageIndicator = document.getElementById('stageIndicator');
+    const scoreDisplay = document.getElementById('scoreDisplay');
+    const progressBar = document.getElementById('progressBar');
+    const msgBox = document.getElementById('msgBox');
+    const nextBtn = document.getElementById('nextBtn');
+    const resetBtn = document.getElementById('resetBtn');
 
-    function shuffle(array) {
-      const copied = [...array];
-      for (let i = copied.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [copied[i], copied[j]] = [copied[j], copied[i]];
-      }
-      return copied;
+    function shuffle(arr) {
+      return [...arr].sort(() => Math.random() - 0.5);
+    }
+
+    function initStage() {
+      const start = currentStage * ITEMS_PER_STAGE;
+      const end = start + ITEMS_PER_STAGE;
+      const stageVocab = allVocab.slice(start, end);
+      
+      stageMatchedCount = 0;
+      selectedJP = null;
+      selectedKO = null;
+      isLock = false;
+      
+      jpGrid.innerHTML = '';
+      koGrid.innerHTML = '';
+      msgBox.textContent = '';
+      nextBtn.classList.add('hidden');
+      
+      stageIndicator.textContent = `STAGE ${currentStage + 1} / ${Math.ceil(allVocab.length / ITEMS_PER_STAGE)}`;
+      updateProgress();
+
+      // Render JP cards
+      shuffle(stageVocab).forEach(item => {
+        const el = createCard(item.jp, item.id, 'jp');
+        jpGrid.appendChild(el);
+      });
+
+      // Render KO cards
+      shuffle(stageVocab).forEach(item => {
+        const el = createCard(item.ko, item.id, 'ko');
+        koGrid.appendChild(el);
+      });
+
+      window.scrollTo(0, 0);
     }
 
     function createCard(text, id, type) {
-      const btn = document.createElement("button");
-      btn.className = `card ${type === "jp" ? "jp-card" : "ko-card"}`;
+      const btn = document.createElement('button');
+      btn.className = `card ${type === 'jp' ? 'jp-card' : 'ko-card'}`;
       btn.textContent = text;
       btn.dataset.id = id;
       btn.dataset.type = type;
-      btn.addEventListener("click", () => handleCardClick(btn));
+      btn.onclick = () => handleCardClick(btn);
       return btn;
     }
 
-    function renderBoards() {
-      jpGrid.innerHTML = "";
-      koGrid.innerHTML = "";
+    function handleCardClick(btn) {
+      if (isLock || btn.classList.contains('matched') || btn.classList.contains('selected')) return;
 
-      const jpItems = shuffle(vocab);
-      const koItems = shuffle(vocab);
-
-      jpItems.forEach(item => {
-        jpGrid.appendChild(createCard(item.jp, item.id, "jp"));
-      });
-
-      koItems.forEach(item => {
-        koGrid.appendChild(createCard(item.ko, item.id, "ko"));
-      });
-    }
-
-    function clearWrongState() {
-      document.querySelectorAll(".card.wrong").forEach(card => {
-        card.classList.remove("wrong");
-      });
-    }
-
-    function clearSelections() {
-      document.querySelectorAll(".card.selected").forEach(card => {
-        card.classList.remove("selected");
-      });
-      selectedJP = null;
-      selectedKO = null;
-    }
-
-    function updateScore() {
-      scoreEl.textContent = score;
-      triesEl.textContent = tries;
-    }
-
-    function checkComplete() {
-      if (score === vocab.length) {
-        messageEl.textContent = "🎉 모두 맞췄어요! 정말 잘했어요!";
-        messageEl.className = "message success";
-      }
-    }
-
-    function handleCardClick(card) {
-      if (lockBoard) return;
-      if (card.classList.contains("matched")) return;
-
-      clearWrongState();
-
-      const type = card.dataset.type;
-
-      if (type === "jp") {
-        if (selectedJP === card) {
-          card.classList.remove("selected");
-          selectedJP = null;
-          return;
-        }
-        if (selectedJP) selectedJP.classList.remove("selected");
-        selectedJP = card;
-        selectedJP.classList.add("selected");
+      if (btn.dataset.type === 'jp') {
+        if (selectedJP) selectedJP.classList.remove('selected');
+        selectedJP = btn;
+      } else {
+        if (selectedKO) selectedKO.classList.remove('selected');
+        selectedKO = btn;
       }
 
-      if (type === "ko") {
-        if (selectedKO === card) {
-          card.classList.remove("selected");
-          selectedKO = null;
-          return;
-        }
-        if (selectedKO) selectedKO.classList.remove("selected");
-        selectedKO = card;
-        selectedKO.classList.add("selected");
-      }
+      btn.classList.add('selected');
 
       if (selectedJP && selectedKO) {
-        tries++;
-        updateScore();
-
-        const jpId = selectedJP.dataset.id;
-        const koId = selectedKO.dataset.id;
-
-        if (jpId === koId) {
-          selectedJP.classList.remove("selected");
-          selectedKO.classList.remove("selected");
-          selectedJP.classList.add("matched");
-          selectedKO.classList.add("matched");
-          selectedJP.disabled = true;
-          selectedKO.disabled = true;
-          selectedJP = null;
-          selectedKO = null;
-          score++;
-          updateScore();
-          messageEl.textContent = "✅ 정답!";
-          messageEl.className = "message success";
-          checkComplete();
-        } else {
-          lockBoard = true;
-          selectedJP.classList.add("wrong");
-          selectedKO.classList.add("wrong");
-          messageEl.textContent = "❌ 다시 생각해보세요!";
-          messageEl.className = "message";
-
-          setTimeout(() => {
-            clearSelections();
-            clearWrongState();
-            lockBoard = false;
-            messageEl.textContent = "";
-          }, 700);
-        }
+        checkMatch();
       }
     }
 
-    function resetGame() {
-      selectedJP = null;
-      selectedKO = null;
-      score = 0;
-      tries = 0;
-      lockBoard = false;
-      messageEl.textContent = "";
-      messageEl.className = "message";
-      updateScore();
-      renderBoards();
+    function checkMatch() {
+      const jpId = selectedJP.dataset.id;
+      const koId = selectedKO.dataset.id;
+
+      if (jpId === koId) {
+        // Match Success
+        selectedJP.className = 'card jp-card matched';
+        selectedKO.className = 'card ko-card matched';
+        
+        matchedCount++;
+        stageMatchedCount++;
+        
+        selectedJP = null;
+        selectedKO = null;
+        
+        msgBox.textContent = '참 잘했어요! ✨';
+        msgBox.className = 'text-center min-h-[40px] mb-4 font-bold text-lg text-green-600';
+        
+        updateProgress();
+        checkStageClear();
+      } else {
+        // Match Fail
+        isLock = true;
+        selectedJP.classList.add('wrong');
+        selectedKO.classList.add('wrong');
+        msgBox.textContent = '다시 한 번 봐볼까요? 🧐';
+        msgBox.className = 'text-center min-h-[40px] mb-4 font-bold text-lg text-red-500';
+
+        setTimeout(() => {
+          selectedJP.classList.remove('selected', 'wrong');
+          selectedKO.classList.remove('selected', 'wrong');
+          selectedJP = null;
+          selectedKO = null;
+          isLock = false;
+        }, 800);
+      }
     }
 
-    shuffleBtn.addEventListener("click", () => {
-      const currentScore = score;
-      const currentTries = tries;
-      renderBoards();
+    function updateProgress() {
+      const total = allVocab.length;
+      const percent = (matchedCount / total) * 100;
+      progressBar.style.width = `${percent}%`;
+      scoreDisplay.textContent = `완료: ${matchedCount} / ${total}`;
+    }
 
-      document.querySelectorAll(".card").forEach(card => {
-        const id = Number(card.dataset.id);
-        const matchedIds = [];
-
-        vocab.forEach(v => {
-          const jpMatched = document.querySelector(`.card.jp-card.matched[data-id="${v.id}"]`);
-          const koMatched = document.querySelector(`.card.ko-card.matched[data-id="${v.id}"]`);
-          if (jpMatched || koMatched) matchedIds.push(v.id);
-        });
-
-        if (matchedIds.includes(id)) {
-          card.classList.add("matched");
-          card.disabled = true;
+    function checkStageClear() {
+      const stageTotal = jpGrid.children.length;
+      if (stageMatchedCount === stageTotal) {
+        if (matchedCount === allVocab.length) {
+          msgBox.textContent = '🎉 모든 스테이지 클리어! 대단해요!';
+          nextBtn.textContent = '처음부터 다시하기';
+          nextBtn.onclick = () => location.reload();
+        } else {
+          msgBox.textContent = `STAGE ${currentStage + 1} 완료! 👏`;
         }
-      });
+        nextBtn.classList.remove('hidden');
+      }
+    }
 
-      score = currentScore;
-      tries = currentTries;
-      selectedJP = null;
-      selectedKO = null;
-      lockBoard = false;
-      updateScore();
-      messageEl.textContent = "🔀 카드 위치를 섞었어요!";
-      messageEl.className = "message";
-    });
+    nextBtn.onclick = () => {
+      currentStage++;
+      initStage();
+    };
 
-    resetBtn.addEventListener("click", resetGame);
+    resetBtn.onclick = () => {
+      if (confirm('진행 상황이 초기화됩니다. 다시 시작할까요?')) {
+        currentStage = 0;
+        matchedCount = 0;
+        initStage();
+      }
+    };
 
-    resetGame();
+    // Start Game
+    initStage();
   </script>
 </body>
 </html>
