@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>일본어-한국어 매칭 퍼즐 퀴즈</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: "Arial", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+      background: linear-gradient(135deg, #f7f4ff, #eef6ff);
+      color: #222;
+    }
+
+    .wrap {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+
+    h1 {
+      margin: 0 0 10px;
+      font-size: 32px;
+      text-align: center;
+    }
+
+    .sub {
+      text-align: center;
+      margin-bottom: 20px;
+      color: #555;
+      line-height: 1.6;
+    }
+
+    .topbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      justify-content: center;
+      align-items: center;
+      margin-bottom: 24px;
+    }
+
+    .info {
+      background: #fff;
+      border-radius: 16px;
+      padding: 10px 16px;
+      box-shadow: 0 6px 16px rgba(0,0,0,0.08);
+      font-weight: bold;
+    }
+
+    button {
+      border: none;
+      border-radius: 14px;
+      padding: 12px 18px;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      background: #6f7cff;
+      color: white;
+      box-shadow: 0 6px 14px rgba(111,124,255,0.25);
+      transition: transform 0.15s ease, opacity 0.15s ease;
+    }
+
+    button:hover {
+      transform: translateY(-2px);
+    }
+
+    button:active {
+      transform: translateY(0);
+    }
+
+    .boards {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+    }
+
+    .panel {
+      background: rgba(255,255,255,0.75);
+      backdrop-filter: blur(8px);
+      border-radius: 24px;
+      padding: 18px;
+      box-shadow: 0 10px 24px rgba(0,0,0,0.08);
+    }
+
+    .panel h2 {
+      margin: 0 0 14px;
+      text-align: center;
+      font-size: 24px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+    }
+
+    .card {
+      min-height: 88px;
+      border: none;
+      border-radius: 20px;
+      font-size: 28px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      padding: 10px;
+      line-height: 1.2;
+      user-select: none;
+      word-break: keep-all;
+    }
+
+    .jp-card {
+      background: #f3e0b8;
+    }
+
+    .ko-card {
+      background: #dfe4ff;
+    }
+
+    .card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 18px rgba(0,0,0,0.1);
+    }
+
+    .card.selected {
+      outline: 5px solid #6f7cff;
+      transform: scale(1.03);
+    }
+
+    .card.matched {
+      background: #c8f7d2 !important;
+      color: #1f6a33;
+      cursor: default;
+      opacity: 0.9;
+    }
+
+    .card.wrong {
+      animation: shake 0.3s;
+      background: #ffd7d7 !important;
+    }
+
+    .message {
+      margin-top: 20px;
+      text-align: center;
+      font-size: 22px;
+      font-weight: bold;
+      min-height: 32px;
+    }
+
+    .success {
+      color: #157a2f;
+    }
+
+    @keyframes shake {
+      0% { transform: translateX(0); }
+      25% { transform: translateX(-5px); }
+      50% { transform: translateX(5px); }
+      75% { transform: translateX(-5px); }
+      100% { transform: translateX(0); }
+    }
+
+    @media (max-width: 900px) {
+      .boards {
+        grid-template-columns: 1fr;
+      }
+
+      .grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .card {
+        font-size: 24px;
+        min-height: 80px;
+      }
+    }
+
+    @media (max-width: 520px) {
+      .grid {
+        grid-template-columns: 1fr;
+      }
+
+      .card {
+        font-size: 22px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>🧩 일본어-한국어 매칭 퍼즐 퀴즈</h1>
+    <div class="sub">
+      일본어 카드 1개와 한국어 카드 1개를 차례대로 눌러서 짝을 맞춰보세요 😊
+    </div>
+
+    <div class="topbar">
+      <div class="info">점수: <span id="score">0</span> / <span id="total">0</span></div>
+      <div class="info">시도: <span id="tries">0</span></div>
+      <button id="shuffleBtn">섞기</button>
+      <button id="resetBtn">다시하기</button>
+    </div>
+
+    <div class="boards">
+      <section class="panel">
+        <h2>🇯🇵 일본어</h2>
+        <div class="grid" id="jpGrid"></div>
+      </section>
+
+      <section class="panel">
+        <h2>🇰🇷 한국어 뜻</h2>
+        <div class="grid" id="koGrid"></div>
+      </section>
+    </div>
+
+    <div class="message" id="message"></div>
+  </div>
+
+  <script>
+    const vocab = [
+      { id: 1, jp: "すし", ko: "초밥" },
+      { id: 2, jp: "ねこ", ko: "고양이" },
+      { id: 3, jp: "きもの", ko: "기모노" },
+      { id: 4, jp: "そば", ko: "소바" },
+      { id: 5, jp: "かつ", ko: "커틀릿" },
+      { id: 6, jp: "さくら", ko: "벚꽃" },
+      { id: 7, jp: "ゆめ", ko: "꿈" },
+      { id: 8, jp: "たこ", ko: "문어" },
+      { id: 9, jp: "つなみ", ko: "쓰나미" },
+      { id: 10, jp: "いぬ", ko: "강아지" },
+      { id: 11, jp: "やま", ko: "산" },
+      { id: 12, jp: "くるま", ko: "자동차" },
+      { id: 13, jp: "はな", ko: "꽃" },
+      { id: 14, jp: "あめ", ko: "비" },
+      { id: 15, jp: "りんご", ko: "사과" },
+      { id: 16, jp: "みず", ko: "물" },
+      { id: 17, jp: "うた", ko: "노래" },
+      { id: 18, jp: "やさい", ko: "채소" },
+      { id: 19, jp: "みかん", ko: "귤" },
+      { id: 20, jp: "いちご", ko: "딸기" },
+      { id: 21, jp: "ぶどう", ko: "포도" },
+      { id: 22, jp: "もも", ko: "복숭아" },
+      { id: 23, jp: "すいか", ko: "수박" },
+      { id: 24, jp: "なし", ko: "배" },
+      { id: 25, jp: "ばなな", ko: "바나나" },
+      { id: 26, jp: "メロン", ko: "멜론" },
+      { id: 27, jp: "らーめん", ko: "라면" },
+      { id: 28, jp: "からあげ", ko: "가라아게" },
+      { id: 29, jp: "うどん", ko: "우동" },
+      { id: 30, jp: "カレー", ko: "카레" },
+      { id: 31, jp: "たこやき", ko: "타코야키" },
+      { id: 32, jp: "やきにく", ko: "야키니쿠" },
+      { id: 33, jp: "とんかつ", ko: "돈가스" },
+      { id: 34, jp: "おにぎり", ko: "주먹밥" }
+    ];
+
+    const jpGrid = document.getElementById("jpGrid");
+    const koGrid = document.getElementById("koGrid");
+    const scoreEl = document.getElementById("score");
+    const totalEl = document.getElementById("total");
+    const triesEl = document.getElementById("tries");
+    const messageEl = document.getElementById("message");
+    const shuffleBtn = document.getElementById("shuffleBtn");
+    const resetBtn = document.getElementById("resetBtn");
+
+    let selectedJP = null;
+    let selectedKO = null;
+    let score = 0;
+    let tries = 0;
+    let lockBoard = false;
+
+    totalEl.textContent = vocab.length;
+
+    function shuffle(array) {
+      const copied = [...array];
+      for (let i = copied.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [copied[i], copied[j]] = [copied[j], copied[i]];
+      }
+      return copied;
+    }
+
+    function createCard(text, id, type) {
+      const btn = document.createElement("button");
+      btn.className = `card ${type === "jp" ? "jp-card" : "ko-card"}`;
+      btn.textContent = text;
+      btn.dataset.id = id;
+      btn.dataset.type = type;
+      btn.addEventListener("click", () => handleCardClick(btn));
+      return btn;
+    }
+
+    function renderBoards() {
+      jpGrid.innerHTML = "";
+      koGrid.innerHTML = "";
+
+      const jpItems = shuffle(vocab);
+      const koItems = shuffle(vocab);
+
+      jpItems.forEach(item => {
+        jpGrid.appendChild(createCard(item.jp, item.id, "jp"));
+      });
+
+      koItems.forEach(item => {
+        koGrid.appendChild(createCard(item.ko, item.id, "ko"));
+      });
+    }
+
+    function clearWrongState() {
+      document.querySelectorAll(".card.wrong").forEach(card => {
+        card.classList.remove("wrong");
+      });
+    }
+
+    function clearSelections() {
+      document.querySelectorAll(".card.selected").forEach(card => {
+        card.classList.remove("selected");
+      });
+      selectedJP = null;
+      selectedKO = null;
+    }
+
+    function updateScore() {
+      scoreEl.textContent = score;
+      triesEl.textContent = tries;
+    }
+
+    function checkComplete() {
+      if (score === vocab.length) {
+        messageEl.textContent = "🎉 모두 맞췄어요! 정말 잘했어요!";
+        messageEl.className = "message success";
+      }
+    }
+
+    function handleCardClick(card) {
+      if (lockBoard) return;
+      if (card.classList.contains("matched")) return;
+
+      clearWrongState();
+
+      const type = card.dataset.type;
+
+      if (type === "jp") {
+        if (selectedJP === card) {
+          card.classList.remove("selected");
+          selectedJP = null;
+          return;
+        }
+        if (selectedJP) selectedJP.classList.remove("selected");
+        selectedJP = card;
+        selectedJP.classList.add("selected");
+      }
+
+      if (type === "ko") {
+        if (selectedKO === card) {
+          card.classList.remove("selected");
+          selectedKO = null;
+          return;
+        }
+        if (selectedKO) selectedKO.classList.remove("selected");
+        selectedKO = card;
+        selectedKO.classList.add("selected");
+      }
+
+      if (selectedJP && selectedKO) {
+        tries++;
+        updateScore();
+
+        const jpId = selectedJP.dataset.id;
+        const koId = selectedKO.dataset.id;
+
+        if (jpId === koId) {
+          selectedJP.classList.remove("selected");
+          selectedKO.classList.remove("selected");
+          selectedJP.classList.add("matched");
+          selectedKO.classList.add("matched");
+          selectedJP.disabled = true;
+          selectedKO.disabled = true;
+          selectedJP = null;
+          selectedKO = null;
+          score++;
+          updateScore();
+          messageEl.textContent = "✅ 정답!";
+          messageEl.className = "message success";
+          checkComplete();
+        } else {
+          lockBoard = true;
+          selectedJP.classList.add("wrong");
+          selectedKO.classList.add("wrong");
+          messageEl.textContent = "❌ 다시 생각해보세요!";
+          messageEl.className = "message";
+
+          setTimeout(() => {
+            clearSelections();
+            clearWrongState();
+            lockBoard = false;
+            messageEl.textContent = "";
+          }, 700);
+        }
+      }
+    }
+
+    function resetGame() {
+      selectedJP = null;
+      selectedKO = null;
+      score = 0;
+      tries = 0;
+      lockBoard = false;
+      messageEl.textContent = "";
+      messageEl.className = "message";
+      updateScore();
+      renderBoards();
+    }
+
+    shuffleBtn.addEventListener("click", () => {
+      const currentScore = score;
+      const currentTries = tries;
+      renderBoards();
+
+      document.querySelectorAll(".card").forEach(card => {
+        const id = Number(card.dataset.id);
+        const matchedIds = [];
+
+        vocab.forEach(v => {
+          const jpMatched = document.querySelector(`.card.jp-card.matched[data-id="${v.id}"]`);
+          const koMatched = document.querySelector(`.card.ko-card.matched[data-id="${v.id}"]`);
+          if (jpMatched || koMatched) matchedIds.push(v.id);
+        });
+
+        if (matchedIds.includes(id)) {
+          card.classList.add("matched");
+          card.disabled = true;
+        }
+      });
+
+      score = currentScore;
+      tries = currentTries;
+      selectedJP = null;
+      selectedKO = null;
+      lockBoard = false;
+      updateScore();
+      messageEl.textContent = "🔀 카드 위치를 섞었어요!";
+      messageEl.className = "message";
+    });
+
+    resetBtn.addEventListener("click", resetGame);
+
+    resetGame();
+  </script>
+</body>
+</html>
