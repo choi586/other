@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>일본어 뜻 맞추기 배치형 퀴즈</title>
+  <title>일본어-한국어 드래그 매칭 퀴즈</title>
   <style>
     * { box-sizing: border-box; }
 
@@ -15,14 +15,14 @@
     }
 
     .wrap {
-      max-width: 1200px;
+      max-width: 1100px;
       margin: 0 auto;
       padding: 24px;
     }
 
     h1 {
       text-align: center;
-      margin-bottom: 10px;
+      margin: 0 0 10px;
       font-size: 32px;
     }
 
@@ -36,9 +36,10 @@
     .topbar {
       display: flex;
       justify-content: center;
+      align-items: center;
       gap: 12px;
       flex-wrap: wrap;
-      margin-bottom: 24px;
+      margin-bottom: 20px;
     }
 
     .info {
@@ -59,13 +60,21 @@
       background: #6f7cff;
       color: white;
       box-shadow: 0 6px 14px rgba(111,124,255,0.25);
-      transition: transform 0.15s ease;
+      transition: transform 0.15s ease, opacity 0.15s ease;
     }
 
-    button:hover { transform: translateY(-2px); }
+    button:hover {
+      transform: translateY(-2px);
+    }
+
+    button:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+      transform: none;
+    }
 
     .panel {
-      background: rgba(255,255,255,0.78);
+      background: rgba(255,255,255,0.82);
       border-radius: 24px;
       padding: 20px;
       box-shadow: 0 10px 24px rgba(0,0,0,0.08);
@@ -75,24 +84,30 @@
     .panel h2 {
       margin: 0 0 16px;
       text-align: center;
+      font-size: 24px;
     }
 
     .word-bank {
       display: grid;
-      grid-template-columns: repeat(4, 1fr);
+      grid-template-columns: repeat(3, 1fr);
       gap: 12px;
+      min-height: 120px;
     }
 
     .jp-chip {
       background: #f3e0b8;
-      border: none;
       border-radius: 18px;
-      min-height: 72px;
-      font-size: 28px;
+      min-height: 76px;
+      font-size: 30px;
       font-weight: bold;
       padding: 10px;
-      cursor: pointer;
-      transition: all 0.15s ease;
+      cursor: grab;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      user-select: none;
+      transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
     }
 
     .jp-chip:hover {
@@ -100,13 +115,12 @@
       box-shadow: 0 8px 18px rgba(0,0,0,0.1);
     }
 
-    .jp-chip.selected {
-      outline: 4px solid #6f7cff;
-      transform: scale(1.03);
+    .jp-chip.dragging {
+      opacity: 0.5;
     }
 
     .jp-chip.used {
-      background: #cfd3df;
+      background: #cfd4df;
       color: #777;
       cursor: default;
       opacity: 0.8;
@@ -114,13 +128,12 @@
 
     .quiz-list {
       display: grid;
-      grid-template-columns: 1fr;
       gap: 12px;
     }
 
     .quiz-row {
       display: grid;
-      grid-template-columns: 1.2fr 1fr 110px;
+      grid-template-columns: 1fr 1fr 90px;
       gap: 12px;
       align-items: center;
       background: #f8f9ff;
@@ -135,7 +148,7 @@
     }
 
     .drop-box {
-      min-height: 68px;
+      min-height: 70px;
       border-radius: 16px;
       border: 3px dashed #b8c0ff;
       background: white;
@@ -144,19 +157,21 @@
       justify-content: center;
       font-size: 28px;
       font-weight: bold;
-      cursor: pointer;
-      transition: all 0.15s ease;
       padding: 8px;
       text-align: center;
+      transition: all 0.15s ease;
     }
 
-    .drop-box:hover {
-      background: #f5f7ff;
+    .drop-box.drag-over {
+      background: #eef1ff;
+      border-color: #6f7cff;
+      transform: scale(1.02);
     }
 
     .drop-box.filled {
       border-style: solid;
       background: #fff8e7;
+      border-color: #d9b96a;
     }
 
     .drop-box.correct {
@@ -165,45 +180,42 @@
       color: #185f2a;
     }
 
-    .drop-box.wrong {
-      background: #ffdede;
-      border-color: #e06a6a;
-    }
-
     .row-btn {
       padding: 10px 12px;
       font-size: 14px;
       background: #8c97ff;
     }
 
-    .message {
-      text-align: center;
-      font-size: 22px;
-      font-weight: bold;
-      min-height: 32px;
-      margin-top: 10px;
+    .step-dots {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      margin: 10px 0 22px;
+      flex-wrap: wrap;
     }
 
-    .success {
-      color: #157a2f;
+    .dot {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: #d4d9f7;
+    }
+
+    .dot.active {
+      background: #6f7cff;
+    }
+
+    .dot.done {
+      background: #57b26a;
     }
 
     @media (max-width: 900px) {
-      .word-bank {
-        grid-template-columns: repeat(3, 1fr);
-      }
-
       .quiz-row {
         grid-template-columns: 1fr;
       }
-
-      .ko-label,
-      .drop-box {
-        font-size: 22px;
-      }
     }
 
-    @media (max-width: 600px) {
+    @media (max-width: 700px) {
       .word-bank {
         grid-template-columns: repeat(2, 1fr);
       }
@@ -211,23 +223,35 @@
       .jp-chip {
         font-size: 24px;
       }
+
+      .ko-label, .drop-box {
+        font-size: 22px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .word-bank {
+        grid-template-columns: 1fr;
+      }
     }
   </style>
 </head>
 <body>
   <div class="wrap">
-    <h1>🧩 일본어 뜻 맞추기 배치형 퀴즈</h1>
+    <h1>🧩 일본어-한국어 드래그 매칭 퀴즈</h1>
     <div class="sub">
-      위의 일본어 단어를 먼저 선택한 뒤,<br>
-      아래 한국어 뜻 옆의 빈칸을 눌러 넣어보세요 😊
+      위의 일본어 단어를 끌어서 아래 뜻 옆의 알맞은 칸에 놓아보세요
     </div>
 
     <div class="topbar">
-      <div class="info">정답: <span id="score">0</span> / <span id="total">0</span></div>
-      <button id="checkBtn">채점하기</button>
-      <button id="shuffleBtn">문제 섞기</button>
-      <button id="resetBtn">다시하기</button>
+      <div class="info">단계 <span id="stepNow">1</span> / <span id="stepTotal">1</span></div>
+      <div class="info">완료 <span id="doneCount">0</span> / <span id="stepSize">0</span></div>
+      <button id="prevBtn">이전</button>
+      <button id="nextBtn">다음</button>
+      <button id="resetBtn">처음부터</button>
     </div>
+
+    <div class="step-dots" id="stepDots"></div>
 
     <section class="panel">
       <h2>🇯🇵 일본어 단어 블록</h2>
@@ -235,11 +259,9 @@
     </section>
 
     <section class="panel">
-      <h2>🇰🇷 뜻에 맞는 일본어를 옆에 놓아보세요</h2>
+      <h2>🇰🇷 뜻에 맞는 일본어를 놓으세요</h2>
       <div class="quiz-list" id="quizList"></div>
     </section>
-
-    <div class="message" id="message"></div>
   </div>
 
   <script>
@@ -280,19 +302,24 @@
       { id: 34, jp: "おにぎり", ko: "주먹밥" }
     ];
 
+    const STEP_SIZE = 9;
+
     const wordBank = document.getElementById("wordBank");
     const quizList = document.getElementById("quizList");
-    const scoreEl = document.getElementById("score");
-    const totalEl = document.getElementById("total");
-    const messageEl = document.getElementById("message");
-    const checkBtn = document.getElementById("checkBtn");
-    const shuffleBtn = document.getElementById("shuffleBtn");
+    const stepNow = document.getElementById("stepNow");
+    const stepTotal = document.getElementById("stepTotal");
+    const doneCount = document.getElementById("doneCount");
+    const stepSize = document.getElementById("stepSize");
+    const stepDots = document.getElementById("stepDots");
+    const prevBtn = document.getElementById("prevBtn");
+    const nextBtn = document.getElementById("nextBtn");
     const resetBtn = document.getElementById("resetBtn");
 
-    let selectedWordId = null;
-    let placedMap = {};
-
-    totalEl.textContent = vocab.length;
+    let steps = [];
+    let currentStep = 0;
+    let placedMaps = [];
+    let wordOrders = [];
+    let meaningOrders = [];
 
     function shuffle(arr) {
       const a = [...arr];
@@ -303,47 +330,101 @@
       return a;
     }
 
+    function chunkArray(arr, size) {
+      const result = [];
+      for (let i = 0; i < arr.length; i += size) {
+        result.push(arr.slice(i, i + size));
+      }
+      return result;
+    }
+
+    function makeSteps() {
+      steps = chunkArray(vocab, STEP_SIZE);
+      placedMaps = steps.map(() => ({}));
+      wordOrders = steps.map(step => shuffle(step));
+      meaningOrders = steps.map(step => shuffle(step));
+    }
+
+    function getCurrentStepData() {
+      return steps[currentStep];
+    }
+
+    function getPlacedMap() {
+      return placedMaps[currentStep];
+    }
+
+    function getItemById(id) {
+      return vocab.find(v => String(v.id) === String(id));
+    }
+
+    function countDoneInStep(stepIndex) {
+      const step = steps[stepIndex];
+      const placed = placedMaps[stepIndex];
+      return step.filter(item => placed[item.id] && String(placed[item.id]) === String(item.id)).length;
+    }
+
+    function isStepComplete(stepIndex) {
+      return countDoneInStep(stepIndex) === steps[stepIndex].length;
+    }
+
+    function renderDots() {
+      stepDots.innerHTML = "";
+      steps.forEach((_, idx) => {
+        const dot = document.createElement("div");
+        dot.className = "dot";
+        if (idx === currentStep) dot.classList.add("active");
+        if (isStepComplete(idx)) dot.classList.add("done");
+        stepDots.appendChild(dot);
+      });
+    }
+
+    function renderTopbar() {
+      stepNow.textContent = currentStep + 1;
+      stepTotal.textContent = steps.length;
+      doneCount.textContent = countDoneInStep(currentStep);
+      stepSize.textContent = steps[currentStep].length;
+      prevBtn.disabled = currentStep === 0;
+      nextBtn.disabled = currentStep === steps.length - 1;
+    }
+
     function renderWordBank() {
       wordBank.innerHTML = "";
-      const shuffledWords = shuffle(vocab);
+      const placedMap = getPlacedMap();
+      const order = wordOrders[currentStep];
 
-      shuffledWords.forEach(item => {
-        const btn = document.createElement("button");
-        btn.className = "jp-chip";
-        btn.textContent = item.jp;
-        btn.dataset.id = item.id;
+      order.forEach(item => {
+        const used = Object.values(placedMap).includes(String(item.id));
 
-        if (Object.values(placedMap).includes(String(item.id))) {
-          btn.classList.add("used");
-          btn.disabled = true;
-        }
+        const chip = document.createElement("div");
+        chip.className = "jp-chip";
+        chip.textContent = item.jp;
+        chip.dataset.id = item.id;
 
-        if (selectedWordId === String(item.id)) {
-          btn.classList.add("selected");
-        }
+        if (used) {
+          chip.classList.add("used");
+        } else {
+          chip.draggable = true;
 
-        btn.addEventListener("click", () => {
-          if (btn.classList.contains("used")) return;
-
-          document.querySelectorAll(".jp-chip").forEach(chip => {
-            chip.classList.remove("selected");
+          chip.addEventListener("dragstart", (e) => {
+            chip.classList.add("dragging");
+            e.dataTransfer.setData("text/plain", String(item.id));
           });
 
-          selectedWordId = String(item.id);
-          btn.classList.add("selected");
-          messageEl.textContent = `선택한 단어: ${item.jp}`;
-          messageEl.className = "message";
-        });
+          chip.addEventListener("dragend", () => {
+            chip.classList.remove("dragging");
+          });
+        }
 
-        wordBank.appendChild(btn);
+        wordBank.appendChild(chip);
       });
     }
 
     function renderQuizList() {
       quizList.innerHTML = "";
-      const shuffledMeaning = shuffle(vocab);
+      const placedMap = getPlacedMap();
+      const order = meaningOrders[currentStep];
 
-      shuffledMeaning.forEach(item => {
+      order.forEach(item => {
         const row = document.createElement("div");
         row.className = "quiz-row";
 
@@ -354,48 +435,46 @@
         const box = document.createElement("div");
         box.className = "drop-box";
         box.dataset.answerId = item.id;
-        box.dataset.rowId = item.id;
 
         if (placedMap[item.id]) {
-          const matchedWord = vocab.find(v => String(v.id) === placedMap[item.id]);
-          box.textContent = matchedWord.jp;
-          box.classList.add("filled");
+          const word = getItemById(placedMap[item.id]);
+          box.textContent = word.jp;
+          box.classList.add("filled", "correct");
         } else {
-          box.textContent = "여기를 눌러 넣기";
+          box.textContent = "";
         }
 
-        box.addEventListener("click", () => {
-          if (!selectedWordId) {
-            messageEl.textContent = "먼저 위에서 일본어 단어를 선택하세요 😊";
-            messageEl.className = "message";
-            return;
-          }
+        if (!placedMap[item.id]) {
+          box.addEventListener("dragover", (e) => {
+            e.preventDefault();
+            box.classList.add("drag-over");
+          });
 
-          const previousWordId = placedMap[item.id];
+          box.addEventListener("dragleave", () => {
+            box.classList.remove("drag-over");
+          });
 
-          if (previousWordId) {
-            delete placedMap[item.id];
-          }
+          box.addEventListener("drop", (e) => {
+            e.preventDefault();
+            box.classList.remove("drag-over");
 
-          for (const key in placedMap) {
-            if (placedMap[key] === selectedWordId) {
-              delete placedMap[key];
-            }
-          }
+            const draggedId = e.dataTransfer.getData("text/plain");
+            if (!draggedId) return;
 
-          placedMap[item.id] = selectedWordId;
-          selectedWordId = null;
-          renderAll();
-        });
+            if (String(draggedId) !== String(item.id)) return;
+
+            placedMap[item.id] = draggedId;
+            renderAll();
+          });
+        }
 
         const clearBtn = document.createElement("button");
         clearBtn.className = "row-btn";
         clearBtn.textContent = "지우기";
+        clearBtn.disabled = !placedMap[item.id];
         clearBtn.addEventListener("click", () => {
-          if (placedMap[item.id]) {
-            delete placedMap[item.id];
-            renderAll();
-          }
+          delete placedMap[item.id];
+          renderAll();
         });
 
         row.appendChild(ko);
@@ -406,65 +485,30 @@
     }
 
     function renderAll() {
+      renderTopbar();
+      renderDots();
       renderWordBank();
       renderQuizList();
-      scoreEl.textContent = "0";
-      document.querySelectorAll(".drop-box").forEach(box => {
-        box.classList.remove("correct", "wrong");
-      });
-      messageEl.textContent = "";
-      messageEl.className = "message";
     }
 
-    function gradeQuiz() {
-      let correct = 0;
-      const boxes = document.querySelectorAll(".drop-box");
-
-      boxes.forEach(box => {
-        box.classList.remove("correct", "wrong");
-
-        const answerId = String(box.dataset.answerId);
-        const userId = placedMap[answerId];
-
-        if (!userId) return;
-
-        if (userId === answerId) {
-          correct++;
-          box.classList.add("correct");
-        } else {
-          box.classList.add("wrong");
-        }
-      });
-
-      scoreEl.textContent = correct;
-
-      if (correct === vocab.length) {
-        messageEl.textContent = "🎉 모두 정답이에요! 정말 잘했어요!";
-        messageEl.className = "message success";
-      } else {
-        messageEl.textContent = `현재 정답은 ${correct}개예요. 틀린 곳을 다시 찾아보세요 😊`;
-        messageEl.className = "message";
-      }
+    function goStep(index) {
+      if (index < 0 || index >= steps.length) return;
+      currentStep = index;
+      renderAll();
     }
 
     function resetGame() {
-      selectedWordId = null;
-      placedMap = {};
-      scoreEl.textContent = "0";
-      messageEl.textContent = "";
-      messageEl.className = "message";
-      renderWordBank();
-      renderQuizList();
+      currentStep = 0;
+      makeSteps();
+      renderAll();
     }
 
-    checkBtn.addEventListener("click", gradeQuiz);
+    prevBtn.addEventListener("click", () => {
+      goStep(currentStep - 1);
+    });
 
-    shuffleBtn.addEventListener("click", () => {
-      selectedWordId = null;
-      renderWordBank();
-      renderQuizList();
-      messageEl.textContent = "🔀 문제 순서를 섞었어요!";
-      messageEl.className = "message";
+    nextBtn.addEventListener("click", () => {
+      goStep(currentStep + 1);
     });
 
     resetBtn.addEventListener("click", resetGame);
