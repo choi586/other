@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <title>두 팀 점수판</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: #111;
+      color: white;
+      font-family: Arial, sans-serif;
+      overflow: hidden;
+    }
+
+    .topbar {
+      position: fixed;
+      top: 20px;
+      left: 20px;
+      z-index: 10;
+    }
+
+    button {
+      font-size: 24px;
+      padding: 12px 20px;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+    }
+
+    .board {
+      display: flex;
+      width: 100vw;
+      height: 100vh;
+    }
+
+    .team {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .team-a {
+      background: #1e3a8a;
+    }
+
+    .team-b {
+      background: #991b1b;
+    }
+
+    .label {
+      font-size: 5vw;
+      font-weight: bold;
+      margin-bottom: 2vh;
+    }
+
+    .score {
+      font-size: 20vw;
+      font-weight: bold;
+      line-height: 1;
+    }
+
+    .center-vs {
+      position: fixed;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 5vw;
+      font-weight: bold;
+      background: rgba(0,0,0,0.35);
+      padding: 20px 30px;
+      border-radius: 20px;
+    }
+
+    .status {
+      position: fixed;
+      bottom: 20px;
+      left: 20px;
+      font-size: 20px;
+      opacity: 0.9;
+      background: rgba(0,0,0,0.4);
+      padding: 10px 14px;
+      border-radius: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <button id="connectBtn">마이크로비트 연결</button>
+  </div>
+
+  <div class="board">
+    <div class="team team-a">
+      <div class="label">A TEAM</div>
+      <div class="score" id="scoreA">0</div>
+    </div>
+    <div class="team team-b">
+      <div class="label">B TEAM</div>
+      <div class="score" id="scoreB">0</div>
+    </div>
+  </div>
+
+  <div class="center-vs">VS</div>
+  <div class="status" id="status">연결 안 됨</div>
+
+  <script>
+    const connectBtn = document.getElementById("connectBtn");
+    const scoreAEl = document.getElementById("scoreA");
+    const scoreBEl = document.getElementById("scoreB");
+    const statusEl = document.getElementById("status");
+
+    let reader;
+
+    function parseLine(line) {
+      // 예: A:3,B:-1
+      const match = line.match(/A:([-\d]+),B:([-\d]+)/);
+      if (!match) return;
+
+      const a = Number(match[1]);
+      const b = Number(match[2]);
+
+      if (!isNaN(a)) scoreAEl.textContent = a;
+      if (!isNaN(b)) scoreBEl.textContent = b;
+    }
+
+    connectBtn.addEventListener("click", async () => {
+      try {
+        const port = await navigator.serial.requestPort();
+        await port.open({ baudRate: 115200 });
+
+        statusEl.textContent = "연결됨";
+
+        const decoder = new TextDecoderStream();
+        port.readable.pipeTo(decoder.writable);
+        reader = decoder.readable.getReader();
+
+        let buffer = "";
+
+        while (true) {
+          const { value, done } = await reader.read();
+          if (done) break;
+          if (!value) continue;
+
+          buffer += value;
+          const lines = buffer.split("\n");
+          buffer = lines.pop();
+
+          for (const line of lines) {
+            parseLine(line.trim());
+          }
+        }
+      } catch (e) {
+        statusEl.textContent = "연결 실패";
+        console.error(e);
+      }
+    });
+  </script>
+</body>
+</html>
