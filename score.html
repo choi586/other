@@ -81,9 +81,9 @@
       left: 20px;
       bottom: 20px;
       z-index: 20;
-      font-size: 18px;
+      font-size: 16px;
       background: rgba(0, 0, 0, 0.45);
-      padding: 12px 16px;
+      padding: 10px 14px;
       border-radius: 12px;
       max-width: calc(100vw - 40px);
       white-space: pre-wrap;
@@ -100,6 +100,7 @@
       <div class="label">A TEAM</div>
       <div class="score" id="scoreA">0</div>
     </section>
+
     <section class="team team-b">
       <div class="label">B TEAM</div>
       <div class="score" id="scoreB">0</div>
@@ -117,74 +118,65 @@
 
     let port = null;
     let reader = null;
-    let buffer = "";
+    let textBuffer = "";
 
-    function updateStatus(text) {
-      statusEl.textContent = text;
+    function applyLineImmediately(line) {
+      const match = line.match(/A\s*:\s*(-?\d+)\s*,\s*B\s*:\s*(-?\d+)/i);
+      if (!match) return;
+
+      scoreAEl.textContent = match[1];
+      scoreBEl.textContent = match[2];
+      statusEl.textContent = "연결됨\n마지막 수신: " + line;
     }
 
-    function applyLatestValidScore(lines) {
-      let lastValid = null;
+    async function startReading() {
+      const decoder = new TextDecoderStream();
+      port.readable.pipeTo(decoder.writable);
+      reader = decoder.readable.getReader();
 
-      for (const raw of lines) {
-        const line = raw.trim();
-        if (!line) continue;
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        if (!value) continue;
 
-        const match = line.match(/A\s*:\s*(-?\d+)\s*,\s*B\s*:\s*(-?\d+)/i);
-        if (match) {
-          lastValid = {
-            line,
-            a: match[1],
-            b: match[2]
-          };
+        textBuffer += value;
+
+        let newlineIndex;
+        while ((newlineIndex = textBuffer.search(/\r?\n/)) !== -1) {
+          const line = textBuffer.slice(0, newlineIndex).trim();
+
+          // \r\n 처리용으로 다음 줄 시작 위치 계산
+          const nextStart =
+            textBuffer[newlineIndex] === "\r" && textBuffer[newlineIndex + 1] === "\n"
+              ? newlineIndex + 2
+              : newlineIndex + 1;
+
+          textBuffer = textBuffer.slice(nextStart);
+
+          if (line) {
+            applyLineImmediately(line);
+          }
         }
       }
-
-      if (lastValid) {
-        scoreAEl.textContent = lastValid.a;
-        scoreBEl.textContent = lastValid.b;
-        updateStatus("연결됨\n마지막 수신: " + lastValid.line);
-      }
     }
 
-    async function connectSerial() {
+    connectBtn.addEventListener("click", async () => {
       try {
         if (!("serial" in navigator)) {
-          updateStatus("이 브라우저는 Web Serial 미지원");
+          statusEl.textContent = "이 브라우저는 Web Serial 미지원";
           return;
         }
 
-        updateStatus("포트 선택 중...");
         port = await navigator.serial.requestPort();
-
-        updateStatus("포트 연결 중...");
         await port.open({ baudRate: 115200 });
 
-        updateStatus("연결됨\n점수 대기 중...");
-
-        const decoder = new TextDecoderStream();
-        port.readable.pipeTo(decoder.writable);
-        reader = decoder.readable.getReader();
-
-        while (true) {
-          const { value, done } = await reader.read();
-          if (done) break;
-          if (!value) continue;
-
-          buffer += value;
-
-          const parts = buffer.split(/\r?\n/);
-          buffer = parts.pop() || "";
-
-          applyLatestValidScore(parts);
-        }
+        statusEl.textContent = "연결됨\n점수 대기 중...";
+        startReading();
       } catch (e) {
-        updateStatus("연결 실패: " + e.message);
+        statusEl.textContent = "연결 실패: " + e.message;
         console.error(e);
       }
-    }
-
-    connectBtn.addEventListener("click", connectSerial);
+    });
   </script>
 </body>
 </html>
