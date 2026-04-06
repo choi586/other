@@ -2,33 +2,44 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>두 팀 점수판</title>
   <style>
     * {
       box-sizing: border-box;
     }
 
-    body {
+    html, body {
       margin: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      font-family: Arial, sans-serif;
       background: #111;
       color: white;
-      font-family: Arial, sans-serif;
-      overflow: hidden;
+    }
+
+    body {
+      position: relative;
     }
 
     .topbar {
       position: fixed;
       top: 20px;
       left: 20px;
-      z-index: 10;
+      z-index: 20;
+      display: flex;
+      gap: 12px;
+      align-items: center;
     }
 
     button {
-      font-size: 24px;
+      font-size: 22px;
       padding: 12px 20px;
       border: none;
-      border-radius: 10px;
+      border-radius: 12px;
       cursor: pointer;
+      font-weight: bold;
     }
 
     .board {
@@ -43,6 +54,7 @@
       flex-direction: column;
       justify-content: center;
       align-items: center;
+      position: relative;
     }
 
     .team-a {
@@ -54,14 +66,15 @@
     }
 
     .label {
-      font-size: 5vw;
-      font-weight: bold;
+      font-size: 4.5vw;
+      font-weight: 700;
       margin-bottom: 2vh;
+      letter-spacing: 0.08em;
     }
 
     .score {
-      font-size: 20vw;
-      font-weight: bold;
+      font-size: 22vw;
+      font-weight: 800;
       line-height: 1;
     }
 
@@ -70,22 +83,26 @@
       left: 50%;
       top: 50%;
       transform: translate(-50%, -50%);
-      font-size: 5vw;
-      font-weight: bold;
-      background: rgba(0,0,0,0.35);
-      padding: 20px 30px;
-      border-radius: 20px;
+      font-size: 4.5vw;
+      font-weight: 800;
+      background: rgba(0, 0, 0, 0.35);
+      padding: 18px 28px;
+      border-radius: 18px;
+      z-index: 10;
     }
 
     .status {
       position: fixed;
-      bottom: 20px;
       left: 20px;
-      font-size: 20px;
-      opacity: 0.9;
-      background: rgba(0,0,0,0.4);
-      padding: 10px 14px;
-      border-radius: 10px;
+      bottom: 20px;
+      z-index: 20;
+      font-size: 18px;
+      background: rgba(0, 0, 0, 0.45);
+      padding: 12px 16px;
+      border-radius: 12px;
+      max-width: calc(100vw - 40px);
+      word-break: break-all;
+      white-space: pre-wrap;
     }
   </style>
 </head>
@@ -95,14 +112,15 @@
   </div>
 
   <div class="board">
-    <div class="team team-a">
+    <section class="team team-a">
       <div class="label">A TEAM</div>
       <div class="score" id="scoreA">0</div>
-    </div>
-    <div class="team team-b">
+    </section>
+
+    <section class="team team-b">
       <div class="label">B TEAM</div>
       <div class="score" id="scoreB">0</div>
-    </div>
+    </section>
   </div>
 
   <div class="center-vs">VS</div>
@@ -114,49 +132,93 @@
     const scoreBEl = document.getElementById("scoreB");
     const statusEl = document.getElementById("status");
 
-    let reader;
+    let port = null;
+    let reader = null;
+    let keepReading = false;
+    let buffer = "";
 
-    function parseLine(line) {
-      // 예: A:3,B:-1
-      const match = line.match(/A:([-\d]+),B:([-\d]+)/);
-      if (!match) return;
+    function updateStatus(message) {
+      statusEl.textContent = message;
+    }
+
+    function parseScoreLine(line) {
+      // 허용 예:
+      // A:1,B:0
+      // A: 1, B: 0
+      // A:-3,B:12
+      const match = line.match(/A\s*:\s*(-?\d+)\s*,\s*B\s*:\s*(-?\d+)/i);
+      if (!match) return false;
 
       const a = Number(match[1]);
       const b = Number(match[2]);
 
-      if (!isNaN(a)) scoreAEl.textContent = a;
-      if (!isNaN(b)) scoreBEl.textContent = b;
+      if (!Number.isNaN(a)) scoreAEl.textContent = String(a);
+      if (!Number.isNaN(b)) scoreBEl.textContent = String(b);
+
+      updateStatus(`연결됨\n마지막 수신: ${line}`);
+      return true;
     }
 
-    connectBtn.addEventListener("click", async () => {
+    async function readLoop() {
+      const decoder = new TextDecoderStream();
+      const readableClosed = port.readable.pipeTo(decoder.writable);
+      reader = decoder.readable.getReader();
+
       try {
-        const port = await navigator.serial.requestPort();
-        await port.open({ baudRate: 115200 });
-
-        statusEl.textContent = "연결됨";
-
-        const decoder = new TextDecoderStream();
-        port.readable.pipeTo(decoder.writable);
-        reader = decoder.readable.getReader();
-
-        let buffer = "";
-
-        while (true) {
+        while (keepReading) {
           const { value, done } = await reader.read();
           if (done) break;
           if (!value) continue;
 
           buffer += value;
-          const lines = buffer.split("\n");
-          buffer = lines.pop();
 
-          for (const line of lines) {
-            parseLine(line.trim());
+          // \n, \r\n 둘 다 처리
+          const lines = buffer.split(/\r?\n/);
+          buffer = lines.pop() ?? "";
+
+          for (const rawLine of lines) {
+            const line = rawLine.trim();
+            if (!line) continue;
+            parseScoreLine(line);
           }
         }
-      } catch (e) {
-        statusEl.textContent = "연결 실패";
-        console.error(e);
+      } catch (error) {
+        updateStatus(`읽기 오류: ${error.message}`);
+        console.error(error);
+      } finally {
+        try {
+          reader.releaseLock();
+        } catch (_) {}
+        try {
+          await readableClosed;
+        } catch (_) {}
+      }
+    }
+
+    connectBtn.addEventListener("click", async () => {
+      try {
+        if (!("serial" in navigator)) {
+          updateStatus("이 브라우저는 Web Serial을 지원하지 않음");
+          return;
+        }
+
+        if (port) {
+          updateStatus("이미 연결됨");
+          return;
+        }
+
+        updateStatus("포트 선택 중...");
+        port = await navigator.serial.requestPort();
+
+        updateStatus("포트 여는 중...");
+        await port.open({ baudRate: 115200 });
+
+        keepReading = true;
+        updateStatus("연결됨\n점수 대기 중...");
+        readLoop();
+      } catch (error) {
+        updateStatus(`연결 실패: ${error.message}`);
+        console.error(error);
       }
     });
   </script>
