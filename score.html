@@ -5,7 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>두 팀 점수판</title>
   <style>
-    * { box-sizing: border-box; }
+    * {
+      box-sizing: border-box;
+    }
 
     html, body {
       margin: 0;
@@ -47,8 +49,13 @@
       align-items: center;
     }
 
-    .team-a { background: #1e3a8a; }
-    .team-b { background: #991b1b; }
+    .team-a {
+      background: #1e3a8a;
+    }
+
+    .team-b {
+      background: #991b1b;
+    }
 
     .label {
       font-size: 4.5vw;
@@ -120,32 +127,35 @@
     let reader = null;
     let buffer = "";
 
-    let latestA = "0";
-    let latestB = "0";
-    let renderedA = "0";
-    let renderedB = "0";
+    let scoreA = 0;
+    let scoreB = 0;
 
-    function startRenderLoop() {
-      function render() {
-        if (latestA !== renderedA) {
-          scoreAEl.textContent = latestA;
-          renderedA = latestA;
-        }
-        if (latestB !== renderedB) {
-          scoreBEl.textContent = latestB;
-          renderedB = latestB;
-        }
-        requestAnimationFrame(render);
-      }
-      requestAnimationFrame(render);
+    function renderScores() {
+      scoreAEl.textContent = String(scoreA);
+      scoreBEl.textContent = String(scoreB);
     }
 
-    function parseAndStore(line) {
-      const match = line.match(/A\s*:\s*(-?\d+)\s*,\s*B\s*:\s*(-?\d+)/i);
-      if (!match) return;
+    function applyEvent(line) {
+      if (line === "A+") {
+        scoreA += 1;
+      } else if (line === "A-") {
+        scoreA -= 1;
+      } else if (line === "B+") {
+        scoreB += 1;
+      } else if (line === "B-") {
+        scoreB -= 1;
+      } else if (line === "R") {
+        scoreA = 0;
+        scoreB = 0;
+      } else if (line === "PING") {
+        statusEl.textContent = "연결됨\n테스트 신호 수신";
+        return;
+      } else {
+        return;
+      }
 
-      latestA = match[1];
-      latestB = match[2];
+      renderScores();
+      statusEl.textContent = "연결됨\n마지막 이벤트: " + line;
     }
 
     async function connectSerial() {
@@ -162,6 +172,7 @@
         await port.open({ baudRate: 115200 });
 
         statusEl.textContent = "연결됨";
+        renderScores();
 
         const decoder = new TextDecoderStream();
         port.readable.pipeTo(decoder.writable);
@@ -173,14 +184,13 @@
           if (!value) continue;
 
           buffer += value;
-
-          let lines = buffer.split(/\r?\n/);
+          const lines = buffer.split(/\r?\n/);
           buffer = lines.pop() || "";
 
           for (const rawLine of lines) {
             const line = rawLine.trim();
             if (line) {
-              parseAndStore(line);
+              applyEvent(line);
             }
           }
         }
@@ -191,7 +201,6 @@
     }
 
     connectBtn.addEventListener("click", connectSerial);
-    startRenderLoop();
   </script>
 </body>
 </html>
