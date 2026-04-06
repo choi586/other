@@ -118,65 +118,80 @@
 
     let port = null;
     let reader = null;
-    let textBuffer = "";
+    let buffer = "";
 
-    function applyLineImmediately(line) {
+    let latestA = "0";
+    let latestB = "0";
+    let renderedA = "0";
+    let renderedB = "0";
+
+    function startRenderLoop() {
+      function render() {
+        if (latestA !== renderedA) {
+          scoreAEl.textContent = latestA;
+          renderedA = latestA;
+        }
+        if (latestB !== renderedB) {
+          scoreBEl.textContent = latestB;
+          renderedB = latestB;
+        }
+        requestAnimationFrame(render);
+      }
+      requestAnimationFrame(render);
+    }
+
+    function parseAndStore(line) {
       const match = line.match(/A\s*:\s*(-?\d+)\s*,\s*B\s*:\s*(-?\d+)/i);
       if (!match) return;
 
-      scoreAEl.textContent = match[1];
-      scoreBEl.textContent = match[2];
-      statusEl.textContent = "연결됨\n마지막 수신: " + line;
+      latestA = match[1];
+      latestB = match[2];
     }
 
-    async function startReading() {
-      const decoder = new TextDecoderStream();
-      port.readable.pipeTo(decoder.writable);
-      reader = decoder.readable.getReader();
-
-      while (true) {
-        const { value, done } = await reader.read();
-        if (done) break;
-        if (!value) continue;
-
-        textBuffer += value;
-
-        let newlineIndex;
-        while ((newlineIndex = textBuffer.search(/\r?\n/)) !== -1) {
-          const line = textBuffer.slice(0, newlineIndex).trim();
-
-          // \r\n 처리용으로 다음 줄 시작 위치 계산
-          const nextStart =
-            textBuffer[newlineIndex] === "\r" && textBuffer[newlineIndex + 1] === "\n"
-              ? newlineIndex + 2
-              : newlineIndex + 1;
-
-          textBuffer = textBuffer.slice(nextStart);
-
-          if (line) {
-            applyLineImmediately(line);
-          }
-        }
-      }
-    }
-
-    connectBtn.addEventListener("click", async () => {
+    async function connectSerial() {
       try {
         if (!("serial" in navigator)) {
           statusEl.textContent = "이 브라우저는 Web Serial 미지원";
           return;
         }
 
+        statusEl.textContent = "포트 선택 중...";
         port = await navigator.serial.requestPort();
+
+        statusEl.textContent = "포트 연결 중...";
         await port.open({ baudRate: 115200 });
 
-        statusEl.textContent = "연결됨\n점수 대기 중...";
-        startReading();
+        statusEl.textContent = "연결됨";
+
+        const decoder = new TextDecoderStream();
+        port.readable.pipeTo(decoder.writable);
+        reader = decoder.readable.getReader();
+
+        while (true) {
+          const { value, done } = await reader.read();
+          if (done) break;
+          if (!value) continue;
+
+          buffer += value;
+
+          let lines = buffer.split(/\r?\n/);
+          buffer = lines.pop() || "";
+
+          for (const rawLine of lines) {
+            const line = rawLine.trim();
+            if (line) {
+              parseAndStore(line);
+            }
+          }
+        }
       } catch (e) {
         statusEl.textContent = "연결 실패: " + e.message;
         console.error(e);
       }
-    });
+    }
+
+    connectBtn.addEventListener("click", connectSerial);
+    startRenderLoop();
   </script>
 </body>
 </html>
