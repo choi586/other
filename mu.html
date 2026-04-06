@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>무한의 계단 - 리듬 마스터</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Black+Han+Sans&display=swap');
+        body {
+            margin: 0;
+            overflow: hidden;
+            background: #87CEEB;
+            font-family: 'Black Han Sans', sans-serif;
+            user-select: none;
+            touch-action: none;
+        }
+        #gameCanvas {
+            display: block;
+            margin: 0 auto;
+            background: linear-gradient(to bottom, #4facfe 0%, #00f2fe 100%);
+        }
+        .ui-layer {
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100%;
+            max-width: 500px;
+            height: 100%;
+            pointer-events: none;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 20px;
+            z-index: 10;
+        }
+        .score-box {
+            text-align: center;
+            margin-top: 30px;
+        }
+        #score {
+            font-size: 60px;
+            color: white;
+            text-shadow: 4px 4px 0px rgba(0,0,0,0.2);
+            transition: transform 0.1s;
+        }
+        #combo {
+            font-size: 24px;
+            color: #FFD700;
+            text-shadow: 2px 2px 0px rgba(0,0,0,0.3);
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+        .energy-container {
+            width: 70%;
+            height: 16px;
+            background: rgba(0,0,0,0.3);
+            border-radius: 8px;
+            margin: 8px auto;
+            overflow: hidden;
+            border: 2px solid white;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        }
+        #energyBar {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(to right, #00ff88, #00ffcc);
+            transition: width 0.1s linear, background 0.3s;
+        }
+        .controls {
+            display: flex;
+            gap: 15px;
+            padding-bottom: 40px;
+            pointer-events: auto;
+        }
+        .btn {
+            flex: 1;
+            height: 90px;
+            background: white;
+            border-radius: 24px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 8px 0 #ccc;
+            cursor: pointer;
+            transition: all 0.05s;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .btn:active {
+            transform: translateY(4px);
+            box-shadow: 0 4px 0 #ccc;
+        }
+        .btn-turn { border: 4px solid #ff69b4; color: #ff69b4; }
+        .btn-step { border: 4px solid #4facfe; color: #4facfe; }
+
+        #startOverlay {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.4);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            z-index: 50;
+            pointer-events: auto;
+            cursor: pointer;
+        }
+        
+        #gameOverModal {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 40px;
+            border-radius: 35px;
+            text-align: center;
+            display: none;
+            pointer-events: auto;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+            z-index: 100;
+            width: 85%;
+            max-width: 380px;
+        }
+    </style>
+</head>
+<body>
+
+<canvas id="gameCanvas"></canvas>
+
+<div id="startOverlay" onclick="startGame()">
+    <div class="text-6xl mb-4 animate-bounce">👟</div>
+    <h1 class="text-4xl font-bold mb-2">TAP TO START</h1>
+    <p class="text-lg opacity-80">방향전환도 한 칸 올라갑니다!</p>
+</div>
+
+<div class="ui-layer">
+    <div class="score-box">
+        <div id="score">0</div>
+        <div id="combo">COMBO 0</div>
+        <div class="energy-container">
+            <div id="energyBar"></div>
+        </div>
+    </div>
+
+    <div class="controls">
+        <div class="btn btn-turn" onpointerdown="handleInput('TURN')">
+            <span class="text-2xl font-black">방향 전환</span>
+            <span class="text-xs">CHANGE DIRECTION</span>
+        </div>
+        <div class="btn btn-step" onpointerdown="handleInput('STEP')">
+            <span class="text-2xl font-black">오르기</span>
+            <span class="text-xs">CLIMB STEP</span>
+        </div>
+    </div>
+</div>
+
+<div id="gameOverModal">
+    <h2 class="text-5xl font-black mb-4 text-pink-500 italic">FAILED</h2>
+    <p class="text-2xl mb-8 text-gray-500 font-bold">기록: <span id="finalScore" class="text-black text-4xl">0</span></p>
+    <button onclick="resetGame()" class="bg-pink-500 hover:bg-pink-600 text-white w-full py-5 rounded-2xl font-bold text-2xl shadow-xl active:scale-95 transition-all">다시 도전</button>
+</div>
+
+<script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const scoreElement = document.getElementById('score');
+    const comboElement = document.getElementById('combo');
+    const energyBar = document.getElementById('energyBar');
+    const gameOverModal = document.getElementById('gameOverModal');
+    const startOverlay = document.getElementById('startOverlay');
+    const finalScoreElement = document.getElementById('finalScore');
+
+    // 에셋 로드
+    const assets = {
+        left: new Image(),
+        front: new Image(),
+        right: new Image()
+    };
+    assets.left.src = 'https://choi586.github.io/other/3.png';
+    assets.front.src = 'https://choi586.github.io/other/2.png';
+    assets.right.src = 'https://choi586.github.io/other/1.png';
+
+    const STAIR_W = 80; 
+    const STAIR_H = 45;
+    const CHAR_SIZE = 140;
+    
+    let gameState = 'READY'; 
+    let score = 0;
+    let combo = 0;
+    let energy = 100;
+    let stairs = [];
+    let particles = [];
+    let clouds = [];
+    
+    let playerLogicX = 0;
+    let playerLogicY = 0;
+    let playerDir = 1; 
+    let playerSprite = assets.front;
+
+    let worldOffsetX = 0;
+    let worldOffsetY = 0;
+    let targetWorldOffsetX = 0;
+    let targetWorldOffsetY = 0;
+    let screenCharX, screenCharY;
+    
+    let shakeAmount = 0;
+    let lastStepTime = 0;
+
+    function initCanvas() {
+        canvas.width = Math.min(window.innerWidth, 500);
+        canvas.height = window.innerHeight;
+        screenCharX = canvas.width / 2;
+        screenCharY = canvas.height * 0.65;
+        
+        targetWorldOffsetX = screenCharX;
+        targetWorldOffsetY = screenCharY;
+        worldOffsetX = targetWorldOffsetX;
+        worldOffsetY = targetWorldOffsetY;
+
+        // 초기 구름 생성
+        clouds = [];
+        for(let i=0; i<8; i++) {
+            clouds.push({
+                x: Math.random() * canvas.width,
+                y: Math.random() * canvas.height,
+                size: 30 + Math.random() * 50,
+                speed: 0.2 + Math.random() * 0.5
+            });
+        }
+    }
+
+    function createStairs() {
+        stairs = [{ x: 0, y: 0 }];
+        let curX = 0;
+        let curY = 0;
+        for (let i = 0; i < 3000; i++) {
+            const dir = Math.random() > 0.5 ? 1 : -1;
+            curX += dir * STAIR_W;
+            curY -= STAIR_H;
+            stairs.push({ x: curX, y: curY });
+        }
+    }
+
+    function startGame() {
+        if (gameState !== 'READY') return;
+        gameState = 'PLAYING';
+        startOverlay.style.display = 'none';
+        playerSprite = assets.right;
+    }
+
+    function resetGame() {
+        score = 0;
+        combo = 0;
+        energy = 100;
+        playerLogicX = 0;
+        playerLogicY = 0;
+        playerDir = 1; 
+        playerSprite = assets.front;
+        particles = [];
+        shakeAmount = 0;
+        
+        initCanvas();
+        createStairs();
+        
+        scoreElement.innerText = '0';
+        comboElement.style.opacity = '0';
+        gameOverModal.style.display = 'none';
+        startOverlay.style.display = 'flex';
+        gameState = 'READY';
+    }
+
+    function createDust(x, y) {
+        for (let i = 0; i < 6; i++) {
+            particles.push({
+                x: x,
+                y: y,
+                vx: (Math.random() - 0.5) * 6,
+                vy: -Math.random() * 3,
+                life: 1.0
+            });
+        }
+    }
+
+    function handleInput(type) {
+        if (gameState !== 'PLAYING') return;
+
+        // 콤보 계산
+        const now = Date.now();
+        if (now - lastStepTime < 400) {
+            combo++;
+            comboElement.innerText = `COMBO ${combo}`;
+            comboElement.style.opacity = '1';
+        } else {
+            combo = 0;
+            comboElement.style.opacity = '0';
+        }
+        lastStepTime = now;
+
+        if (type === 'TURN') playerDir *= -1;
+
+        const nextX = playerLogicX + (playerDir * STAIR_W);
+        const nextY = playerLogicY - STAIR_H;
+        const nextStair = stairs[score + 1];
+
+        if (nextX === nextStair.x && nextY === nextStair.y) {
+            score++;
+            playerLogicX = nextX;
+            playerLogicY = nextY;
+            scoreElement.innerText = score;
+            
+            scoreElement.style.transform = 'scale(1.2)';
+            setTimeout(() => scoreElement.style.transform = 'scale(1)', 50);
+
+            energy = Math.min(100, energy + Math.max(1, 10 - Math.floor(score/40)));
+            playerSprite = playerDir === 1 ? assets.right : assets.left;
+
+            targetWorldOffsetX = screenCharX - playerLogicX;
+            targetWorldOffsetY = screenCharY - playerLogicY;
+            
+            createDust(playerLogicX, playerLogicY);
+        } else {
+            triggerShake(20);
+            endGame();
+        }
+    }
+
+    function triggerShake(amt) {
+        shakeAmount = amt;
+    }
+
+    function endGame() {
+        gameState = 'GAMEOVER';
+        finalScoreElement.innerText = score;
+        setTimeout(() => {
+            gameOverModal.style.display = 'block';
+        }, 500);
+    }
+
+    function draw() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // 1. 배경 구름 (패럴랙스)
+        ctx.fillStyle = 'rgba(255,255,255,0.3)';
+        clouds.forEach(c => {
+            if (gameState === 'PLAYING') {
+                // 고도에 따라 구름이 아래로 흐름
+                c.y += (targetWorldOffsetY - worldOffsetY) * 0.5;
+                if (c.y > canvas.height + 100) {
+                    c.y = -100;
+                    c.x = Math.random() * canvas.width;
+                }
+            }
+            ctx.beginPath();
+            ctx.arc(c.x, c.y, c.size, 0, Math.PI * 2);
+            ctx.fill();
+        });
+
+        // 2. 에너지 관리
+        if (gameState === 'PLAYING' && score > 0) {
+            energy -= 0.2 + (score * 0.0015);
+            if (energy <= 0) {
+                energy = 0;
+                triggerShake(12);
+                endGame();
+            }
+        }
+        energyBar.style.width = energy + '%';
+        // 에너지 양에 따른 색상 변화
+        if (energy > 60) energyBar.style.background = 'linear-gradient(to right, #00ff88, #00ffcc)';
+        else if (energy > 30) energyBar.style.background = 'linear-gradient(to right, #ffcc00, #ff9900)';
+        else energyBar.style.background = 'linear-gradient(to right, #ff416c, #ff4b2b)';
+
+        // 3. 카메라/흔들림
+        worldOffsetX += (targetWorldOffsetX - worldOffsetX) * 0.35; // 더 빠르게 추적
+        worldOffsetY += (targetWorldOffsetY - worldOffsetY) * 0.35;
+
+        let sx = (Math.random() - 0.5) * shakeAmount;
+        let sy = (Math.random() - 0.5) * shakeAmount;
+        shakeAmount *= 0.85;
+
+        ctx.save();
+        ctx.translate(worldOffsetX + sx, worldOffsetY + sy);
+
+        // 계단 그리기
+        stairs.forEach((s) => {
+            if (Math.abs(s.y - playerLogicY) > canvas.height) return;
+            const x = s.x - STAIR_W / 2;
+            const y = s.y;
+            
+            // 그림자
+            ctx.fillStyle = 'rgba(0,0,0,0.1)';
+            ctx.fillRect(x + 6, y + 6, STAIR_W, STAIR_H - 10);
+
+            // 본체
+            ctx.fillStyle = '#F48FB1';
+            ctx.beginPath();
+            ctx.roundRect(x, y, STAIR_W, STAIR_H - 10, 8);
+            ctx.fill();
+            
+            ctx.strokeStyle = '#AD1457';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(x, y, STAIR_W, STAIR_H - 10);
+        });
+
+        // 파티클
+        for (let i = particles.length - 1; i >= 0; i--) {
+            const p = particles[i];
+            p.vx *= 0.95;
+            p.vy += 0.1; // 중력
+            p.x += p.vx;
+            p.y += p.vy;
+            p.life -= 0.04;
+            if (p.life <= 0) { particles.splice(i, 1); continue; }
+            ctx.fillStyle = `rgba(255, 255, 255, ${p.life})`;
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, Math.max(0, 5 * p.life), 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        ctx.restore();
+
+        // 4. 캐릭터 렌더링 (화면 고정)
+        const jumpDist = Math.abs(targetWorldOffsetY - worldOffsetY);
+        const bounceY = jumpDist > 0.5 ? Math.abs(Math.sin(jumpDist * 0.15) * 30) : 0;
+        
+        ctx.save();
+        ctx.translate(screenCharX + sx, screenCharY + sy - bounceY);
+        // 점프 시 몸을 더 길게 늘리는 Squash & Stretch 강화
+        const scaleY = 1 + (bounceY * 0.008);
+        const scaleX = 1 - (bounceY * 0.004);
+        ctx.scale(scaleX, scaleY);
+
+        if (playerSprite.complete) {
+            ctx.drawImage(playerSprite, -CHAR_SIZE/2, -CHAR_SIZE + 35, CHAR_SIZE, CHAR_SIZE);
+        }
+        ctx.restore();
+
+        requestAnimationFrame(draw);
+    }
+
+    // 키보드 조작
+    window.addEventListener('keydown', (e) => {
+        if (gameState === 'READY' && (e.code === 'Space' || e.code === 'Enter')) startGame();
+        if (gameState !== 'PLAYING') return;
+        
+        const key = e.key.toLowerCase();
+        if (key === 'arrowleft' || key === 'a') handleInput('TURN'); 
+        else if (key === 'arrowright' || key === 'd' || key === ' ' || key === 'arrowup') handleInput('STEP'); 
+    });
+
+    window.addEventListener('resize', initCanvas);
+    window.onload = () => {
+        initCanvas();
+        resetGame();
+        draw();
+    };
+</script>
+</body>
+</html>
