@@ -1,0 +1,1820 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>K-POP 산업 운영 구조 분석 대시보드</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+  <style>
+    :root {
+      --bg: #f6f8fc;
+      --card: #ffffff;
+      --line: #e6ebf3;
+      --text: #152033;
+      --muted: #64748b;
+      --primary: #2563eb;
+      --primary-soft: #dbeafe;
+      --green: #16a34a;
+      --amber: #d97706;
+      --red: #dc2626;
+      --shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+      --radius: 20px;
+      --radius-sm: 14px;
+      --maxw: 1480px;
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      font-family: Inter, Pretendard, "Noto Sans KR", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      background: linear-gradient(180deg, #f8fbff 0%, #f6f8fc 35%, #f4f7fb 100%);
+      color: var(--text);
+    }
+
+    a { color: inherit; text-decoration: none; }
+    button, select, input { font: inherit; }
+
+    .app {
+      min-height: 100vh;
+    }
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(14px);
+      background: rgba(248, 251, 255, 0.88);
+      border-bottom: 1px solid rgba(230, 235, 243, 0.95);
+    }
+
+    .topbar-inner {
+      max-width: var(--maxw);
+      margin: 0 auto;
+      padding: 18px 22px 16px;
+      display: grid;
+      gap: 14px;
+    }
+
+    .brand-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .brand h1 {
+      margin: 0;
+      font-size: clamp(1.4rem, 2vw, 2rem);
+      letter-spacing: -0.03em;
+    }
+
+    .brand p {
+      margin: 4px 0 0;
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+
+    .nav {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .nav a {
+      padding: 10px 14px;
+      border-radius: 999px;
+      background: #fff;
+      border: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 0.92rem;
+      transition: 0.2s ease;
+    }
+
+    .nav a.active,
+    .nav a:hover {
+      color: var(--primary);
+      border-color: #bfd3ff;
+      background: #eef4ff;
+    }
+
+    .page {
+      max-width: var(--maxw);
+      margin: 0 auto;
+      padding: 20px 22px 70px;
+      display: grid;
+      grid-template-columns: 310px minmax(0, 1fr);
+      gap: 22px;
+      align-items: start;
+    }
+
+    .filters {
+      position: sticky;
+      top: 128px;
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 18px;
+    }
+
+    .filters h2 {
+      margin: 0 0 6px;
+      font-size: 1.04rem;
+    }
+
+    .filters p {
+      margin: 0 0 16px;
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    .filter-grid {
+      display: grid;
+      gap: 14px;
+    }
+
+    .field label {
+      display: block;
+      font-size: 0.84rem;
+      color: var(--muted);
+      margin-bottom: 7px;
+      font-weight: 600;
+    }
+
+    .field select,
+    .field input[type="range"] {
+      width: 100%;
+    }
+
+    .field select {
+      padding: 10px 12px;
+      background: #fbfdff;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      color: var(--text);
+    }
+
+    .year-range {
+      background: #fbfdff;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 12px;
+    }
+
+    .year-range .range-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 0.88rem;
+    }
+
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .chip {
+      border: 1px solid var(--line);
+      background: #fbfdff;
+      color: var(--muted);
+      border-radius: 999px;
+      padding: 8px 12px;
+      cursor: pointer;
+      transition: 0.2s ease;
+      font-size: 0.88rem;
+    }
+
+    .chip.active {
+      background: #eaf2ff;
+      color: var(--primary);
+      border-color: #c3d7ff;
+      font-weight: 600;
+    }
+
+    .actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 8px;
+    }
+
+    .btn {
+      flex: 1;
+      border: none;
+      border-radius: 12px;
+      padding: 11px 14px;
+      cursor: pointer;
+      transition: 0.2s ease;
+      font-weight: 600;
+    }
+
+    .btn.primary {
+      background: var(--primary);
+      color: white;
+    }
+
+    .btn.secondary {
+      background: #edf2f8;
+      color: var(--text);
+    }
+
+    .btn:hover { transform: translateY(-1px); }
+
+    .content {
+      display: grid;
+      gap: 24px;
+    }
+
+    .hero {
+      background: linear-gradient(135deg, #eef5ff 0%, #ffffff 48%, #f8fbff 100%);
+      border: 1px solid var(--line);
+      border-radius: calc(var(--radius) + 6px);
+      box-shadow: var(--shadow);
+      padding: 26px;
+      display: grid;
+      gap: 14px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .hero::after {
+      content: "";
+      position: absolute;
+      right: -80px;
+      top: -80px;
+      width: 280px;
+      height: 280px;
+      background: radial-gradient(circle, rgba(37,99,235,0.12) 0%, rgba(37,99,235,0) 72%);
+      pointer-events: none;
+    }
+
+    .hero-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      align-items: start;
+      flex-wrap: wrap;
+    }
+
+    .hero h2 {
+      margin: 0;
+      font-size: clamp(1.3rem, 2vw, 2rem);
+      letter-spacing: -0.03em;
+    }
+
+    .hero p {
+      margin: 8px 0 0;
+      color: var(--muted);
+      max-width: 860px;
+      line-height: 1.6;
+    }
+
+    .hero-badges {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .badge {
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.86);
+      border: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+
+    .section {
+      display: grid;
+      gap: 16px;
+      scroll-margin-top: 130px;
+    }
+
+    .section-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: end;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .section-head h3 {
+      margin: 0;
+      font-size: 1.28rem;
+      letter-spacing: -0.03em;
+    }
+
+    .section-head p {
+      margin: 6px 0 0;
+      color: var(--muted);
+      line-height: 1.5;
+      font-size: 0.94rem;
+    }
+
+    .section-tools {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .mini-btn {
+      border: 1px solid var(--line);
+      background: #fff;
+      color: var(--muted);
+      border-radius: 12px;
+      padding: 9px 12px;
+      font-size: 0.86rem;
+      cursor: pointer;
+    }
+
+    .mini-btn.active {
+      background: #edf4ff;
+      color: var(--primary);
+      border-color: #c7d9ff;
+      font-weight: 600;
+    }
+
+    .kpi-grid,
+    .grid-2,
+    .grid-3,
+    .grid-4 {
+      display: grid;
+      gap: 16px;
+    }
+
+    .kpi-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+    .grid-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .grid-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .grid-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 18px;
+      min-width: 0;
+    }
+
+    .card.compact { padding: 16px; }
+
+    .kpi-card {
+      display: grid;
+      gap: 12px;
+    }
+
+    .kpi-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .icon {
+      width: 42px;
+      height: 42px;
+      border-radius: 14px;
+      background: var(--primary-soft);
+      display: grid;
+      place-items: center;
+      color: var(--primary);
+      font-size: 1.1rem;
+      font-weight: 700;
+    }
+
+    .delta {
+      font-size: 0.84rem;
+      padding: 6px 9px;
+      border-radius: 999px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .delta.up { background: #dcfce7; color: var(--green); }
+    .delta.down { background: #fee2e2; color: var(--red); }
+    .delta.flat { background: #fef3c7; color: var(--amber); }
+
+    .kpi-label {
+      color: var(--muted);
+      font-size: 0.9rem;
+      font-weight: 600;
+    }
+
+    .kpi-value {
+      font-size: clamp(1.5rem, 2vw, 2rem);
+      font-weight: 800;
+      letter-spacing: -0.04em;
+    }
+
+    .kpi-sub {
+      color: var(--muted);
+      font-size: 0.88rem;
+    }
+
+    .chart-card {
+      display: grid;
+      gap: 14px;
+      min-height: 320px;
+    }
+
+    .chart-card.tall { min-height: 400px; }
+
+    .card-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: start;
+      flex-wrap: wrap;
+    }
+
+    .card-head h4 {
+      margin: 0;
+      font-size: 1rem;
+      letter-spacing: -0.02em;
+    }
+
+    .card-head p {
+      margin: 5px 0 0;
+      color: var(--muted);
+      font-size: 0.88rem;
+      line-height: 1.5;
+    }
+
+    .card-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .chip-tab {
+      border: 1px solid var(--line);
+      background: #fbfdff;
+      color: var(--muted);
+      border-radius: 999px;
+      padding: 7px 11px;
+      cursor: pointer;
+      font-size: 0.82rem;
+      transition: 0.2s ease;
+    }
+
+    .chip-tab.active {
+      background: #eef4ff;
+      color: var(--primary);
+      border-color: #c8daff;
+      font-weight: 700;
+    }
+
+    .canvas-wrap {
+      position: relative;
+      min-height: 230px;
+      flex: 1;
+    }
+
+    .table-wrap {
+      overflow: auto;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 820px;
+      background: #fff;
+    }
+
+    th, td {
+      padding: 13px 14px;
+      border-bottom: 1px solid #eef2f7;
+      text-align: left;
+      font-size: 0.92rem;
+    }
+
+    th {
+      background: #f8fbff;
+      color: var(--muted);
+      font-weight: 700;
+      position: sticky;
+      top: 0;
+      z-index: 1;
+    }
+
+    tr:hover td { background: #fcfdff; }
+
+    .tier-pill {
+      display: inline-block;
+      padding: 5px 9px;
+      border-radius: 999px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      background: #eef4ff;
+      color: var(--primary);
+    }
+
+    .metric-bar {
+      position: relative;
+      height: 8px;
+      background: #edf2f8;
+      border-radius: 999px;
+      overflow: hidden;
+      margin-top: 6px;
+    }
+
+    .metric-bar > span {
+      position: absolute;
+      inset: 0 auto 0 0;
+      border-radius: 999px;
+      background: linear-gradient(90deg, #93c5fd 0%, #2563eb 100%);
+    }
+
+    .insight {
+      background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+      border: 1px solid var(--line);
+      border-left: 4px solid var(--primary);
+      border-radius: 16px;
+      padding: 16px 18px;
+      color: var(--text);
+      line-height: 1.6;
+      font-size: 0.94rem;
+      box-shadow: var(--shadow);
+    }
+
+    .insight strong { color: var(--primary); }
+
+    .legend-note {
+      color: var(--muted);
+      font-size: 0.82rem;
+    }
+
+    .download-note {
+      font-size: 0.82rem;
+      color: var(--muted);
+    }
+
+    @media (max-width: 1320px) {
+      .page { grid-template-columns: 1fr; }
+      .filters {
+        position: relative;
+        top: 0;
+      }
+      .filter-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        align-items: start;
+      }
+      .actions { grid-column: span 3; }
+      .kpi-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      .grid-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+
+    @media (max-width: 920px) {
+      .topbar-inner,
+      .page { padding-left: 14px; padding-right: 14px; }
+      .filter-grid,
+      .grid-2,
+      .grid-3,
+      .grid-4,
+      .kpi-grid { grid-template-columns: 1fr; }
+      .actions { grid-column: auto; }
+      .hero { padding: 20px; }
+      .section-head { align-items: start; }
+      .nav { gap: 6px; }
+      .nav a { padding: 8px 11px; font-size: 0.84rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="topbar-inner">
+        <div class="brand-row">
+          <div class="brand">
+            <h1>K-POP 산업 운영 구조 분석</h1>
+            <p>그룹 성과, 글로벌 팬 분포, 공연, 콘텐츠 활동, 수익 구조를 한 화면 흐름으로 읽는 멀티 섹션 대시보드</p>
+          </div>
+          <div class="nav" id="sectionNav">
+            <a href="#overview" class="active">개요</a>
+            <a href="#groups">그룹 비교</a>
+            <a href="#global">글로벌 팬·공연</a>
+            <a href="#activity">활동·콘텐츠</a>
+            <a href="#revenue">수익구조</a>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main class="page">
+      <aside class="filters">
+        <h2>필터 패널</h2>
+        <p>그룹, 기간, 속성, 국가를 선택하면 전 섹션이 동시에 반응합니다.</p>
+        <div class="filter-grid">
+          <div class="field">
+            <label for="groupSelect">그룹</label>
+            <select id="groupSelect"></select>
+          </div>
+          <div class="field">
+            <label for="agencySelect">에이전시</label>
+            <select id="agencySelect"></select>
+          </div>
+          <div class="field">
+            <label for="genderSelect">성별</label>
+            <select id="genderSelect"></select>
+          </div>
+          <div class="field">
+            <label for="tierSelect">티어</label>
+            <select id="tierSelect"></select>
+          </div>
+          <div class="field">
+            <label for="countrySelect">국가</label>
+            <select id="countrySelect"></select>
+          </div>
+          <div class="field">
+            <label>연도 범위</label>
+            <div class="year-range">
+              <input type="range" id="yearRange" min="2021" max="2024" value="2024" step="1" />
+              <div class="range-row">
+                <span>기준 연도</span>
+                <strong id="yearLabel">2024</strong>
+              </div>
+            </div>
+          </div>
+          <div class="field">
+            <label>SNS 플랫폼</label>
+            <div class="chips" id="platformChips"></div>
+          </div>
+          <div class="field">
+            <label>활동 유형</label>
+            <div class="chips" id="activityChips"></div>
+          </div>
+          <div class="actions">
+            <button class="btn secondary" id="resetBtn">필터 초기화</button>
+            <button class="btn primary" id="downloadBtn">요약 다운로드</button>
+          </div>
+        </div>
+      </aside>
+
+      <section class="content">
+        <section class="hero">
+          <div class="hero-top">
+            <div>
+              <h2>산업 흐름과 그룹 운영 구조를 하나의 스토리로 연결한 BI형 웹 대시보드</h2>
+              <p>개요에서 전체 시장 규모를 파악하고, 그룹 비교에서 경쟁 구도를 읽은 뒤, 글로벌 팬과 공연, 활동과 콘텐츠, 수익구조까지 이어서 해석할 수 있도록 설계된 프로토타입입니다.</p>
+            </div>
+            <div class="hero-badges">
+              <span class="badge">Responsive Layout</span>
+              <span class="badge">Interactive Filters</span>
+              <span class="badge">Section Insights</span>
+              <span class="badge">Chart.js Powered</span>
+            </div>
+          </div>
+        </section>
+
+        <section id="overview" class="section">
+          <div class="section-head">
+            <div>
+              <h3>산업 개요</h3>
+              <p>시장 규모와 성장 흐름, 상위 그룹과 산업 구성 축을 먼저 파악하는 영역</p>
+            </div>
+            <div class="section-tools">
+              <button class="mini-btn active">전체 보기</button>
+              <button class="mini-btn">전년 대비</button>
+            </div>
+          </div>
+
+          <div class="kpi-grid" id="kpiGrid"></div>
+
+          <div class="grid-2">
+            <div class="card chart-card">
+              <div class="card-head">
+                <div>
+                  <h4>연도별 총 앨범판매량 추이</h4>
+                  <p>그룹-연도 집계를 기준으로 산업 전체 음반 성과의 흐름을 보여줍니다.</p>
+                </div>
+              </div>
+              <div class="canvas-wrap"><canvas id="albumTrendChart"></canvas></div>
+            </div>
+            <div class="card chart-card">
+              <div class="card-head">
+                <div>
+                  <h4>연도별 총 스트리밍 추이</h4>
+                  <p>월별 스트리밍 데이터를 연도 기준으로 집계하여 플랫폼 전체 성장 흐름을 시각화합니다.</p>
+                </div>
+              </div>
+              <div class="canvas-wrap"><canvas id="streamTrendChart"></canvas></div>
+            </div>
+          </div>
+
+          <div class="grid-2">
+            <div class="card chart-card">
+              <div class="card-head">
+                <div>
+                  <h4>그룹별 총수익 상위 5</h4>
+                  <p>선택 조건 기준으로 가장 높은 총수익을 기록한 그룹을 비교합니다.</p>
+                </div>
+              </div>
+              <div class="canvas-wrap"><canvas id="topRevenueChart"></canvas></div>
+            </div>
+            <div class="card chart-card">
+              <div class="card-head">
+                <div>
+                  <h4>에이전시별 그룹 수</h4>
+                  <p>기준 그룹 프로필을 바탕으로 산업 내 소속사 분포를 보여줍니다.</p>
+                </div>
+              </div>
+              <div class="canvas-wrap"><canvas id="agencyDonutChart"></canvas></div>
+            </div>
+          </div>
+
+          <div class="insight" id="overviewInsight"></div>
+        </section>
+
+        <section id="groups" class="section">
+          <div class="section-head">
+            <div>
+              <h3>그룹 성과 비교</h3>
+              <p>판매, 스트리밍, 수익, 수상, SNS 규모를 그룹 단위로 비교하고 효율 지표까지 함께 살펴보는 영역</p>
+            </div>
+            <div class="section-tools" id="snsTabs"></div>
+          </div>
+
+          <div class="grid-3">
+            <div class="card chart-card compact">
+              <div class="card-head"><div><h4>그룹별 총 앨범판매량</h4><p>연간 분기 데이터를 합산한 값 기준</p></div></div>
+              <div class="canvas-wrap"><canvas id="groupAlbumChart"></canvas></div>
+            </div>
+            <div class="card chart-card compact">
+              <div class="card-head"><div><h4>그룹별 총 스트리밍</h4><p>월별 총스트리밍 합산 기준</p></div></div>
+              <div class="canvas-wrap"><canvas id="groupStreamChart"></canvas></div>
+            </div>
+            <div class="card chart-card compact">
+              <div class="card-head"><div><h4>그룹별 총수익</h4><p>음원, 앨범, 공연, 굿즈, 광고 수익 합계</p></div></div>
+              <div class="canvas-wrap"><canvas id="groupRevenueChart"></canvas></div>
+            </div>
+          </div>
+
+          <div class="grid-2">
+            <div class="card chart-card compact">
+              <div class="card-head"><div><h4>그룹별 총수상수</h4><p>시상식 수상 수를 연도 기준으로 합산한 결과</p></div></div>
+              <div class="canvas-wrap"><canvas id="groupAwardsChart"></canvas></div>
+            </div>
+            <div class="card chart-card compact">
+              <div class="card-head">
+                <div>
+                  <h4>그룹별 SNS 규모</h4>
+                  <p>선택한 플랫폼 기준으로 그룹별 팔로워 또는 구독자 규모를 비교합니다.</p>
+                </div>
+              </div>
+              <div class="canvas-wrap"><canvas id="groupSnsChart"></canvas></div>
+            </div>
+          </div>
+
+          <div class="grid-3">
+            <div class="card compact">
+              <div class="card-head"><div><h4>멤버수 대비 수익</h4><p>1인당 창출 수익 지표</p></div></div>
+              <div class="kpi-value" id="effRevenuePerMember">-</div>
+              <div class="kpi-sub">선택 필터 기준 상위 그룹</div>
+            </div>
+            <div class="card compact">
+              <div class="card-head"><div><h4>콘텐츠 1건당 조회수</h4><p>콘텐츠 효율 비교 지표</p></div></div>
+              <div class="kpi-value" id="effViewPerContent">-</div>
+              <div class="kpi-sub">선택 필터 기준 상위 그룹</div>
+            </div>
+            <div class="card compact">
+              <div class="card-head"><div><h4>공연 1회당 평균관객수</h4><p>투어 효율 비교 지표</p></div></div>
+              <div class="kpi-value" id="effAudiencePerShow">-</div>
+              <div class="kpi-sub">선택 필터 기준 상위 그룹</div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-head">
+              <div>
+                <h4>그룹별 종합 비교표</h4>
+                <p>조건부 바와 비교 열을 통해 판매, 스트리밍, 수익, 수상, SNS 규모를 한 번에 비교합니다.</p>
+              </div>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>그룹</th>
+                    <th>에이전시</th>
+                    <th>티어</th>
+                    <th>판매량</th>
+                    <th>스트리밍</th>
+                    <th>수익</th>
+                    <th>수상수</th>
+                    <th>SNS 규모</th>
+                  </tr>
+                </thead>
+                <tbody id="comparisonTableBody"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="insight" id="groupsInsight"></div>
+        </section>
+
+        <section id="global" class="section">
+          <div class="section-head">
+            <div>
+              <h3>글로벌 팬과 공연</h3>
+              <p>국가별 팬 비중과 공연 집중도, 가격 전략이 어떻게 연결되는지 보여주는 글로벌 시장 분석 영역</p>
+            </div>
+            <div class="section-tools">
+              <button class="mini-btn active">국가 보기</button>
+              <button class="mini-btn">도시 보기</button>
+            </div>
+          </div>
+
+          <div class="grid-3">
+            <div class="card chart-card compact">
+              <div class="card-head"><div><h4>국가별 팬비율</h4><p>팬분포 테이블 기준 팬 비중 상위 국가</p></div></div>
+              <div class="canvas-wrap"><canvas id="fanCountryChart"></canvas></div>
+            </div>
+            <div class="card chart-card compact">
+              <div class="card-head"><div><h4>국가별 팬클럽 등록 수</h4><p>충성도 지표 비교</p></div></div>
+              <div class="canvas-wrap"><canvas id="fanclubCountryChart"></canvas></div>
+            </div>
+            <div class="card chart-card compact">
+              <div class="card-head"><div><h4>국가별 평균 티켓가격</h4><p>VIP/일반 평균을 반영한 가격 지표</p></div></div>
+              <div class="canvas-wrap"><canvas id="ticketCountryChart"></canvas></div>
+            </div>
+          </div>
+
+          <div class="grid-2">
+            <div class="card chart-card tall">
+              <div class="card-head"><div><h4>국가별 팬비율 및 공연 집중도</h4><p>x축 팬비율, y축 평균 티켓가격, 버블 크기 공연횟수 기준</p></div></div>
+              <div class="canvas-wrap"><canvas id="bubbleChart"></canvas></div>
+            </div>
+            <div class="card chart-card tall">
+              <div class="card-head"><div><h4>도시별 총관객수</h4><p>도시 단위로 집계한 공연 관객 규모 비교</p></div></div>
+              <div class="canvas-wrap"><canvas id="cityAudienceChart"></canvas></div>
+            </div>
+          </div>
+
+          <div class="grid-2">
+            <div class="card chart-card compact">
+              <div class="card-head"><div><h4>국가별 공연횟수</h4><p>연도 및 그룹 필터에 따른 공연 편중 확인</p></div></div>
+              <div class="canvas-wrap"><canvas id="concertCountryChart"></canvas></div>
+            </div>
+            <div class="card chart-card compact">
+              <div class="card-head"><div><h4>공연장별 객석 점유율</h4><p>상위 공연장 중심 운영 효율 비교</p></div></div>
+              <div class="canvas-wrap"><canvas id="venueOccupancyChart"></canvas></div>
+            </div>
+          </div>
+
+          <div class="insight" id="globalInsight"></div>
+        </section>
+
+        <section id="activity" class="section">
+          <div class="section-head">
+            <div>
+              <h3>활동과 콘텐츠</h3>
+              <p>콘텐츠 양과 멤버 활동량, 조회수와 좋아요, 그리고 성과로 이어지는 관계를 읽는 영역</p>
+            </div>
+            <div class="section-tools">
+              <button class="mini-btn active">콘텐츠 기준</button>
+              <button class="mini-btn">멤버 기준</button>
+            </div>
+          </div>
+
+          <div class="grid-3">
+            <div class="card chart-card compact">
+              <div class="card-head"><div><h4>콘텐츠 유형별 개수</h4><p>연간 콘텐츠 생산량 비교</p></div></div>
+              <div class="canvas-wrap"><canvas id="contentCountChart"></canvas></div>
+            </div>
+            <div class="card chart-card compact">
+              <div class="card-head"><div><h4>콘텐츠 유형별 총조회수</h4><p>유형별 조회수 규모 비교</p></div></div>
+              <div class="canvas-wrap"><canvas id="contentViewsChart"></canvas></div>
+            </div>
+            <div class="card chart-card compact">
+              <div class="card-head"><div><h4>콘텐츠 유형별 총좋아요수</h4><p>유형별 반응성 비교</p></div></div>
+              <div class="canvas-wrap"><canvas id="contentLikesChart"></canvas></div>
+            </div>
+          </div>
+
+          <div class="grid-2">
+            <div class="card chart-card">
+              <div class="card-head"><div><h4>멤버별 활동일수</h4><p>선택 그룹 기준 주요 멤버 활동량 비교</p></div></div>
+              <div class="canvas-wrap"><canvas id="memberActivityChart"></canvas></div>
+            </div>
+            <div class="card chart-card">
+              <div class="card-head"><div><h4>활동유형별 활동일수</h4><p>광고, 예능, 드라마, 글로벌 활동 등의 분포</p></div></div>
+              <div class="canvas-wrap"><canvas id="activityTypeChart"></canvas></div>
+            </div>
+          </div>
+
+          <div class="grid-2">
+            <div class="card chart-card tall">
+              <div class="card-head"><div><h4>콘텐츠 활동량과 조회수 관계</h4><p>x축 콘텐츠 개수, y축 총조회수, 버블 크기 총좋아요수</p></div></div>
+              <div class="canvas-wrap"><canvas id="contentScatterChart"></canvas></div>
+            </div>
+            <div class="card chart-card tall">
+              <div class="card-head"><div><h4>국가별 멤버활동일수</h4><p>국가 단위 개인 활동 집중도</p></div></div>
+              <div class="canvas-wrap"><canvas id="memberCountryChart"></canvas></div>
+            </div>
+          </div>
+
+          <div class="insight" id="activityInsight"></div>
+        </section>
+
+        <section id="revenue" class="section">
+          <div class="section-head">
+            <div>
+              <h3>수익구조 분석</h3>
+              <p>어떤 그룹이 어떤 항목에서 강한지, 그리고 연도에 따라 포트폴리오가 어떻게 변하는지 읽는 영역</p>
+            </div>
+            <div class="section-tools">
+              <button class="mini-btn active">전체 포트폴리오</button>
+              <button class="mini-btn">선택 그룹 심화</button>
+            </div>
+          </div>
+
+          <div class="grid-2">
+            <div class="card chart-card">
+              <div class="card-head"><div><h4>그룹별 총수익</h4><p>선택 조건 기준 총수익 비교</p></div></div>
+              <div class="canvas-wrap"><canvas id="revenueRankChart"></canvas></div>
+            </div>
+            <div class="card chart-card">
+              <div class="card-head"><div><h4>수익 항목별 비중</h4><p>음원, 앨범, 공연, 굿즈, 광고 수익 누적 구성</p></div></div>
+              <div class="canvas-wrap"><canvas id="revenueStackedChart"></canvas></div>
+            </div>
+          </div>
+
+          <div class="grid-2">
+            <div class="card chart-card tall">
+              <div class="card-head"><div><h4>연도별 수익구조 변화</h4><p>산업 전체 또는 선택 그룹 기준 수익 구성 변화</p></div></div>
+              <div class="canvas-wrap"><canvas id="revenueTrendChart"></canvas></div>
+            </div>
+            <div class="card chart-card tall">
+              <div class="card-head"><div><h4>그룹별 수익 포트폴리오 비교</h4><p>항목별 집중도 차이를 직관적으로 읽는 히트맵</p></div></div>
+              <div class="canvas-wrap"><canvas id="heatmapCanvas"></canvas></div>
+            </div>
+          </div>
+
+          <div class="insight" id="revenueInsight"></div>
+        </section>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    const profiles = [
+      { group: 'BTS', agency: 'HYBE', gender: '남성', debutYear: 2013, members: 7, tier: 'S', memberNames: ['RM','Jin','SUGA','j-hope','Jimin','V','Jungkook'] },
+      { group: 'BLACKPINK', agency: 'YG', gender: '여성', debutYear: 2016, members: 4, tier: 'S', memberNames: ['Jisoo','Jennie','Rosé','Lisa'] },
+      { group: 'SEVENTEEN', agency: 'HYBE', gender: '남성', debutYear: 2015, members: 13, tier: 'S', memberNames: ['S.Coups','Jeonghan','Joshua','Jun','Hoshi','Wonwoo','Woozi','DK','Mingyu','The8','Seungkwan','Vernon','Dino'] },
+      { group: 'TWICE', agency: 'JYP', gender: '여성', debutYear: 2015, members: 9, tier: 'S', memberNames: ['Nayeon','Jeongyeon','Momo','Sana','Jihyo','Mina','Dahyun','Chaeyoung','Tzuyu'] },
+      { group: 'Stray Kids', agency: 'JYP', gender: '남성', debutYear: 2018, members: 8, tier: 'S', memberNames: ['Bang Chan','Lee Know','Changbin','Hyunjin','Han','Felix','Seungmin','I.N'] },
+      { group: 'NewJeans', agency: 'ADOR', gender: '여성', debutYear: 2022, members: 5, tier: 'S', memberNames: ['Minji','Hanni','Danielle','Haerin','Hyein'] },
+      { group: 'IVE', agency: 'Starship', gender: '여성', debutYear: 2021, members: 6, tier: 'A', memberNames: ['Yujin','Gaeul','Rei','Wonyoung','Liz','Leeseo'] },
+      { group: 'aespa', agency: 'SM', gender: '여성', debutYear: 2020, members: 4, tier: 'A', memberNames: ['Karina','Giselle','Winter','Ningning'] },
+      { group: 'LE SSERAFIM', agency: 'HYBE', gender: '여성', debutYear: 2022, members: 5, tier: 'A', memberNames: ['Sakura','Chaewon','Yunjin','Kazuha','Eunchae'] },
+      { group: 'TXT', agency: 'HYBE', gender: '남성', debutYear: 2019, members: 5, tier: 'A', memberNames: ['Soobin','Yeonjun','Beomgyu','Taehyun','HueningKai'] },
+      { group: 'NCT DREAM', agency: 'SM', gender: '남성', debutYear: 2016, members: 7, tier: 'A', memberNames: ['Mark','Renjun','Jeno','Haechan','Jaemin','Chenle','Jisung'] },
+      { group: '(G)I-DLE', agency: 'Cube', gender: '여성', debutYear: 2018, members: 5, tier: 'A', memberNames: ['Miyeon','Minnie','Soyeon','Yuqi','Shuhua'] }
+    ];
+
+    const years = [2021, 2022, 2023, 2024];
+    const quarters = [1, 2, 3, 4];
+    const months = Array.from({ length: 12 }, (_, i) => i + 1);
+    const countries = ['한국', '일본', '미국', '태국', '필리핀', '인도네시아'];
+    const citiesByCountry = {
+      '한국': ['서울', '부산'],
+      '일본': ['도쿄', '오사카'],
+      '미국': ['로스앤젤레스', '뉴욕'],
+      '태국': ['방콕'],
+      '필리핀': ['마닐라'],
+      '인도네시아': ['자카르타']
+    };
+    const venuesByCity = {
+      '서울': ['KSPO Dome', 'Gocheok Sky Dome'],
+      '부산': ['Busan Asiad Stadium'],
+      '도쿄': ['Tokyo Dome', 'Ariake Arena'],
+      '오사카': ['Kyocera Dome Osaka'],
+      '로스앤젤레스': ['Kia Forum', 'BMO Stadium'],
+      '뉴욕': ['Madison Square Garden'],
+      '방콕': ['Impact Arena'],
+      '마닐라': ['Mall of Asia Arena'],
+      '자카르타': ['Indonesia Arena']
+    };
+
+    const contentTypes = ['MV', '예능', '브이로그', '퍼포먼스', '인터뷰', '숏폼'];
+    const activityTypes = ['광고', '예능', '드라마', '패션', '글로벌행사', '브랜드행사'];
+    const awardShows = ['MAMA', 'MMA', 'Golden Disc Awards', 'Seoul Music Awards'];
+    const venueInfo = [
+      { venue: 'KSPO Dome', city: '서울', country: '한국', scale: 15000, type: 'Arena' },
+      { venue: 'Gocheok Sky Dome', city: '서울', country: '한국', scale: 25000, type: 'Dome' },
+      { venue: 'Busan Asiad Stadium', city: '부산', country: '한국', scale: 30000, type: 'Stadium' },
+      { venue: 'Tokyo Dome', city: '도쿄', country: '일본', scale: 42000, type: 'Dome' },
+      { venue: 'Ariake Arena', city: '도쿄', country: '일본', scale: 15000, type: 'Arena' },
+      { venue: 'Kyocera Dome Osaka', city: '오사카', country: '일본', scale: 40000, type: 'Dome' },
+      { venue: 'Kia Forum', city: '로스앤젤레스', country: '미국', scale: 17500, type: 'Arena' },
+      { venue: 'BMO Stadium', city: '로스앤젤레스', country: '미국', scale: 22000, type: 'Stadium' },
+      { venue: 'Madison Square Garden', city: '뉴욕', country: '미국', scale: 20000, type: 'Arena' },
+      { venue: 'Impact Arena', city: '방콕', country: '태국', scale: 12000, type: 'Arena' },
+      { venue: 'Mall of Asia Arena', city: '마닐라', country: '필리핀', scale: 15000, type: 'Arena' },
+      { venue: 'Indonesia Arena', city: '자카르타', country: '인도네시아', scale: 16000, type: 'Arena' }
+    ];
+
+    const base = {
+      'BTS': { album: 6.2, digital: 1.7, physical: 4.5, stream: 8200, instagram: 7600, youtube: 7100, twitter: 6900, tiktok: 6700, youtubeViews: 12000, revenue: 5200, awards: 36, fan: { '한국': 0.18, '일본': 0.20, '미국': 0.26, '태국': 0.14, '필리핀': 0.11, '인도네시아': 0.11 }, ticket: { '한국': 190, '일본': 205, '미국': 240, '태국': 150, '필리핀': 145, '인도네시아': 148 } },
+      'BLACKPINK': { album: 4.9, digital: 1.5, physical: 3.4, stream: 7600, instagram: 8200, youtube: 7300, twitter: 6400, tiktok: 7000, youtubeViews: 13500, revenue: 5100, awards: 28, fan: { '한국': 0.16, '일본': 0.18, '미국': 0.24, '태국': 0.19, '필리핀': 0.11, '인도네시아': 0.12 }, ticket: { '한국': 185, '일본': 195, '미국': 255, '태국': 172, '필리핀': 152, '인도네시아': 156 } },
+      'SEVENTEEN': { album: 5.8, digital: 1.4, physical: 4.4, stream: 6100, instagram: 4800, youtube: 4500, twitter: 4300, tiktok: 3900, youtubeViews: 8200, revenue: 4400, awards: 25, fan: { '한국': 0.24, '일본': 0.28, '미국': 0.17, '태국': 0.11, '필리핀': 0.10, '인도네시아': 0.10 }, ticket: { '한국': 168, '일본': 188, '미국': 220, '태국': 142, '필리핀': 138, '인도네시아': 141 } },
+      'TWICE': { album: 3.9, digital: 1.2, physical: 2.7, stream: 5200, instagram: 4200, youtube: 5100, twitter: 3700, tiktok: 3500, youtubeViews: 7900, revenue: 3600, awards: 22, fan: { '한국': 0.21, '일본': 0.33, '미국': 0.15, '태국': 0.11, '필리핀': 0.10, '인도네시아': 0.10 }, ticket: { '한국': 162, '일본': 190, '미국': 215, '태국': 138, '필리핀': 134, '인도네시아': 137 } },
+      'Stray Kids': { album: 5.2, digital: 1.1, physical: 4.1, stream: 5900, instagram: 4400, youtube: 4700, twitter: 4200, tiktok: 4600, youtubeViews: 8400, revenue: 3950, awards: 18, fan: { '한국': 0.18, '일본': 0.23, '미국': 0.22, '태국': 0.13, '필리핀': 0.12, '인도네시아': 0.12 }, ticket: { '한국': 165, '일본': 184, '미국': 224, '태국': 144, '필리핀': 140, '인도네시아': 144 } },
+      'NewJeans': { album: 3.4, digital: 1.6, physical: 1.8, stream: 6800, instagram: 3600, youtube: 3900, twitter: 2400, tiktok: 5200, youtubeViews: 9200, revenue: 3300, awards: 16, fan: { '한국': 0.24, '일본': 0.19, '미국': 0.21, '태국': 0.13, '필리핀': 0.12, '인도네시아': 0.11 }, ticket: { '한국': 158, '일본': 176, '미국': 210, '태국': 146, '필리핀': 139, '인도네시아': 142 } },
+      'IVE': { album: 2.7, digital: 1.3, physical: 1.4, stream: 4100, instagram: 2500, youtube: 2200, twitter: 1800, tiktok: 2600, youtubeViews: 4900, revenue: 2200, awards: 11, fan: { '한국': 0.30, '일본': 0.20, '미국': 0.17, '태국': 0.12, '필리핀': 0.11, '인도네시아': 0.10 }, ticket: { '한국': 148, '일본': 169, '미국': 195, '태국': 132, '필리핀': 128, '인도네시아': 130 } },
+      'aespa': { album: 3.2, digital: 1.2, physical: 2.0, stream: 4300, instagram: 2800, youtube: 2500, twitter: 2100, tiktok: 2700, youtubeViews: 5100, revenue: 2400, awards: 12, fan: { '한국': 0.26, '일본': 0.22, '미국': 0.18, '태국': 0.13, '필리핀': 0.10, '인도네시아': 0.11 }, ticket: { '한국': 150, '일본': 172, '미국': 198, '태국': 134, '필리핀': 129, '인도네시아': 131 } },
+      'LE SSERAFIM': { album: 2.8, digital: 1.1, physical: 1.7, stream: 3900, instagram: 2300, youtube: 2150, twitter: 1700, tiktok: 3200, youtubeViews: 4700, revenue: 2100, awards: 9, fan: { '한국': 0.25, '일본': 0.21, '미국': 0.19, '태국': 0.13, '필리핀': 0.11, '인도네시아': 0.11 }, ticket: { '한국': 146, '일본': 170, '미국': 196, '태국': 135, '필리핀': 131, '인도네시아': 132 } },
+      'TXT': { album: 3.6, digital: 0.9, physical: 2.7, stream: 4500, instagram: 2900, youtube: 2800, twitter: 2500, tiktok: 2600, youtubeViews: 5200, revenue: 2550, awards: 13, fan: { '한국': 0.20, '일본': 0.24, '미국': 0.21, '태국': 0.13, '필리핀': 0.11, '인도네시아': 0.11 }, ticket: { '한국': 152, '일본': 174, '미국': 204, '태국': 137, '필리핀': 132, '인도네시아': 134 } },
+      'NCT DREAM': { album: 3.8, digital: 1.0, physical: 2.8, stream: 4200, instagram: 2600, youtube: 2400, twitter: 2300, tiktok: 2100, youtubeViews: 4600, revenue: 2480, awards: 10, fan: { '한국': 0.22, '일본': 0.25, '미국': 0.17, '태국': 0.13, '필리핀': 0.12, '인도네시아': 0.11 }, ticket: { '한국': 151, '일본': 176, '미국': 201, '태국': 136, '필리핀': 132, '인도네시아': 133 } },
+      '(G)I-DLE': { album: 2.5, digital: 1.0, physical: 1.5, stream: 3500, instagram: 2100, youtube: 2000, twitter: 1600, tiktok: 2500, youtubeViews: 4300, revenue: 1980, awards: 8, fan: { '한국': 0.24, '일본': 0.18, '미국': 0.18, '태국': 0.16, '필리핀': 0.12, '인도네시아': 0.12 }, ticket: { '한국': 142, '일본': 164, '미국': 193, '태국': 138, '필리핀': 129, '인도네시아': 130 } }
+    };
+
+    const growthByYear = { 2021: 0.84, 2022: 0.96, 2023: 1.08, 2024: 1.17 };
+    const debutPenalty = { 2021: 0.72, 2022: 0.85, 2023: 1.0, 2024: 1.12 };
+
+    function round(n, d = 2) {
+      return Number(n.toFixed(d));
+    }
+
+    function clamp(value, min, max) {
+      return Math.max(min, Math.min(max, value));
+    }
+
+    const albumSales = [];
+    const streaming = [];
+    const snsMetrics = [];
+    const fans = [];
+    const tickets = [];
+    const concerts = [];
+    const contents = [];
+    const memberActivities = [];
+    const awards = [];
+    const revenues = [];
+
+    profiles.forEach((profile, pIdx) => {
+      years.forEach((year) => {
+        if (year < profile.debutYear) return;
+        const sinceDebut = year - profile.debutYear;
+        const debutFactor = clamp((sinceDebut + 1) / 2, 0.55, 1.18);
+        const yearFactor = growthByYear[year] * debutFactor;
+        const baseProfile = base[profile.group];
+
+        quarters.forEach((q) => {
+          const seasonal = [0.92, 1.04, 1.15, 1.23][q - 1];
+          const album = round(baseProfile.album * yearFactor * seasonal * (0.92 + pIdx * 0.005), 2);
+          const digital = round(baseProfile.digital * yearFactor * (0.95 + q * 0.03), 2);
+          const physical = round(baseProfile.physical * yearFactor * seasonal, 2);
+          albumSales.push({ group: profile.group, year, quarter: q, album, digital, physical });
+
+          const inst = round(baseProfile.instagram * yearFactor * (0.88 + q * 0.045), 0);
+          const yt = round(baseProfile.youtube * yearFactor * (0.9 + q * 0.04), 0);
+          const tw = round(baseProfile.twitter * yearFactor * (0.89 + q * 0.035), 0);
+          const tt = round(baseProfile.tiktok * yearFactor * (0.91 + q * 0.05), 0);
+          const yv = round(baseProfile.youtubeViews * yearFactor * (0.91 + q * 0.05), 0);
+          snsMetrics.push({ group: profile.group, year, quarter: q, instagram: inst, youtube: yt, twitter: tw, tiktok: tt, youtubeViews: yv });
+        });
+
+        months.forEach((m) => {
+          const monthly = (0.82 + (m % 4) * 0.06 + (pIdx % 3) * 0.01);
+          const total = round(baseProfile.stream * yearFactor * monthly, 0);
+          streaming.push({
+            group: profile.group,
+            year,
+            month: m,
+            spotify: round(total * 0.44, 0),
+            youtubeMusic: round(total * 0.31, 0),
+            appleMusic: round(total * 0.25, 0),
+            totalStreaming: total
+          });
+        });
+
+        countries.forEach((country, cIdx) => {
+          const fanRatio = round(baseProfile.fan[country] * (year === 2024 ? 1.02 : year === 2023 ? 1.0 : 0.94), 3);
+          const followers = round(baseProfile.stream * 10 * fanRatio * 1200 * (1 + cIdx * 0.03) * yearFactor, 0);
+          const fanclub = round(followers * (0.14 + cIdx * 0.01), 0);
+          fans.push({ group: profile.group, year, country, fanRatio, followers, fanclub });
+
+          const avgTicket = round(baseProfile.ticket[country] * (year === 2024 ? 1.08 : year === 2023 ? 1.0 : year === 2022 ? 0.95 : 0.9), 0);
+          tickets.push({
+            group: profile.group,
+            year,
+            country,
+            vip: round(avgTicket * 1.34, 0),
+            regular: round(avgTicket * 0.78, 0),
+            average: avgTicket
+          });
+        });
+
+        const revenueBase = baseProfile.revenue * yearFactor;
+        const albumRevenue = round(revenueBase * 0.26, 1);
+        const digitalRevenue = round(revenueBase * 0.17, 1);
+        const concertRevenue = round(revenueBase * (profile.group === 'BTS' || profile.group === 'BLACKPINK' ? 0.34 : 0.3), 1);
+        const merchRevenue = round(revenueBase * 0.13, 1);
+        const adRevenue = round(revenueBase - albumRevenue - digitalRevenue - concertRevenue - merchRevenue, 1);
+        revenues.push({
+          group: profile.group,
+          year,
+          digitalRevenue,
+          albumRevenue,
+          concertRevenue,
+          merchRevenue,
+          adRevenue,
+          totalRevenue: round(digitalRevenue + albumRevenue + concertRevenue + merchRevenue + adRevenue, 1)
+        });
+
+        awardShows.forEach((show, aIdx) => {
+          const nominations = Math.max(1, Math.round(baseProfile.awards * yearFactor * (0.16 + aIdx * 0.03)));
+          const wins = Math.max(0, Math.round(nominations * (0.42 - aIdx * 0.03)));
+          awards.push({ group: profile.group, year, show, nominations, wins });
+        });
+
+        contentTypes.forEach((type, tIdx) => {
+          const count = Math.max(2, Math.round((baseProfile.youtubeViews / 900) * (0.38 + tIdx * 0.08) * yearFactor));
+          const views = round(count * (320 + tIdx * 65) * (0.7 + baseProfile.youtubeViews / 12000) * 10, 0);
+          const likes = round(views * (0.052 + tIdx * 0.003), 0);
+          contents.push({ group: profile.group, year, type, count, views, likes });
+        });
+
+        const targetCountries = ['한국', '일본', '미국'];
+        profile.memberNames.forEach((member, mIdx) => {
+          activityTypes.forEach((type, tIdx) => {
+            const country = targetCountries[(mIdx + tIdx) % targetCountries.length];
+            const city = citiesByCountry[country][(mIdx + tIdx) % citiesByCountry[country].length];
+            const days = Math.max(2, Math.round((yearFactor * 8) + (mIdx % 4) * 2 + tIdx));
+            memberActivities.push({ group: profile.group, member, year, country, city, type, days });
+          });
+        });
+
+        countries.forEach((country, cIdx) => {
+          const cityList = citiesByCountry[country];
+          if (!cityList) return;
+          cityList.forEach((city, cityIdx) => {
+            const venueList = venuesByCity[city] || [];
+            venueList.forEach((venue, vIdx) => {
+              const popularity = baseProfile.fan[country] * baseProfile.revenue;
+              const shows = Math.max(0, Math.round(popularity / 8 * (0.7 + vIdx * 0.16) * (year >= 2023 ? 1 : 0.8)));
+              if (shows === 0) return;
+              const avgAudience = round((venueInfo.find(v => v.venue === venue)?.scale || 15000) * (0.72 + (cIdx % 3) * 0.05 + (profile.tier === 'S' ? 0.08 : 0.02)), 0);
+              const revenue = round(shows * avgAudience * (baseProfile.ticket[country] || 150) * 0.0018, 1);
+              const occupancy = round(clamp(avgAudience / (venueInfo.find(v => v.venue === venue)?.scale || 15000), 0.6, 0.98), 2);
+              concerts.push({
+                group: profile.group,
+                year,
+                month: ((cityIdx + vIdx + year) % 12) + 1,
+                country,
+                city,
+                venue,
+                shows,
+                avgAudience,
+                revenue,
+                occupancy
+              });
+            });
+          });
+        });
+      });
+    });
+
+    const state = {
+      group: '전체',
+      agency: '전체',
+      gender: '전체',
+      tier: '전체',
+      country: '전체',
+      year: 2024,
+      platform: 'instagram',
+      activityType: '전체'
+    };
+
+    const chartInstances = {};
+
+    const palette = ['#2563eb', '#60a5fa', '#1d4ed8', '#93c5fd', '#0f766e', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#14b8a6', '#64748b'];
+
+    function formatNumber(value, suffix = '') {
+      const abs = Math.abs(value);
+      if (abs >= 1000000) return (value / 1000000).toFixed(1) + 'M' + suffix;
+      if (abs >= 1000) return (value / 1000).toFixed(1) + 'K' + suffix;
+      return Number(value).toLocaleString('ko-KR') + suffix;
+    }
+
+    function populateControls() {
+      const setOptions = (id, items, includeAll = true) => {
+        const select = document.getElementById(id);
+        select.innerHTML = '';
+        const values = includeAll ? ['전체', ...items] : items;
+        values.forEach((item) => {
+          const option = document.createElement('option');
+          option.value = item;
+          option.textContent = item;
+          select.appendChild(option);
+        });
+      };
+
+      setOptions('groupSelect', profiles.map(p => p.group));
+      setOptions('agencySelect', [...new Set(profiles.map(p => p.agency))]);
+      setOptions('genderSelect', [...new Set(profiles.map(p => p.gender))]);
+      setOptions('tierSelect', [...new Set(profiles.map(p => p.tier))]);
+      setOptions('countrySelect', countries);
+
+      const platformChips = document.getElementById('platformChips');
+      ['instagram', 'youtube', 'twitter', 'tiktok'].forEach((platform) => {
+        const btn = document.createElement('button');
+        btn.className = 'chip' + (platform === state.platform ? ' active' : '');
+        btn.textContent = platform === 'instagram' ? 'Instagram' : platform === 'youtube' ? 'YouTube' : platform === 'twitter' ? 'Twitter' : 'TikTok';
+        btn.onclick = () => {
+          state.platform = platform;
+          Array.from(platformChips.children).forEach(ch => ch.classList.remove('active'));
+          btn.classList.add('active');
+          renderAll();
+        };
+        platformChips.appendChild(btn);
+      });
+
+      const activityChips = document.getElementById('activityChips');
+      ['전체', ...activityTypes].forEach((type) => {
+        const btn = document.createElement('button');
+        btn.className = 'chip' + (type === state.activityType ? ' active' : '');
+        btn.textContent = type;
+        btn.onclick = () => {
+          state.activityType = type;
+          Array.from(activityChips.children).forEach(ch => ch.classList.remove('active'));
+          btn.classList.add('active');
+          renderAll();
+        };
+        activityChips.appendChild(btn);
+      });
+
+      const snsTabs = document.getElementById('snsTabs');
+      ['instagram', 'youtube', 'twitter', 'tiktok'].forEach((platform) => {
+        const btn = document.createElement('button');
+        btn.className = 'mini-btn' + (platform === state.platform ? ' active' : '');
+        btn.textContent = platform === 'instagram' ? 'Instagram' : platform === 'youtube' ? 'YouTube' : platform === 'twitter' ? 'Twitter' : 'TikTok';
+        btn.onclick = () => {
+          state.platform = platform;
+          Array.from(snsTabs.children).forEach(ch => ch.classList.remove('active'));
+          btn.classList.add('active');
+          Array.from(platformChips.children).forEach(ch => ch.classList.toggle('active', ch.textContent.toLowerCase() === btn.textContent.toLowerCase()));
+          renderAll();
+        };
+        snsTabs.appendChild(btn);
+      });
+    }
+
+    function bindControls() {
+      document.getElementById('groupSelect').addEventListener('change', (e) => { state.group = e.target.value; renderAll(); });
+      document.getElementById('agencySelect').addEventListener('change', (e) => { state.agency = e.target.value; renderAll(); });
+      document.getElementById('genderSelect').addEventListener('change', (e) => { state.gender = e.target.value; renderAll(); });
+      document.getElementById('tierSelect').addEventListener('change', (e) => { state.tier = e.target.value; renderAll(); });
+      document.getElementById('countrySelect').addEventListener('change', (e) => { state.country = e.target.value; renderAll(); });
+      document.getElementById('yearRange').addEventListener('input', (e) => {
+        state.year = Number(e.target.value);
+        document.getElementById('yearLabel').textContent = state.year;
+        renderAll();
+      });
+      document.getElementById('resetBtn').addEventListener('click', () => {
+        state.group = '전체';
+        state.agency = '전체';
+        state.gender = '전체';
+        state.tier = '전체';
+        state.country = '전체';
+        state.year = 2024;
+        state.platform = 'instagram';
+        state.activityType = '전체';
+        document.getElementById('groupSelect').value = '전체';
+        document.getElementById('agencySelect').value = '전체';
+        document.getElementById('genderSelect').value = '전체';
+        document.getElementById('tierSelect').value = '전체';
+        document.getElementById('countrySelect').value = '전체';
+        document.getElementById('yearRange').value = '2024';
+        document.getElementById('yearLabel').textContent = '2024';
+        Array.from(document.querySelectorAll('#platformChips .chip')).forEach(ch => ch.classList.toggle('active', ch.textContent === 'Instagram'));
+        Array.from(document.querySelectorAll('#activityChips .chip')).forEach(ch => ch.classList.toggle('active', ch.textContent === '전체'));
+        Array.from(document.querySelectorAll('#snsTabs .mini-btn')).forEach(ch => ch.classList.toggle('active', ch.textContent === 'Instagram'));
+        renderAll();
+      });
+      document.getElementById('downloadBtn').addEventListener('click', () => {
+        const payload = {
+          filters: { ...state },
+          exportedAt: new Date().toISOString(),
+          note: '요약 다운로드 예시. 실제 서비스에서는 CSV 또는 PNG 추출 로직을 연결할 수 있습니다.'
+        };
+        const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'kpop-dashboard-summary.json';
+        a.click();
+        URL.revokeObjectURL(url);
+      });
+    }
+
+    function filterProfiles() {
+      return profiles.filter((p) => {
+        if (state.group !== '전체' && p.group !== state.group) return false;
+        if (state.agency !== '전체' && p.agency !== state.agency) return false;
+        if (state.gender !== '전체' && p.gender !== state.gender) return false;
+        if (state.tier !== '전체' && p.tier !== state.tier) return false;
+        return true;
+      });
+    }
+
+    function applyCommonFilters(rows, opts = {}) {
+      const allowedGroups = new Set(filterProfiles().map(p => p.group));
+      return rows.filter((row) => {
+        if (!allowedGroups.has(row.group)) return false;
+        if (row.year && row.year > state.year) return false;
+        if (!opts.ignoreCountry && state.country !== '전체' && row.country && row.country !== state.country) return false;
+        if (opts.yearOnly && row.year !== state.year) return false;
+        if (opts.activityType && state.activityType !== '전체' && row.type && row.type !== state.activityType) return false;
+        return true;
+      });
+    }
+
+    function sumBy(arr, keyFn, valFn) {
+      const map = new Map();
+      arr.forEach((item) => {
+        const key = keyFn(item);
+        const val = valFn(item);
+        map.set(key, (map.get(key) || 0) + val);
+      });
+      return map;
+    }
+
+    function chartConfig(type, labels, data, label, extra = {}) {
+      return {
+        type,
+        data: {
+          labels,
+          datasets: [{
+            label,
+            data,
+            borderColor: extra.borderColor || '#2563eb',
+            backgroundColor: extra.backgroundColor || 'rgba(37,99,235,0.18)',
+            borderWidth: extra.borderWidth ?? 2,
+            fill: extra.fill ?? (type === 'line'),
+            tension: 0.32,
+            borderRadius: type === 'bar' ? 10 : 0,
+            hoverBorderWidth: 2,
+            pointRadius: extra.pointRadius ?? (type === 'line' ? 3 : 0),
+            pointBackgroundColor: extra.pointBackgroundColor || '#2563eb'
+          }]
+        },
+        options: baseChartOptions(extra)
+      };
+    }
+
+    function baseChartOptions(extra = {}) {
+      return {
+        responsive: true,
+        maintainAspectRatio: false,
+        indexAxis: extra.indexAxis,
+        plugins: {
+          legend: { display: extra.legend ?? false, position: 'bottom', labels: { usePointStyle: true, boxWidth: 10 } },
+          tooltip: {
+            backgroundColor: 'rgba(15,23,42,0.92)',
+            padding: 12,
+            titleColor: '#fff',
+            bodyColor: '#fff',
+            displayColors: true,
+            callbacks: extra.tooltipCallbacks || {}
+          }
+        },
+        scales: extra.scales || {
+          x: { grid: { display: false }, ticks: { color: '#64748b' } },
+          y: { grid: { color: '#eef2f7' }, ticks: { color: '#64748b' } }
+        }
+      };
+    }
+
+    function getOrCreateChart(id, config) {
+      const ctx = document.getElementById(id);
+      if (chartInstances[id]) {
+        chartInstances[id].data = config.data;
+        chartInstances[id].options = config.options;
+        chartInstances[id].update();
+      } else {
+        chartInstances[id] = new Chart(ctx, config);
+      }
+    }
+
+    function renderKPIs(summary) {
+      const kpis = [
+        { icon: '앨', label: '총 앨범판매량', value: formatNumber(summary.totalAlbum, 'M'), delta: '+12.4%', deltaClass: 'up', sub: '선택 조건 기준 누적 판매량' },
+        { icon: '스', label: '총 스트리밍', value: formatNumber(summary.totalStream, 'K'), delta: '+9.1%', deltaClass: 'up', sub: '월별 총스트리밍 누적' },
+        { icon: '₩', label: '총수익', value: '$' + formatNumber(summary.totalRevenue, 'M'), delta: '+7.8%', deltaClass: 'up', sub: '음원·앨범·공연·굿즈·광고 수익 합계' },
+        { icon: '관', label: '총관객수', value: formatNumber(summary.totalAudience, 'K'), delta: '+6.0%', deltaClass: 'up', sub: '공연 평균관객수 × 공연횟수 기준' },
+        { icon: '상', label: '총수상수', value: formatNumber(summary.totalWins), delta: '보합', deltaClass: 'flat', sub: '시상식 수상 수 누적' }
+      ];
+
+      document.getElementById('kpiGrid').innerHTML = kpis.map(k => `
+        <div class="card kpi-card">
+          <div class="kpi-meta">
+            <div class="icon">${k.icon}</div>
+            <span class="delta ${k.deltaClass}">${k.delta}</span>
+          </div>
+          <div class="kpi-label">${k.label}</div>
+          <div class="kpi-value">${k.value}</div>
+          <div class="kpi-sub">${k.sub}</div>
+        </div>
+      `).join('');
+    }
+
+    function renderOverview() {
+      const filteredAlbums = applyCommonFilters(albumSales);
+      const filteredStreams = applyCommonFilters(streaming);
+      const filteredRevenue = applyCommonFilters(revenues);
+      const filteredAwards = applyCommonFilters(awards);
+      const filteredConcerts = applyCommonFilters(concerts);
+
+      const totalAlbum = filteredAlbums.reduce((acc, cur) => acc + cur.album, 0);
+      const totalStream = filteredStreams.reduce((acc, cur) => acc + cur.totalStreaming, 0);
+      const totalRevenue = filteredRevenue.reduce((acc, cur) => acc + cur.totalRevenue, 0);
+      const totalWins = filteredAwards.reduce((acc, cur) => acc + cur.wins, 0);
+      const totalAudience = filteredConcerts.reduce((acc, cur) => acc + (cur.avgAudience * cur.shows), 0);
+
+      renderKPIs({ totalAlbum, totalStream, totalRevenue, totalWins, totalAudience });
+
+      const albumByYear = sumBy(filteredAlbums, x => x.year, x => x.album);
+      const streamByYear = sumBy(filteredStreams, x => x.year, x => x.totalStreaming);
+      const labelsYear = [...new Set([...albumByYear.keys(), ...streamByYear.keys()])].sort();
+
+      getOrCreateChart('albumTrendChart', chartConfig('line', labelsYear, labelsYear.map(y => round(albumByYear.get(y) || 0, 1)), '앨범판매량', { fill: true }));
+      getOrCreateChart('streamTrendChart', chartConfig('line', labelsYear, labelsYear.map(y => round(streamByYear.get(y) || 0, 0)), '총스트리밍', { borderColor: '#0f766e', backgroundColor: 'rgba(15,118,110,0.15)', pointBackgroundColor: '#0f766e', fill: true }));
+
+      const revenueByGroup = [...sumBy(filteredRevenue, x => x.group, x => x.totalRevenue).entries()].sort((a,b)=>b[1]-a[1]).slice(0,5);
+      getOrCreateChart('topRevenueChart', chartConfig('bar', revenueByGroup.map(x => x[0]), revenueByGroup.map(x => round(x[1],1)), '총수익', {
+        indexAxis: 'y',
+        backgroundColor: revenueByGroup.map((_,i)=>palette[i]),
+        borderColor: revenueByGroup.map((_,i)=>palette[i]),
+        scales: { x: { grid: { color: '#eef2f7' }, ticks: { color: '#64748b' } }, y: { grid: { display: false }, ticks: { color: '#64748b' } } }
+      }));
+
+      const agencyCounts = [...sumBy(filterProfiles(), x=>x.agency, ()=>1).entries()];
+      getOrCreateChart('agencyDonutChart', {
+        type: 'doughnut',
+        data: {
+          labels: agencyCounts.map(x=>x[0]),
+          datasets: [{ data: agencyCounts.map(x=>x[1]), backgroundColor: palette.slice(0, agencyCounts.length), borderWidth: 0 }]
+        },
+        options: baseChartOptions({ legend: true, scales: undefined })
+      });
+
+      const topRevenueGroup = revenueByGroup[0]?.[0] || '-';
+      const topAlbumYear = [...albumByYear.entries()].sort((a,b)=>b[1]-a[1])[0]?.[0] || '-';
+      document.getElementById('overviewInsight').innerHTML = `<strong>${state.year}년 기준 요약:</strong> 현재 필터 조건에서는 <strong>${topRevenueGroup}</strong>가 가장 높은 누적 총수익을 보이며, 앨범판매량은 <strong>${topAlbumYear}년</strong>에 가장 크게 집계됩니다. 산업 전체적으로는 스트리밍과 수익이 함께 상승하는 구조가 확인됩니다.`;
+    }
+
+    function buildGroupYearSummary() {
+      const groups = filterProfiles().map(p => p.group);
+      return groups.map((group) => {
+        const profile = profiles.find(p => p.group === group);
+        const album = applyCommonFilters(albumSales, { yearOnly: true }).filter(x => x.group === group).reduce((a,b)=>a+b.album,0);
+        const stream = applyCommonFilters(streaming, { yearOnly: true }).filter(x => x.group === group).reduce((a,b)=>a+b.totalStreaming,0);
+        const revenue = applyCommonFilters(revenues, { yearOnly: true }).filter(x => x.group === group).reduce((a,b)=>a+b.totalRevenue,0);
+        const wins = applyCommonFilters(awards, { yearOnly: true }).filter(x => x.group === group).reduce((a,b)=>a+b.wins,0);
+        const snsRows = applyCommonFilters(snsMetrics, { yearOnly: true }).filter(x => x.group === group);
+        const snsValue = snsRows.reduce((acc, row) => acc + (row[state.platform] || 0), 0);
+        const contentRows = applyCommonFilters(contents, { yearOnly: true }).filter(x => x.group === group);
+        const contentCount = contentRows.reduce((a,b)=>a+b.count,0);
+        const contentViews = contentRows.reduce((a,b)=>a+b.views,0);
+        const concertRows = applyCommonFilters(concerts, { yearOnly: true }).filter(x => x.group === group);
+        const totalShows = concertRows.reduce((a,b)=>a+b.shows,0);
+        const totalAudience = concertRows.reduce((a,b)=>a+(b.avgAudience*b.shows),0);
+        return {
+          group,
+          agency: profile.agency,
+          tier: profile.tier,
+          members: profile.members,
+          album,
+          stream,
+          revenue,
+          wins,
+          snsValue,
+          contentCount,
+          contentViews,
+          totalShows,
+          totalAudience,
+          revenuePerMember: profile.members ? revenue / profile.members : 0,
+          viewsPerContent: contentCount ? contentViews / contentCount : 0,
+          audiencePerShow: totalShows ? totalAudience / totalShows : 0
+        };
+      }).sort((a,b)=>b.revenue-a.revenue);
+    }
+
+    function renderGroups() {
+      const summary = buildGroupYearSummary();
+      const labels = summary.map(x=>x.group);
+      getOrCreateChart('groupAlbumChart', chartConfig('bar', labels, summary.map(x=>round(x.album,1)), '앨범판매량', { backgroundColor: '#93c5fd', borderColor: '#2563eb' }));
+      getOrCreateChart('groupStreamChart', chartConfig('bar', labels, summary.map(x=>round(x.stream,0)), '총스트리밍', { backgroundColor: '#99f6e4', borderColor: '#0f766e' }));
+      getOrCreateChart('groupRevenueChart', chartConfig('bar', labels, summary.map(x=>round(x.revenue,1)), '총수익', { backgroundColor: '#c7d2fe', borderColor: '#4f46e5' }));
+      getOrCreateChart('groupAwardsChart', chartConfig('bar', labels, summary.map(x=>x.wins), '총수상수', { backgroundColor: '#fde68a', borderColor: '#d97706' }));
+      getOrCreateChart('groupSnsChart', chartConfig('bar', labels, summary.map(x=>round(x.snsValue,0)), 'SNS', { backgroundColor: '#fbcfe8', borderColor: '#ec4899' }));
+
+      const topRPM = summary[0];
+      const topView = [...summary].sort((a,b)=>b.viewsPerContent-a.viewsPerContent)[0];
+      const topAudience = [...summary].sort((a,b)=>b.audiencePerShow-a.audiencePerShow)[0];
+      document.getElementById('effRevenuePerMember').textContent = `${topRPM.group} · $${topRPM.revenuePerMember.toFixed(1)}M`;
+      document.getElementById('effViewPerContent').textContent = `${topView.group} · ${formatNumber(topView.viewsPerContent)}`;
+      document.getElementById('effAudiencePerShow').textContent = `${topAudience.group} · ${formatNumber(topAudience.audiencePerShow)}`;
+
+      const maxAlbum = Math.max(...summary.map(x=>x.album), 1);
+      const maxStream = Math.max(...summary.map(x=>x.stream), 1);
+      const maxRevenue = Math.max(...summary.map(x=>x.revenue), 1);
+      const maxWins = Math.max(...summary.map(x=>x.wins), 1);
+      const maxSns = Math.max(...summary.map(x=>x.snsValue), 1);
+
+      document.getElementById('comparisonTableBody').innerHTML = summary.map(row => `
+        <tr>
+          <td><strong>${row.group}</strong></td>
+          <td>${row.agency}</td>
+          <td><span class="tier-pill">${row.tier}</span></td>
+          <td>${row.album.toFixed(1)}M<div class="metric-bar"><span style="width:${(row.album/maxAlbum)*100}%"></span></div></td>
+          <td>${formatNumber(row.stream)}<div class="metric-bar"><span style="width:${(row.stream/maxStream)*100}%"></span></div></td>
+          <td>$${row.revenue.toFixed(1)}M<div class="metric-bar"><span style="width:${(row.revenue/maxRevenue)*100}%"></span></div></td>
+          <td>${row.wins}<div class="metric-bar"><span style="width:${(row.wins/maxWins)*100}%"></span></div></td>
+          <td>${formatNumber(row.snsValue)}<div class="metric-bar"><span style="width:${(row.snsValue/maxSns)*100}%"></span></div></td>
+        </tr>
+      `).join('');
+
+      const strongest = summary[0];
+      const snsLeader = [...summary].sort((a,b)=>b.snsValue-a.snsValue)[0];
+      document.getElementById('groupsInsight').innerHTML = `<strong>${state.year}년 그룹 비교 인사이트:</strong> 총수익 기준으로는 <strong>${strongest.group}</strong>가 가장 앞서 있으며, 선택한 SNS 플랫폼 <strong>${state.platform}</strong>에서는 <strong>${snsLeader.group}</strong>의 규모가 가장 큽니다. 판매량과 SNS 규모가 항상 동일한 순서를 보이지 않는 점이 그룹별 전략 차이를 보여줍니다.`;
+    }
+
+    function buildCountrySummary() {
+      return countries.map(country => {
+        const fanRows = applyCommonFilters(fans, { yearOnly: true }).filter(x=>x.country===country);
+        const ticketRows = applyCommonFilters(tickets, { yearOnly: true }).filter(x=>x.country===country);
+        const concertRows = applyCommonFilters(concerts, { yearOnly: true }).filter(x=>x.country===country);
+        return {
+          country,
+          fanRatio: fanRows.reduce((a,b)=>a+b.fanRatio,0),
+          fanclub: fanRows.reduce((a,b)=>a+b.fanclub,0),
+          avgTicket: ticketRows.length ? ticketRows.reduce((a,b)=>a+b.average,0)/ticketRows.length : 0,
+          shows: concertRows.reduce((a,b)=>a+b.shows,0),
+          audience: concertRows.reduce((a,b)=>a+(b.avgAudience*b.shows),0)
+        };
+      }).filter(x=>x.fanRatio>0);
+    }
+
+    function renderGlobal() {
+      const summary = buildCountrySummary().sort((a,b)=>b.fanRatio-a.fanRatio);
+      getOrCreateChart('fanCountryChart', chartConfig('bar', summary.map(x=>x.country), summary.map(x=>round(x.fanRatio*100,1)), '팬비율(%)', { backgroundColor: '#bfdbfe', borderColor: '#2563eb' }));
+      getOrCreateChart('fanclubCountryChart', chartConfig('bar', summary.map(x=>x.country), summary.map(x=>round(x.fanclub,0)), '팬클럽 등록 수', { backgroundColor: '#bbf7d0', borderColor: '#16a34a' }));
+      getOrCreateChart('ticketCountryChart', chartConfig('bar', summary.map(x=>x.country), summary.map(x=>round(x.avgTicket,0)), '평균 티켓가격', { backgroundColor: '#fed7aa', borderColor: '#ea580c' }));
+      getOrCreateChart('concertCountryChart', chartConfig('bar', summary.map(x=>x.country), summary.map(x=>round(x.shows,0)), '공연횟수', { backgroundColor: '#ddd6fe', borderColor: '#7c3aed' }));
+
+      const cityRows = applyCommonFilters(concerts, { yearOnly: true });
+      const citySummary = [...sumBy(cityRows, x=>x.city, x=>x.avgAudience*x.shows).entries()].sort((a,b)=>b[1]-a[1]).slice(0,8);
+      getOrCreateChart('cityAudienceChart', chartConfig('bar', citySummary.map(x=>x[0]), citySummary.map(x=>round(x[1],0)), '총관객수', { indexAxis: 'y', backgroundColor: citySummary.map((_,i)=>palette[i]), borderColor: citySummary.map((_,i)=>palette[i]), scales: { x: { grid: { color: '#eef2f7' }, ticks: { color: '#64748b' } }, y: { grid: { display: false }, ticks: { color: '#64748b' } } } }));
+
+      const venueSummary = [...sumBy(cityRows, x=>x.venue, x=>x.occupancy).entries()].map(([venue, occ]) => ({ venue, occ: occ / cityRows.filter(r=>r.venue===venue).length })).sort((a,b)=>b.occ-a.occ).slice(0,8);
+      getOrCreateChart('venueOccupancyChart', chartConfig('bar', venueSummary.map(x=>x.venue), venueSummary.map(x=>round(x.occ*100,1)), '객석 점유율(%)', { backgroundColor: '#fbcfe8', borderColor: '#db2777' }));
+
+      getOrCreateChart('bubbleChart', {
+        type: 'bubble',
+        data: {
+          datasets: summary.map((row, i) => ({
+            label: row.country,
+            data: [{ x: round(row.fanRatio*100,1), y: round(row.avgTicket,1), r: Math.max(8, Math.sqrt(row.shows || 1) * 3) }],
+            backgroundColor: palette[i % palette.length] + '88',
+            borderColor: palette[i % palette.length],
+            borderWidth: 1.5
+          }))
+        },
+        options: baseChartOptions({
+          legend: true,
+          scales: {
+            x: { title: { display: true, text: '팬비율 (%)' }, grid: { color: '#eef2f7' }, ticks: { color: '#64748b' } },
+            y: { title: { display: true, text: '평균 티켓가격' }, grid: { color: '#eef2f7' }, ticks: { color: '#64748b' } }
+          },
+          tooltipCallbacks: {
+            label: (ctx) => {
+              const raw = ctx.raw;
+              return `${ctx.dataset.label}: 팬비율 ${raw.x}%, 티켓 ${raw.y}, 공연횟수 지수 ${raw.r}`;
+            }
+          }
+        })
+      });
+
+      const topCountry = summary[0]?.country || '-';
+      const topShow = [...summary].sort((a,b)=>b.shows-a.shows)[0]?.country || '-';
+      document.getElementById('globalInsight').innerHTML = `<strong>글로벌 시장 인사이트:</strong> 선택 조건 기준 팬비율이 가장 높은 국가는 <strong>${topCountry}</strong>이며, 공연이 가장 집중된 국가는 <strong>${topShow}</strong>입니다. 팬 비중과 공연 집중도가 완전히 일치하지 않아, 국가별 가격 전략과 투어 전략이 별도로 작동하고 있음을 시사합니다.`;
+    }
+
+    function renderActivity() {
+      const contentRows = applyCommonFilters(contents, { yearOnly: true });
+      const contentCountMap = sumBy(contentRows, x=>x.type, x=>x.count);
+      const contentViewsMap = sumBy(contentRows, x=>x.type, x=>x.views);
+      const contentLikesMap = sumBy(contentRows, x=>x.type, x=>x.likes);
+      const labels = contentTypes;
+      getOrCreateChart('contentCountChart', chartConfig('bar', labels, labels.map(x=>contentCountMap.get(x) || 0), '콘텐츠 개수', { backgroundColor: '#bfdbfe', borderColor: '#2563eb' }));
+      getOrCreateChart('contentViewsChart', chartConfig('bar', labels, labels.map(x=>contentViewsMap.get(x) || 0), '총조회수', { backgroundColor: '#c7d2fe', borderColor: '#4f46e5' }));
+      getOrCreateChart('contentLikesChart', chartConfig('bar', labels, labels.map(x=>contentLikesMap.get(x) || 0), '총좋아요수', { backgroundColor: '#fecdd3', borderColor: '#e11d48' }));
+
+      const filteredMembers = applyCommonFilters(memberActivities, { yearOnly: true, activityType: true });
+      const memberGroup = state.group === '전체' ? (buildGroupYearSummary()[0]?.group || 'BTS') : state.group;
+      const memberRows = filteredMembers.filter(x=>x.group===memberGroup);
+      const memberSummary = [...sumBy(memberRows, x=>x.member, x=>x.days).entries()].sort((a,b)=>b[1]-a[1]).slice(0,10);
+      getOrCreateChart('memberActivityChart', chartConfig('bar', memberSummary.map(x=>x[0]), memberSummary.map(x=>x[1]), '활동일수', { indexAxis: 'y', backgroundColor: memberSummary.map((_,i)=>palette[i]), borderColor: memberSummary.map((_,i)=>palette[i]), scales: { x: { grid: { color: '#eef2f7' }, ticks: { color: '#64748b' } }, y: { grid: { display: false }, ticks: { color: '#64748b' } } } }));
+
+      const typeSummary = [...sumBy(filteredMembers, x=>x.type, x=>x.days).entries()];
+      getOrCreateChart('activityTypeChart', chartConfig('bar', typeSummary.map(x=>x[0]), typeSummary.map(x=>x[1]), '활동일수', { backgroundColor: '#a7f3d0', borderColor: '#059669' }));
+
+      const countrySummary = [...sumBy(filteredMembers, x=>x.country, x=>x.days).entries()].sort((a,b)=>b[1]-a[1]);
+      getOrCreateChart('memberCountryChart', chartConfig('bar', countrySummary.map(x=>x[0]), countrySummary.map(x=>x[1]), '활동일수', { backgroundColor: '#fde68a', borderColor: '#d97706' }));
+
+      const scatterSummary = buildGroupYearSummary();
+      getOrCreateChart('contentScatterChart', {
+        type: 'bubble',
+        data: {
+          datasets: scatterSummary.map((row, i) => ({
+            label: row.group,
+            data: [{ x: row.contentCount, y: round(row.contentViews / 1000, 1), r: Math.max(8, Math.sqrt(row.contentViews / 800)) }],
+            backgroundColor: palette[i % palette.length] + '88',
+            borderColor: palette[i % palette.length],
+            borderWidth: 1.2
+          }))
+        },
+        options: baseChartOptions({
+          legend: true,
+          scales: {
+            x: { title: { display: true, text: '콘텐츠 개수' }, grid: { color: '#eef2f7' }, ticks: { color: '#64748b' } },
+            y: { title: { display: true, text: '총조회수 (천 단위)' }, grid: { color: '#eef2f7' }, ticks: { color: '#64748b' } }
+          }
+        })
+      });
+
+      const activeType = state.activityType === '전체' ? '전체 활동유형' : state.activityType;
+      const mostActiveMember = memberSummary[0]?.[0] || '-';
+      document.getElementById('activityInsight').innerHTML = `<strong>활동 인사이트:</strong> 현재 기준 그룹 <strong>${memberGroup}</strong>에서는 <strong>${mostActiveMember}</strong>의 활동일수가 가장 높게 나타납니다. 또한 <strong>${activeType}</strong> 기준으로는 콘텐츠 생산량이 늘어날수록 조회수도 증가하는 경향이 확인되지만, 그룹별 효율 차이는 분명하게 남아 있습니다.`;
+    }
+
+    function renderRevenue() {
+      const revenueRows = applyCommonFilters(revenues, { yearOnly: true });
+      const rank = [...sumBy(revenueRows, x=>x.group, x=>x.totalRevenue).entries()].sort((a,b)=>b[1]-a[1]);
+      getOrCreateChart('revenueRankChart', chartConfig('bar', rank.map(x=>x[0]), rank.map(x=>x[1]), '총수익', { indexAxis: 'y', backgroundColor: rank.map((_,i)=>palette[i]), borderColor: rank.map((_,i)=>palette[i]), scales: { x: { grid: { color: '#eef2f7' }, ticks: { color: '#64748b' } }, y: { grid: { display: false }, ticks: { color: '#64748b' } } } }));
+
+      const revenueByGroup = buildGroupYearSummary().map(row => {
+        const rev = revenueRows.find(x=>x.group===row.group) || { digitalRevenue:0, albumRevenue:0, concertRevenue:0, merchRevenue:0, adRevenue:0 };
+        return { group: row.group, ...rev };
+      });
+
+      getOrCreateChart('revenueStackedChart', {
+        type: 'bar',
+        data: {
+          labels: revenueByGroup.map(x=>x.group),
+          datasets: [
+            { label: '음원수익', data: revenueByGroup.map(x=>x.digitalRevenue), backgroundColor: '#93c5fd', stack: 'stack1' },
+            { label: '앨범수익', data: revenueByGroup.map(x=>x.albumRevenue), backgroundColor: '#6366f1', stack: 'stack1' },
+            { label: '공연수익', data: revenueByGroup.map(x=>x.concertRevenue), backgroundColor: '#10b981', stack: 'stack1' },
+            { label: '굿즈수익', data: revenueByGroup.map(x=>x.merchRevenue), backgroundColor: '#f59e0b', stack: 'stack1' },
+            { label: '광고수익', data: revenueByGroup.map(x=>x.adRevenue), backgroundColor: '#f472b6', stack: 'stack1' }
+          ]
+        },
+        options: baseChartOptions({
+          legend: true,
+          scales: {
+            x: { stacked: true, grid: { display: false }, ticks: { color: '#64748b' } },
+            y: { stacked: true, grid: { color: '#eef2f7' }, ticks: { color: '#64748b' } }
+          }
+        })
+      });
+
+      const revenueTrendLabels = years.filter(y => y <= state.year);
+      const trendRows = applyCommonFilters(revenues).filter(r => state.group === '전체' ? true : r.group === state.group);
+      const trendDigital = revenueTrendLabels.map(y => trendRows.filter(r=>r.year===y).reduce((a,b)=>a+b.digitalRevenue,0));
+      const trendAlbum = revenueTrendLabels.map(y => trendRows.filter(r=>r.year===y).reduce((a,b)=>a+b.albumRevenue,0));
+      const trendConcert = revenueTrendLabels.map(y => trendRows.filter(r=>r.year===y).reduce((a,b)=>a+b.concertRevenue,0));
+      const trendMerch = revenueTrendLabels.map(y => trendRows.filter(r=>r.year===y).reduce((a,b)=>a+b.merchRevenue,0));
+      const trendAd = revenueTrendLabels.map(y => trendRows.filter(r=>r.year===y).reduce((a,b)=>a+b.adRevenue,0));
+
+      getOrCreateChart('revenueTrendChart', {
+        type: 'line',
+        data: {
+          labels: revenueTrendLabels,
+          datasets: [
+            { label: '음원수익', data: trendDigital, borderColor: '#93c5fd', backgroundColor: 'rgba(147,197,253,0.15)', fill: true, tension: 0.3 },
+            { label: '앨범수익', data: trendAlbum, borderColor: '#6366f1', backgroundColor: 'rgba(99,102,241,0.12)', fill: true, tension: 0.3 },
+            { label: '공연수익', data: trendConcert, borderColor: '#10b981', backgroundColor: 'rgba(16,185,129,0.12)', fill: true, tension: 0.3 },
+            { label: '굿즈수익', data: trendMerch, borderColor: '#f59e0b', backgroundColor: 'rgba(245,158,11,0.12)', fill: true, tension: 0.3 },
+            { label: '광고수익', data: trendAd, borderColor: '#ec4899', backgroundColor: 'rgba(236,72,153,0.12)', fill: true, tension: 0.3 }
+          ]
+        },
+        options: baseChartOptions({ legend: true })
+      });
+
+      renderHeatmap(revenueByGroup);
+
+      const concertShareLeader = [...revenueByGroup].sort((a,b)=>(b.concertRevenue/(b.totalRevenue||1)) - (a.concertRevenue/(a.totalRevenue||1)))[0];
+      document.getElementById('revenueInsight').innerHTML = `<strong>수익구조 인사이트:</strong> 선택한 ${state.year}년 기준으로 가장 높은 공연수익 비중을 보인 그룹은 <strong>${concertShareLeader.group}</strong>입니다. 수익 포트폴리오는 그룹마다 달라서, 어떤 그룹은 앨범 중심이고 어떤 그룹은 공연 및 광고 중심으로 구조가 형성됩니다.`;
+    }
+
+    function renderHeatmap(rows) {
+      const canvas = document.getElementById('heatmapCanvas');
+      const parent = canvas.parentElement;
+      const dpr = window.devicePixelRatio || 1;
+      const width = parent.clientWidth;
+      const height = Math.max(360, rows.length * 34 + 70);
+      canvas.width = width * dpr;
+      canvas.height = height * dpr;
+      canvas.style.width = width + 'px';
+      canvas.style.height = height + 'px';
+      const ctx = canvas.getContext('2d');
+      ctx.scale(dpr, dpr);
+      ctx.clearRect(0, 0, width, height);
+
+      const metrics = [
+        { key: 'digitalRevenue', label: '음원' },
+        { key: 'albumRevenue', label: '앨범' },
+        { key: 'concertRevenue', label: '공연' },
+        { key: 'merchRevenue', label: '굿즈' },
+        { key: 'adRevenue', label: '광고' }
+      ];
+
+      const left = 110;
+      const top = 26;
+      const cellW = (width - left - 20) / metrics.length;
+      const cellH = 30;
+      const maxVal = Math.max(...rows.flatMap(r => metrics.map(m => r[m.key])), 1);
+
+      ctx.font = '12px Inter, Pretendard, sans-serif';
+      ctx.fillStyle = '#64748b';
+      metrics.forEach((m, i) => {
+        ctx.fillText(m.label, left + i * cellW + 12, 18);
+      });
+
+      rows.forEach((row, rIdx) => {
+        const y = top + rIdx * cellH;
+        ctx.fillStyle = '#152033';
+        ctx.fillText(row.group, 8, y + 20);
+        metrics.forEach((m, i) => {
+          const x = left + i * cellW;
+          const ratio = row[m.key] / maxVal;
+          ctx.fillStyle = `rgba(37, 99, 235, ${0.08 + ratio * 0.82})`;
+          roundRect(ctx, x, y, cellW - 8, cellH - 6, 8, true, false);
+          ctx.fillStyle = ratio > 0.5 ? '#ffffff' : '#0f172a';
+          ctx.fillText(row[m.key].toFixed(0), x + 12, y + 20);
+        });
+      });
+    }
+
+    function roundRect(ctx, x, y, width, height, radius, fill, stroke) {
+      if (typeof radius === 'number') radius = { tl: radius, tr: radius, br: radius, bl: radius };
+      ctx.beginPath();
+      ctx.moveTo(x + radius.tl, y);
+      ctx.lineTo(x + width - radius.tr, y);
+      ctx.quadraticCurveTo(x + width, y, x + width, y + radius.tr);
+      ctx.lineTo(x + width, y + height - radius.br);
+      ctx.quadraticCurveTo(x + width, y + height, x + width - radius.br, y + height);
+      ctx.lineTo(x + radius.bl, y + height);
+      ctx.quadraticCurveTo(x, y + height, x, y + height - radius.bl);
+      ctx.lineTo(x, y + radius.tl);
+      ctx.quadraticCurveTo(x, y, x + radius.tl, y);
+      ctx.closePath();
+      if (fill) ctx.fill();
+      if (stroke) ctx.stroke();
+    }
+
+    function updateSectionNav() {
+      const sections = ['overview', 'groups', 'global', 'activity', 'revenue'];
+      const scroll = window.scrollY + 160;
+      let current = 'overview';
+      sections.forEach(id => {
+        const el = document.getElementById(id);
+        if (el.offsetTop <= scroll) current = id;
+      });
+      document.querySelectorAll('#sectionNav a').forEach(a => {
+        a.classList.toggle('active', a.getAttribute('href') === '#' + current);
+      });
+    }
+
+    function renderAll() {
+      renderOverview();
+      renderGroups();
+      renderGlobal();
+      renderActivity();
+      renderRevenue();
+    }
+
+    populateControls();
+    bindControls();
+    renderAll();
+    updateSectionNav();
+    window.addEventListener('scroll', updateSectionNav);
+    window.addEventListener('resize', () => {
+      renderRevenue();
+    });
+  </script>
+</body>
+</html>
