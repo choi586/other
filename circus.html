@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>서커스 찰리 - 전 스테이지 완성판</title>
+    <style>
+        :root {
+            --bg-color: #000;
+            --ui-font: 'Courier New', Courier, monospace;
+        }
+
+        body, html {
+            margin: 0; padding: 0; width: 100%; height: 100%;
+            overflow: hidden; background-color: var(--bg-color);
+            display: flex; justify-content: center; align-items: center;
+            font-family: var(--ui-font);
+            user-select: none;
+        }
+
+        #game-container {
+            position: relative; width: 800px; height: 400px;
+            overflow: hidden; background-color: #000;
+            border: 4px solid #333;
+        }
+
+        canvas {
+            display: block; width: 100%; height: 100%;
+            image-rendering: pixelated;
+        }
+
+        .ui-overlay {
+            position: absolute; top: 10px; left: 0; right: 0;
+            color: #fff; padding: 0 20px; pointer-events: none;
+            display: flex; justify-content: space-between; font-size: 18px;
+            z-index: 10; text-shadow: 2px 2px #000;
+        }
+
+        .distance-marker {
+            position: absolute; bottom: 20px; left: 50%;
+            transform: translateX(-50%); background: rgba(0, 0, 0, 0.8);
+            border: 2px solid #f39c12; padding: 5px 15px;
+            color: #fff; font-size: 24px; z-index: 10;
+        }
+
+        .message-box {
+            position: absolute; top: 50%; left: 50%;
+            transform: translate(-50%, -50%); background: rgba(0, 0, 0, 0.9);
+            border: 4px solid #fff; padding: 25px; color: #fff;
+            text-align: center; display: none; z-index: 100; min-width: 400px;
+        }
+
+        .btn {
+            background: #e74c3c; color: white; border: none;
+            padding: 10px 20px; font-size: 18px; cursor: pointer;
+            margin-top: 15px; font-family: inherit; font-weight: bold;
+            transition: transform 0.1s;
+        }
+
+        .btn:active { transform: scale(0.95); }
+        .btn:hover { background: #c0392b; }
+
+        .stage-select-container {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .stage-btn {
+            background: #34495e; color: white; border: 2px solid #7f8c8d;
+            padding: 8px; font-size: 12px; cursor: pointer;
+            font-family: inherit;
+        }
+
+        .stage-btn:hover { background: #f39c12; border-color: #fff; }
+        .stage-btn.active { background: #e74c3c; border-color: #fff; }
+
+        .stage-title { color: #f1c40f; font-size: 22px; margin-bottom: 5px; }
+        .controls-hint {
+            position: absolute; bottom: 10px; left: 10px;
+            color: rgba(255,255,255,0.4); font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="game-container">
+        <div class="ui-overlay">
+            <div>SCORE: <span id="score-val">000000</span></div>
+            <div id="stage-num-display">STAGE-01</div>
+        </div>
+
+        <div class="distance-marker"><span id="dist-val">100</span>M</div>
+
+        <div id="start-screen" class="message-box" style="display: block;">
+            <h2>CIRCUS CHARLIE</h2>
+            <div class="stage-title" id="start-stage-name">STAGE 1: FIRE RINGS</div>
+            <p id="start-desc" style="font-size: 14px; margin: 10px 0;">타이밍에 맞춰 스페이스바를 누르세요!</p>
+            
+            <div style="font-size: 12px; color: #aaa; margin-top: 15px;">스테이지 선택</div>
+            <div class="stage-select-container" id="stage-select-grid"></div>
+
+            <button class="btn" onclick="startGame()" style="width: 100%;">공연 시작 (SPACE)</button>
+        </div>
+
+        <div id="result-screen" class="message-box">
+            <h2 id="result-title">STAGE CLEAR!</h2>
+            <p id="result-text" style="margin: 15px 0;"></p>
+            <button class="btn" id="result-btn" onclick="handleResultBtn()" style="width: 100%;">다음으로</button>
+        </div>
+
+        <canvas id="gameCanvas"></canvas>
+        <div class="controls-hint">SPACEBAR / CLICK TO JUMP</div>
+    </div>
+
+<script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const scoreVal = document.getElementById('score-val');
+    const distVal = document.getElementById('dist-val');
+    const stageDisplay = document.getElementById('stage-num-display');
+    const startScreen = document.getElementById('start-screen');
+    const resultScreen = document.getElementById('result-screen');
+    const stageSelectGrid = document.getElementById('stage-select-grid');
+    
+    const GAME_WIDTH = 800;
+    const GAME_HEIGHT = 400;
+    const FLOOR_Y = 320;
+    
+    canvas.width = GAME_WIDTH;
+    canvas.height = GAME_HEIGHT;
+
+    let gameState = 'START';
+    let currentStage = 1;
+    let score = 0;
+    let worldX = 0;
+    let distance = 100;
+    let frameCount = 0;
+
+    const STAGES = {
+        1: { name: "FIRE RINGS", desc: "사자를 타고 불의 고리 점프!", bg: "#4a9e2f", speed: 2.5, gravity: 0.45, jumpPower: -8.5 },
+        2: { name: "TIGHTROPE", desc: "줄 위에서 원숭이 피하기!", bg: "#2980b9", speed: 2.0, gravity: 0.35, jumpPower: -8.0 },
+        3: { name: "TRAMPOLINE", desc: "트램펄린 위를 점프하며 장애물 피하기!", bg: "#8e44ad", speed: 2.2, gravity: 0.45, jumpPower: -8.5 },
+        4: { name: "BALL JUMP", desc: "공 위로만 이동하세요! 바닥은 위험!", bg: "#d35400", speed: 1.8, gravity: 0.4, jumpPower: -8.0 },
+        5: { name: "HORSE RIDE", desc: "말을 타고 허들을 돌파!", bg: "#27ae60", speed: 4.8, gravity: 0.5, jumpPower: -9.5 },
+        6: { name: "TRAPEZE", desc: "공중그네 타이밍을 맞추세요!", bg: "#2c3e50", speed: 2.0, gravity: 0.25, jumpPower: -7.0 }
+    };
+
+    function initStageButtons() {
+        stageSelectGrid.innerHTML = '';
+        for (let i = 1; i <= 6; i++) {
+            const btn = document.createElement('button');
+            btn.className = 'stage-btn' + (currentStage === i ? ' active' : '');
+            btn.innerText = `STAGE ${i}`;
+            btn.onclick = (e) => { e.stopPropagation(); selectStage(i); };
+            stageSelectGrid.appendChild(btn);
+        }
+    }
+
+    function selectStage(n) {
+        currentStage = n;
+        initStageButtons();
+        showStartScreen();
+    }
+
+    const player = {
+        x: 180, y: FLOOR_Y, vy: 0, isJumping: false,
+        trapezeId: -1, 
+        reset(yPos) {
+            this.y = yPos;
+            this.vy = 0;
+            this.isJumping = false;
+            this.trapezeId = -1;
+        },
+        jump() {
+            if (!this.isJumping || currentStage === 6) {
+                this.vy = STAGES[currentStage].jumpPower;
+                this.isJumping = true;
+                this.trapezeId = -1;
+            }
+        },
+        update() {
+            if (currentStage === 6 && this.trapezeId !== -1) {
+                const trap = obstacles.find(o => o.id === this.trapezeId);
+                if (trap) {
+                    const angle = Math.sin(frameCount * 0.05) * 0.8;
+                    this.x = (trap.x - worldX) + Math.sin(angle) * 150;
+                    this.y = 50 + Math.cos(angle) * 150;
+                }
+                return;
+            }
+
+            if (this.isJumping) {
+                this.vy += STAGES[currentStage].gravity;
+                this.y += this.vy;
+                const groundY = FLOOR_Y; 
+                if (this.y >= groundY) {
+                    this.y = groundY;
+                    this.isJumping = false;
+                    this.vy = 0;
+                    if (currentStage === 6) gameOver(); 
+                }
+            }
+        },
+        drawClown(offsetX, offsetY, isRiding) {
+            ctx.save();
+            ctx.translate(offsetX, offsetY);
+            const walkCycle = isRiding ? 0 : Math.floor(frameCount / 10) % 2;
+            ctx.fillStyle = '#fff'; 
+            if (isRiding) {
+                ctx.fillRect(-10, -12, 6, 12); ctx.fillRect(4, -12, 6, 12);
+            } else {
+                if (this.isJumping) {
+                    ctx.fillRect(-6, -12, 4, 12); ctx.fillRect(2, -12, 4, 12);
+                } else {
+                    ctx.fillRect(walkCycle === 0 ? -4 : -6, -12, 4, 12);
+                    ctx.fillRect(walkCycle === 0 ? 0 : 2, -12, 4, 12);
+                }
+            }
+            ctx.fillStyle = '#e74c3c'; ctx.fillRect(-8, -32, 16, 20);
+            ctx.fillStyle = '#fff'; ctx.fillRect(-8, -32, 16, 4);
+            ctx.fillStyle = '#f3e5f5'; ctx.fillRect(-7, -45, 14, 14);
+            ctx.fillStyle = '#000'; ctx.fillRect(2, -41, 2, 2); 
+            ctx.fillStyle = '#e74c3c'; ctx.fillRect(4, -38, 3, 3); 
+            ctx.fillStyle = '#2980b9'; ctx.beginPath(); ctx.moveTo(-7, -45); ctx.lineTo(7, -45); ctx.lineTo(0, -57); ctx.fill();
+            ctx.fillStyle = '#fff'; ctx.fillRect(-1, -59, 3, 3);
+            ctx.fillStyle = '#e74c3c';
+            if (this.isJumping) ctx.fillRect(8, -32, 6, 4); 
+            else ctx.fillRect(6, -22, 6, 4);
+            ctx.restore();
+        },
+        drawLion(offsetX, offsetY) {
+            ctx.save(); ctx.translate(offsetX, offsetY);
+            const legCycle = Math.floor(frameCount / 8) % 2;
+            ctx.fillStyle = '#e67e22'; ctx.fillRect(-25, -20, 50, 20);
+            ctx.fillStyle = '#d35400'; ctx.fillRect(15, -30, 20, 25);
+            ctx.fillStyle = '#e67e22'; ctx.fillRect(25, -25, 15, 15);
+            ctx.fillStyle = '#000'; ctx.fillRect(35, -22, 2, 2); 
+            ctx.fillStyle = '#d35400'; 
+            if (this.isJumping) { ctx.fillRect(-22, 0, 6, 12); ctx.fillRect(16, 0, 6, 12); }
+            else { ctx.fillRect(legCycle === 0 ? -20 : -15, 0, 6, 10); ctx.fillRect(legCycle === 0 ? 14 : 9, 0, 6, 10); }
+            ctx.strokeStyle = '#d35400'; ctx.lineWidth = 3; ctx.beginPath();
+            const tailWag = Math.sin(frameCount * 0.1) * 5;
+            ctx.moveTo(-25, -15); ctx.quadraticCurveTo(-35, -25 + tailWag, -30, -35 + tailWag); ctx.stroke();
+            ctx.restore();
+        },
+        drawHorse(offsetX, offsetY) {
+            ctx.save(); ctx.translate(offsetX, offsetY);
+            const legCycle = Math.floor(frameCount / 6) % 2;
+            ctx.fillStyle = '#7f8c8d'; ctx.fillRect(-30, -25, 60, 25); 
+            ctx.fillStyle = '#95a5a6'; ctx.fillRect(20, -45, 15, 30); 
+            ctx.fillStyle = '#7f8c8d'; ctx.fillRect(25, -50, 20, 15); 
+            ctx.fillStyle = '#2c3e50'; ctx.fillRect(-30, -30, 40, 5); 
+            ctx.fillStyle = '#333';
+            if (legCycle === 0) { ctx.fillRect(-25, 0, 8, 12); ctx.fillRect(15, 0, 8, 12); }
+            else { ctx.fillRect(-15, 0, 8, 12); ctx.fillRect(5, 0, 8, 12); }
+            ctx.restore();
+        },
+        draw() {
+            const bounce = (this.isJumping || currentStage === 6) ? 0 : Math.sin(frameCount * 0.2) * 2;
+            if (currentStage === 1) {
+                this.drawLion(this.x, this.y);
+                this.drawClown(this.x, this.y - 18 + bounce, true);
+            } else if (currentStage === 5) {
+                this.drawHorse(this.x, this.y);
+                this.drawClown(this.x, this.y - 25 + bounce, true);
+            } else {
+                this.drawClown(this.x, this.y, false);
+            }
+        }
+    };
+
+    function spawnObstacles() {
+        obstacles = [];
+        let lastX = 600;
+        for(let i=1; i<25; i++) {
+            if (currentStage === 1) {
+                lastX += 550;
+                obstacles.push({ x: lastX, type: (i % 4 === 0) ? 'pot' : 'hoop' });
+            } else if (currentStage === 2) {
+                lastX += 350 + Math.random() * 400;
+                obstacles.push({ x: lastX, type: 'monkey' });
+            } else if (currentStage === 3) {
+                lastX += 300;
+                if (i % 2 === 0) obstacles.push({ x: lastX, type: 'trampoline' });
+                else obstacles.push({ x: lastX, type: 'knife', y: 150 + Math.random() * 80 });
+            } else if (currentStage === 4) {
+                lastX += 400;
+                obstacles.push({ x: lastX, type: 'ball_static' });
+            } else if (currentStage === 5) {
+                lastX += 500;
+                obstacles.push({ x: lastX, type: (i % 3 === 0) ? 'trampoline' : 'hurdle' });
+            } else if (currentStage === 6) {
+                lastX += 450;
+                obstacles.push({ x: lastX, type: 'trapeze', id: i });
+            }
+        }
+    }
+
+    function checkCollision(obs) {
+        const ox = obs.x - worldX;
+        const px = player.x;
+        const py = player.y;
+
+        if (obs.type === 'hoop') {
+            if (Math.abs(px - ox) < 12) {
+                if (py - 58 < FLOOR_Y - 142 || py - 5 > FLOOR_Y - 18) return true;
+                if (!obs.passed) { obs.passed = true; score += 500; }
+            }
+        } else if (obs.type === 'pot' || obs.type === 'hurdle') {
+            if (Math.abs(px - ox) < 22 && py > FLOOR_Y - 25) return true;
+        } else if (obs.type === 'monkey') {
+            if (Math.abs(px - ox) < 18 && py > FLOOR_Y - 35) return true;
+        } else if (obs.type === 'knife') {
+            if (Math.abs(px - ox) < 20 && Math.abs(py - 40 - obs.y) < 20) return true;
+        } else if (obs.type === 'trampoline') {
+            if (Math.abs(px - ox) < 30 && py >= FLOOR_Y - 5) {
+                player.vy = -14; 
+                player.isJumping = true;
+            }
+        } else if (obs.type === 'ball_static') {
+            if (Math.abs(px - ox) < 25) { if (!player.isJumping) return false; }
+            if (!player.isJumping && py >= FLOOR_Y) return true;
+        } else if (obs.type === 'trapeze') {
+            const angle = Math.sin(frameCount * 0.05) * 0.8;
+            const tx = ox + Math.sin(angle) * 150;
+            const ty = 50 + Math.cos(angle) * 150;
+            if (player.isJumping && Math.abs(px - tx) < 25 && Math.abs(py - 50 - ty) < 25) {
+                player.trapezeId = obs.id;
+                player.isJumping = false;
+            }
+        }
+        return false;
+    }
+
+    function drawObstacle(obs) {
+        const ox = obs.x - worldX;
+        if (ox < -200 || ox > GAME_WIDTH + 200) return;
+
+        if (obs.type === 'hoop') {
+            // 이글거리는 불꽃 애니메이션 복구
+            const time = frameCount * 0.15;
+            for (let i = 0; i < 3; i++) {
+                const flicker = Math.sin(time + i) * 3 + (Math.random() * 2);
+                const rw = 25 + flicker - (i * 4);
+                const rh = 62 + flicker - (i * 4);
+                ctx.lineWidth = 6 - i;
+                ctx.strokeStyle = i === 0 ? '#e67e22' : (i === 1 ? '#e74c3c' : '#f1c40f');
+                ctx.beginPath(); ctx.ellipse(ox, FLOOR_Y - 80, rw, rh, 0, 0, Math.PI * 2); ctx.stroke();
+                
+                // 불꽃 입자 효과 추가
+                if (frameCount % 6 === 0) {
+                    const angle = Math.random() * Math.PI * 2;
+                    const dist = rw + 5;
+                    ctx.fillStyle = i === 2 ? '#f1c40f' : '#e67e22';
+                    ctx.fillRect(ox + Math.cos(angle) * dist, (FLOOR_Y - 80) + Math.sin(angle) * dist, 3, 3);
+                }
+            }
+        } else if (obs.type === 'pot') {
+            ctx.fillStyle = '#fff'; ctx.fillRect(ox - 15, FLOOR_Y - 20, 30, 20);
+            // 항아리 위 일렁이는 불꽃
+            const fireH = 15 + Math.random() * 10;
+            ctx.fillStyle = '#e74c3c'; ctx.fillRect(ox - 10, FLOOR_Y - 20 - fireH, 20, fireH);
+            ctx.fillStyle = '#f1c40f'; ctx.fillRect(ox - 5, FLOOR_Y - 20 - fireH/2, 10, fireH/2);
+        } else if (obs.type === 'monkey') {
+            ctx.fillStyle = '#8B4513'; ctx.fillRect(ox - 12, FLOOR_Y - 30, 24, 24); 
+            ctx.fillStyle = '#D2B48C'; ctx.fillRect(ox - 6, -38 + FLOOR_Y, 12, 10); 
+        } else if (obs.type === 'trampoline') {
+            ctx.fillStyle = '#e74c3c'; ctx.fillRect(ox - 35, FLOOR_Y - 10, 70, 10);
+            ctx.strokeStyle = '#fff'; ctx.strokeRect(ox - 35, FLOOR_Y - 10, 70, 10);
+        } else if (obs.type === 'knife') {
+            ctx.fillStyle = '#bdc3c7'; ctx.fillRect(ox - 20, obs.y, 40, 8);
+            ctx.fillStyle = '#c0392b'; ctx.fillRect(ox - 25, obs.y, 10, 8);
+        } else if (obs.type === 'ball_static') {
+            ctx.fillStyle = '#e74c3c'; ctx.beginPath(); ctx.arc(ox, FLOOR_Y - 20, 20, 0, Math.PI*2); ctx.fill();
+            ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(ox, FLOOR_Y - 20, 10, 0, Math.PI*2); ctx.fill();
+        } else if (obs.type === 'hurdle') {
+            ctx.fillStyle = '#fff'; ctx.fillRect(ox - 15, FLOOR_Y - 35, 30, 35);
+            ctx.fillStyle = '#2980b9'; ctx.fillRect(ox - 15, FLOOR_Y - 35, 30, 8);
+        } else if (obs.type === 'trapeze') {
+            const angle = Math.sin(frameCount * 0.05) * 0.8;
+            const tx = ox + Math.sin(angle) * 150;
+            const ty = 50 + Math.cos(angle) * 150;
+            ctx.strokeStyle = '#eee'; ctx.lineWidth = 2;
+            ctx.beginPath(); ctx.moveTo(ox, 50); ctx.lineTo(tx, ty); ctx.stroke();
+            ctx.fillStyle = '#f39c12'; ctx.fillRect(tx - 20, ty, 40, 5);
+        }
+    }
+
+    function gameLoop() {
+        if (gameState !== 'PLAYING') return;
+        frameCount++;
+        ctx.clearRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+        
+        ctx.fillStyle = '#222'; ctx.fillRect(0, 0, GAME_WIDTH, 120);
+        for(let i=0; i<GAME_WIDTH/40+1; i++) {
+            ctx.fillStyle = i % 2 === 0 ? '#f1c40f' : '#e67e22';
+            ctx.fillRect((i*40) - (worldX%40), 120, 40, 15);
+        }
+        ctx.fillStyle = STAGES[currentStage].bg; ctx.fillRect(0, FLOOR_Y, GAME_WIDTH, GAME_HEIGHT - FLOOR_Y);
+        if (currentStage === 2) {
+            ctx.strokeStyle = '#fff'; ctx.lineWidth = 2;
+            ctx.beginPath(); ctx.moveTo(0, FLOOR_Y); ctx.lineTo(GAME_WIDTH, FLOOR_Y); ctx.stroke();
+        }
+
+        if (player.trapezeId === -1) worldX += STAGES[currentStage].speed;
+        distance = Math.max(0, 100 - Math.floor(worldX / 100));
+        distVal.innerText = distance;
+        if (distance <= 0) { winStage(); return; }
+
+        obstacles.forEach(obs => {
+            drawObstacle(obs);
+            if (checkCollision(obs)) gameOver();
+        });
+
+        player.update();
+        player.draw();
+        scoreVal.innerText = score.toString().padStart(6, '0');
+        requestAnimationFrame(gameLoop);
+    }
+
+    function startGame() {
+        gameState = 'PLAYING';
+        worldX = 0; frameCount = 0; distance = 100;
+        player.reset(FLOOR_Y);
+        startScreen.style.display = 'none';
+        resultScreen.style.display = 'none';
+        spawnObstacles();
+        requestAnimationFrame(gameLoop);
+    }
+
+    function winStage() {
+        gameState = 'CLEAR';
+        resultScreen.style.display = 'block';
+        document.getElementById('result-title').innerText = "STAGE CLEAR!";
+        document.getElementById('result-title').style.color = "#2ecc71";
+        document.getElementById('result-text').innerText = `STAGE ${currentStage} 성공!`;
+        document.getElementById('result-btn').innerText = (currentStage === 6) ? "다시 처음으로" : "다음 스테이지";
+    }
+
+    function gameOver() {
+        gameState = 'OVER';
+        resultScreen.style.display = 'block';
+        document.getElementById('result-title').innerText = "GAME OVER";
+        document.getElementById('result-title').style.color = "#e74c3c";
+        document.getElementById('result-text').innerText = "관객들이 아쉬워합니다.";
+        document.getElementById('result-btn').innerText = "다시 시도";
+    }
+
+    function handleResultBtn() {
+        if (gameState === 'CLEAR') currentStage = (currentStage % 6) + 1;
+        showStartScreen();
+    }
+
+    function showStartScreen() {
+        gameState = 'START';
+        const data = STAGES[currentStage];
+        document.getElementById('start-stage-name').innerText = `STAGE ${currentStage}: ${data.name}`;
+        document.getElementById('start-desc').innerText = data.desc;
+        stageDisplay.innerText = `STAGE-0${currentStage}`;
+        startScreen.style.display = 'block';
+        resultScreen.style.display = 'none';
+        initStageButtons();
+        
+        ctx.clearRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+        player.reset(FLOOR_Y);
+        player.draw();
+    }
+
+    window.addEventListener('keydown', e => {
+        if (e.code === 'Space') {
+            if (gameState === 'PLAYING') player.jump();
+            else if (gameState === 'START') startGame();
+        }
+    });
+    canvas.addEventListener('mousedown', () => { if (gameState === 'PLAYING') player.jump(); });
+
+    initStageButtons();
+    showStartScreen();
+</script>
+</body>
+</html>
