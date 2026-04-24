@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>무한의 도전 - Infinite Stairs</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Black+Han+Sans&display=swap');
+        
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background-color: #1a1a1a;
+            font-family: 'Black Han Sans', sans-serif;
+            user-select: none;
+            touch-action: manipulation;
+        }
+
+        #game-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            max-width: 500px;
+            margin: 0 auto;
+            background: linear-gradient(to bottom, #87CEEB, #E0F6FF);
+            overflow: hidden;
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+
+        .ui-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .energy-bar-container {
+            width: 80%;
+            height: 20px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            margin-top: 40px;
+            border: 3px solid white;
+            overflow: hidden;
+        }
+
+        #energy-fill {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(to right, #ff4e50, #f9d423);
+            transition: width 0.1s linear;
+        }
+
+        .score-display {
+            font-size: 3.5rem;
+            color: white;
+            text-shadow: 4px 4px 0px #000;
+            margin-top: 10px;
+        }
+
+        .game-btn {
+            pointer-events: auto;
+            width: 130px;
+            height: 130px;
+            border-radius: 50%;
+            border: 6px solid white;
+            color: white;
+            font-size: 1.5rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 8px 0 rgba(0, 0, 0, 0.2);
+            transition: transform 0.05s;
+            cursor: pointer;
+        }
+
+        .game-btn:active {
+            transform: translateY(4px);
+            box-shadow: 0 4px 0 rgba(0, 0, 0, 0.2);
+        }
+
+        #btn-climb { background-color: #4CAF50; }
+        #btn-turn { background-color: #2196F3; }
+
+        .screen {
+            position: absolute;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.7);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            z-index: 100;
+            pointer-events: auto;
+        }
+
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+
+    <div id="game-container">
+        <canvas id="gameCanvas"></canvas>
+
+        <!-- 인게임 UI -->
+        <div class="ui-layer" id="ingame-ui">
+            <div class="energy-bar-container">
+                <div id="energy-fill"></div>
+            </div>
+            <div class="score-display" id="current-score">0</div>
+            
+            <!-- 조작 버튼 (하단) -->
+            <div class="absolute bottom-12 flex justify-around w-full px-4">
+                <div id="btn-turn" class="game-btn flex-col">
+                    <span class="text-xs">방향전환</span>
+                    <span class="font-bold">TURN</span>
+                    <span class="text-xs mt-1">(Z / ←)</span>
+                </div>
+                <div id="btn-climb" class="game-btn flex-col">
+                    <span class="text-xs">올라가기</span>
+                    <span class="font-bold">CLIMB</span>
+                    <span class="text-xs mt-1">(X / →)</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 메인 화면 -->
+        <div id="start-screen" class="screen">
+            <h1 class="text-6xl mb-6 text-yellow-400 italic font-bold">무한의 도전</h1>
+            <p class="mb-10 text-2xl">최고 기록: <span id="best-score" class="text-yellow-300">0</span></p>
+            <button id="start-button" class="bg-white text-black px-12 py-5 rounded-full text-3xl font-bold hover:bg-yellow-400 transition-colors shadow-lg">게임 시작</button>
+            <div class="mt-12 text-center text-gray-400 text-sm leading-relaxed">
+                PC 조작: Z(방향전환), X(올라가기) <br>
+                또는 좌/우 방향키 사용 가능
+            </div>
+        </div>
+
+        <!-- 게임 오버 화면 -->
+        <div id="gameover-screen" class="screen hidden">
+            <h2 class="text-6xl mb-6 text-red-500 font-bold">GAME OVER</h2>
+            <p class="text-3xl mb-2">현재 점수: <span id="final-score" class="text-yellow-400">0</span></p>
+            <p class="text-xl mb-10 opacity-80">최고 기록: <span id="gameover-best">0</span></p>
+            <button id="restart-button" class="bg-white text-black px-12 py-5 rounded-full text-3xl font-bold hover:bg-red-400 transition-colors shadow-lg">다시 하기</button>
+        </div>
+    </div>
+
+    <script>
+        /**
+         * 게임 설정 및 에셋 주소
+         */
+        const ASSETS = {
+            charLeft: "https://i.ibb.co/4wkhRbmK/8.png", 
+            charRight: "https://i.ibb.co/6cVKHR33/9.png",
+            stair: "https://via.placeholder.com/80x40/5D4037/FFFFFF?text="
+        };
+
+        const config = {
+            stairWidth: 80,
+            stairHeight: 40,
+            initialEnergy: 100,
+            energyDecayBase: 0.15,
+            energyRecover: 5,
+            maxStairsVisible: 35,
+            playerSize: 140, 
+            playerVisualOffsetY: 55 // 캐릭터를 계단 아래쪽으로 더 내리기 위해 보정값 상향 (25 -> 55)
+        };
+
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const energyFill = document.getElementById('energy-fill');
+        const currentScoreUI = document.getElementById('current-score');
+        const startScreen = document.getElementById('start-screen');
+        const gameoverScreen = document.getElementById('gameover-screen');
+        const bestScoreUI = document.getElementById('best-score');
+
+        let gameState = 'MENU';
+        let score = 0;
+        let bestScore = parseInt(localStorage.getItem('infinite_stairs_best')) || 0;
+        let energy = 100;
+        let stairs = []; 
+        let player = {
+            dir: 1, 
+            stairIndex: 0,
+            screenX: 0,
+            screenY: 0
+        };
+        
+        let cameraX = 0;
+        let cameraY = 0;
+        let lastTime = 0;
+
+        const images = {};
+        const imageUrls = [
+            { name: 'left', url: ASSETS.charLeft },
+            { name: 'right', url: ASSETS.charRight }
+        ];
+
+        function loadImages() {
+            imageUrls.forEach(item => {
+                const img = new Image();
+                img.src = item.url;
+                img.onload = () => {
+                    images[item.name] = img;
+                };
+            });
+        }
+
+        function init() {
+            resize();
+            bestScoreUI.textContent = bestScore;
+            loadImages();
+            
+            window.addEventListener('resize', resize);
+            document.getElementById('start-button').addEventListener('click', startGame);
+            document.getElementById('restart-button').addEventListener('click', startGame);
+            
+            const handleClimb = (e) => { e.preventDefault(); handleInput('climb'); };
+            const handleTurn = (e) => { e.preventDefault(); handleInput('turn'); };
+
+            document.getElementById('btn-climb').addEventListener('pointerdown', handleClimb);
+            document.getElementById('btn-turn').addEventListener('pointerdown', handleTurn);
+
+            window.addEventListener('keydown', (e) => {
+                if (gameState !== 'PLAYING') return;
+                const key = e.key.toLowerCase();
+                if (key === 'arrowright' || key === 'x') handleInput('climb');
+                if (key === 'arrowleft' || key === 'z') handleInput('turn');
+            });
+
+            requestAnimationFrame(gameLoop);
+        }
+
+        function resize() {
+            canvas.width = canvas.parentElement.clientWidth;
+            canvas.height = canvas.parentElement.clientHeight;
+        }
+
+        function startGame() {
+            score = 0;
+            energy = 100;
+            gameState = 'PLAYING';
+            startScreen.classList.add('hidden');
+            gameoverScreen.classList.add('hidden');
+            currentScoreUI.textContent = "0";
+            
+            stairs = [];
+            let startX = canvas.width / 2;
+            let startY = canvas.height - 250;
+            
+            stairs.push({ x: startX, y: startY });
+            
+            for (let i = 0; i < config.maxStairsVisible; i++) {
+                addStair();
+            }
+
+            player.stairIndex = 0;
+            player.dir = 1; 
+            player.screenX = stairs[0].x;
+            player.screenY = stairs[0].y - 30;
+            
+            cameraX = (canvas.width / 2) - player.screenX;
+            cameraY = (canvas.height * 0.7) - player.screenY;
+        }
+
+        function addStair() {
+            const last = stairs[stairs.length - 1];
+            const dir = Math.random() > 0.5 ? 1 : -1;
+            const nextX = last.x + (dir * config.stairWidth * 0.7);
+            const nextY = last.y - config.stairHeight;
+            stairs.push({ x: nextX, y: nextY });
+        }
+
+        function handleInput(type) {
+            if (gameState !== 'PLAYING') return;
+
+            const currentStair = stairs[player.stairIndex];
+            const nextStair = stairs[player.stairIndex + 1];
+
+            let inputDir = player.dir;
+            if (type === 'turn') {
+                inputDir *= -1; 
+            }
+
+            const expectedX = currentStair.x + (inputDir * config.stairWidth * 0.7);
+            
+            if (Math.abs(expectedX - nextStair.x) < 5) {
+                player.dir = inputDir;
+                player.stairIndex++;
+                score++;
+                energy = Math.min(100, energy + config.energyRecover);
+                currentScoreUI.textContent = score;
+                
+                if (stairs.length - player.stairIndex < 15) {
+                    addStair();
+                }
+            } else {
+                gameOver();
+            }
+        }
+
+        function gameOver() {
+            if (gameState === 'GAMEOVER') return;
+            gameState = 'GAMEOVER';
+            
+            if (score > bestScore) {
+                bestScore = score;
+                localStorage.setItem('infinite_stairs_best', bestScore);
+            }
+            
+            document.getElementById('final-score').textContent = score;
+            document.getElementById('gameover-best').textContent = bestScore;
+            gameoverScreen.classList.remove('hidden');
+        }
+
+        function update(dt) {
+            if (gameState !== 'PLAYING') return;
+
+            const decay = config.energyDecayBase + (score * 0.0015);
+            energy -= decay;
+            energyFill.style.width = Math.max(0, energy) + '%';
+
+            if (energy <= 0) {
+                gameOver();
+            }
+
+            const targetX = stairs[player.stairIndex].x;
+            const targetY = stairs[player.stairIndex].y - 30;
+
+            player.screenX += (targetX - player.screenX) * 0.4;
+            player.screenY += (targetY - player.screenY) * 0.4;
+
+            const targetCameraX = (canvas.width / 2) - player.screenX;
+            cameraX += (targetCameraX - cameraX) * 0.15;
+
+            const targetCameraY = (canvas.height * 0.7) - player.screenY;
+            cameraY += (targetCameraY - cameraY) * 0.15;
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            ctx.save();
+            ctx.translate(cameraX, cameraY);
+
+            stairs.forEach((stair, index) => {
+                if (stair.y + cameraY > canvas.height + 200 || stair.y + cameraY < -200 ||
+                    stair.x + cameraX > canvas.width + 200 || stair.x + cameraX < -200) return;
+
+                ctx.fillStyle = '#3E2723';
+                ctx.fillRect(stair.x - config.stairWidth/2, stair.y + 8, config.stairWidth, 12);
+                
+                ctx.fillStyle = index % 2 === 0 ? '#6D4C41' : '#795548';
+                ctx.fillRect(stair.x - config.stairWidth/2, stair.y, config.stairWidth, 10);
+                
+                if (index % 10 === 0 && index > 0) {
+                    ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+                    ctx.font = 'bold 14px sans-serif';
+                    ctx.fillText(index + 'F', stair.x + 45, stair.y + 10);
+                }
+            });
+
+            const charImg = player.dir === 1 ? images.right : images.left;
+            const charSize = config.playerSize; 
+            if (charImg && charImg.complete) {
+                ctx.drawImage(
+                    charImg, 
+                    player.screenX - charSize/2, 
+                    player.screenY - charSize + config.playerVisualOffsetY, 
+                    charSize, 
+                    charSize
+                );
+            } else {
+                ctx.fillStyle = player.dir === 1 ? '#2196F3' : '#F44336';
+                ctx.fillRect(player.screenX - 20, player.screenY - 50, 40, 50);
+            }
+
+            ctx.restore();
+        }
+
+        function gameLoop(timestamp) {
+            const dt = timestamp - lastTime;
+            lastTime = timestamp;
+
+            update(dt);
+            draw();
+
+            requestAnimationFrame(gameLoop);
+        }
+
+        window.onload = init;
+    </script>
+</body>
+</html>
