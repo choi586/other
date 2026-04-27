@@ -2,8 +2,8 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>히라가나 디펜스 게임</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>히라가나 디펜스 게임 - 모바일 최적화</title>
     <style>
         body {
             margin: 0;
@@ -14,20 +14,20 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
+            justify-content: flex-start;
             height: 100vh;
             overflow: hidden;
             user-select: none;
+            touch-action: manipulation;
         }
 
         #game-container {
             position: relative;
             width: 100%;
-            max-width: 600px;
-            height: 80vh;
-            border: 2px solid #333;
+            max-width: 500px;
+            height: 100%;
             background-color: #050505;
-            box-shadow: 0 0 20px rgba(0, 255, 0, 0.1);
+            overflow: hidden;
         }
 
         canvas {
@@ -44,20 +44,22 @@
             display: flex;
             justify-content: space-between;
             pointer-events: none;
+            z-index: 5;
         }
 
         .status-text {
-            font-size: 18px;
+            font-size: 14px;
             color: #0ff;
             text-shadow: 0 0 5px #0ff;
+            font-weight: bold;
         }
 
         #energy-container {
-            width: 150px;
-            height: 15px;
+            width: 100px;
+            height: 10px;
             border: 1px solid #fff;
             background: #222;
-            position: relative;
+            margin-top: 4px;
         }
 
         #energy-bar {
@@ -67,53 +69,59 @@
             transition: width 0.3s;
         }
 
+        /* 모바일 입력창 최적화 */
         #input-container {
             position: absolute;
-            bottom: 20px;
+            bottom: 30%; /* 키보드 높이를 고려하여 위로 올림 */
             left: 50%;
             transform: translateX(-50%);
-            width: 80%;
+            width: 90%;
             text-align: center;
+            z-index: 10;
         }
 
         input {
-            background: transparent;
-            border: none;
-            border-bottom: 2px solid #0ff;
+            background: rgba(0, 0, 0, 0.7);
+            border: 2px solid #0ff;
+            border-radius: 10px;
             color: #fff;
-            font-size: 24px;
+            font-size: 28px; /* 크게 변경 */
             text-align: center;
             outline: none;
-            width: 150px;
-            padding: 5px;
+            width: 140px;
+            padding: 10px;
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.5);
+        }
+
+        input::placeholder {
+            font-size: 16px;
+            color: #666;
         }
 
         #message-box {
             position: absolute;
-            top: 50%;
+            top: 40%;
             left: 50%;
             transform: translate(-50%, -50%);
             background: rgba(0, 0, 0, 0.9);
             border: 2px solid #0ff;
-            padding: 20px;
+            padding: 30px;
             text-align: center;
             display: none;
-            z-index: 10;
+            z-index: 20;
+            width: 70%;
         }
 
         button {
             background: #0ff;
             color: #000;
             border: none;
-            padding: 10px 20px;
-            font-size: 16px;
+            padding: 15px 30px;
+            font-size: 18px;
             cursor: pointer;
-            margin-top: 10px;
+            margin-top: 15px;
             font-weight: bold;
-        }
-
-        button:hover {
-            background: #fff;
+            border-radius: 5px;
         }
     </style>
 </head>
@@ -123,10 +131,10 @@
         <div id="ui-overlay">
             <div>
                 <div class="status-text" id="score-display">SCORE: 0</div>
-                <div class="status-text" id="level-display">LEVEL: 1 (BASIC)</div>
+                <div class="status-text" id="level-display">LV 1</div>
             </div>
             <div style="text-align: right;">
-                <div class="status-text">BASE ENERGY</div>
+                <div class="status-text">ENERGY</div>
                 <div id="energy-container">
                     <div id="energy-bar"></div>
                 </div>
@@ -136,11 +144,11 @@
         <canvas id="gameCanvas"></canvas>
 
         <div id="input-container">
-            <input type="text" id="answer-input" placeholder="입력하세요" autocomplete="off">
+            <input type="text" id="answer-input" placeholder="발음 입력" autocomplete="off" enterkeyhint="done">
         </div>
 
         <div id="message-box">
-            <h2 id="msg-title">GAME OVER</h2>
+            <h2 id="msg-title" style="color:#0ff; margin-top:0;">GAME OVER</h2>
             <p id="msg-score">최종 점수: 0</p>
             <button onclick="resetGame()">다시 시작</button>
         </div>
@@ -156,12 +164,13 @@
         const messageBox = document.getElementById('message-box');
         const msgScore = document.getElementById('msg-score');
 
+        // 데이터 수정 완료
         const kanaData = [
             { j: 'あ', k: '아' }, { j: 'い', k: '이' }, { j: 'う', k: '우' }, { j: 'え', k: '에' }, { j: 'お', k: '오' },
             { j: 'か', k: '카' }, { j: 'き', k: '키' }, { j: 'く', k: '쿠' }, { j: 'け', k: '케' }, { j: 'こ', k: '코' },
             { j: 'さ', k: '사' }, { j: 'し', k: '시' }, { j: 'す', k: '스' }, { j: 'せ', k: '세' }, { j: 'そ', k: '소' },
             { j: 'た', k: '타' }, { j: 'ち', k: '치' }, { j: 'つ', k: '츠' }, { j: 'て', k: '테' }, { j: 'と', k: '토' },
-            { j: 'な', k: '나' }, { j: '에', k: '니' }, { j: 'ぬ', k: '누' }, { j: 'ね', k: '네' }, { j: 'の', k: '노' },
+            { j: 'な', k: '나' }, { j: 'に', k: '니' }, { j: 'ぬ', k: '누' }, { j: 'ね', k: '네' }, { j: 'の', k: '노' },
             { j: 'は', k: '하' }, { j: 'ひ', k: '히' }, { j: 'ふ', k: '후' }, { j: 'へ', k: '헤' }, { j: 'ほ', k: '호' },
             { j: 'ま', k: '마' }, { j: 'み', k: '미' }, { j: 'む', k: '무' }, { j: 'め', k: '메' }, { j: 'も', k: '모' },
             { j: 'や', k: '야' }, { j: 'ゆ', k: '유' }, { j: 'よ', k: '요' },
@@ -177,8 +186,8 @@
         let bullets = [];
         let particles = [];
         let spawnTimer = 0;
-        let spawnInterval = 120;
-        let gameSpeed = 1;
+        let spawnInterval = 100;
+        let gameSpeed = 1.0;
 
         function resize() {
             canvas.width = canvas.offsetWidth;
@@ -192,34 +201,37 @@
                 const data = kanaData[Math.floor(Math.random() * kanaData.length)];
                 this.text = data.j;
                 this.answer = data.k;
-                this.x = Math.random() * (canvas.width - 80) + 40;
-                this.y = -50;
-                this.speed = (Math.random() * 0.4 + 0.4) * gameSpeed;
+                this.x = Math.random() * (canvas.width - 60) + 30;
+                this.y = -40;
+                this.speed = (Math.random() * 0.5 + 0.5) * gameSpeed;
                 this.color = '#4dd0e1';
-                this.isTargeted = false; // 총알이 날아오고 있는지 여부
-                this.isDead = false;    // 폭발 대기 상태
+                this.isTargeted = false;
+                this.isDead = false;
             }
 
             draw() {
+                ctx.save();
                 ctx.fillStyle = this.color;
-                // 몸체
-                ctx.fillRect(this.x - 15, this.y - 15, 30, 15);
-                ctx.fillRect(this.x - 20, this.y - 10, 40, 10);
+                // 머리 및 몸체
+                ctx.fillRect(this.x - 15, this.y - 12, 30, 12);
+                ctx.fillRect(this.x - 18, this.y - 8, 36, 8);
                 
-                // 안테나 (타겟팅 되면 깜빡거림)
-                ctx.fillStyle = (this.isTargeted && Math.floor(Date.now()/100)%2) ? '#fff' : '#ff4444';
-                ctx.fillRect(this.x - 2, this.y - 18, 4, 4);
+                // 안테나
+                ctx.fillStyle = (this.isTargeted && Math.floor(Date.now()/150)%2) ? '#fff' : '#ff3d00';
+                ctx.fillRect(this.x - 2, this.y - 16, 4, 4);
                 
                 // 글자
                 ctx.fillStyle = '#ffeb3b';
-                ctx.font = 'bold 24px "Courier New"';
+                ctx.font = 'bold 22px Arial';
                 ctx.textAlign = 'center';
                 ctx.fillText(this.text, this.x, this.y + 15);
+                ctx.restore();
             }
 
             update() {
                 this.y += this.speed;
-                if (this.y > canvas.height - 100) {
+                // 하단 기지에 닿기 전 데미지 판정 (모바일 가독성을 위해 위치 조정)
+                if (this.y > canvas.height - 120) {
                     takeDamage();
                     return false;
                 }
@@ -232,32 +244,28 @@
                 this.target = target;
                 this.x = canvas.width / 2;
                 this.y = canvas.height - 80;
-                this.speed = 12;
+                this.speed = 15;
             }
 
             draw() {
-                ctx.fillStyle = '#ff4444';
-                ctx.shadowBlur = 10;
-                ctx.shadowColor = '#ff4444';
+                ctx.save();
+                ctx.fillStyle = '#ff3d00';
+                ctx.shadowBlur = 8;
+                ctx.shadowColor = '#ff3d00';
                 ctx.beginPath();
-                ctx.arc(this.x, this.y, 5, 0, Math.PI * 2);
+                ctx.arc(this.x, this.y, 4, 0, Math.PI * 2);
                 ctx.fill();
-                ctx.shadowBlur = 0;
+                ctx.restore();
             }
 
             update() {
-                // 타겟이 이미 사라졌거나 죽었다면 총알 제거
-                if (!enemies.includes(this.target) || this.target.isDead) {
-                    return false;
-                }
+                if (!enemies.includes(this.target) || this.target.isDead) return false;
 
-                // 타겟 방향으로 이동
                 const dx = this.target.x - this.x;
                 const dy = this.target.y - this.y;
                 const dist = Math.hypot(dx, dy);
 
                 if (dist < 15) {
-                    // 충돌 발생!
                     this.onHit();
                     return false;
                 }
@@ -270,13 +278,9 @@
             onHit() {
                 this.target.isDead = true;
                 createExplosion(this.target.x, this.target.y);
-                
                 score += 10;
                 scoreDisplay.innerText = `SCORE: ${score}`;
-                
-                if (score > 0 && score % 100 === 0) {
-                    levelUp();
-                }
+                if (score > 0 && score % 100 === 0) levelUp();
             }
         }
 
@@ -284,39 +288,36 @@
             constructor(x, y) {
                 this.x = x;
                 this.y = y;
-                this.vx = (Math.random() - 0.5) * 6;
-                this.vy = (Math.random() - 0.5) * 6;
+                this.vx = (Math.random() - 0.5) * 5;
+                this.vy = (Math.random() - 0.5) * 5;
                 this.life = 1.0;
-                this.color = Math.random() > 0.5 ? '#ff4444' : '#ffeb3b';
+                this.color = Math.random() > 0.5 ? '#ff3d00' : '#ffeb3b';
             }
             update() {
                 this.x += this.vx;
                 this.y += this.vy;
-                this.life -= 0.04;
+                this.life -= 0.05;
                 return this.life > 0;
             }
             draw() {
                 ctx.globalAlpha = this.life;
                 ctx.fillStyle = this.color;
-                ctx.fillRect(this.x, this.y, 4, 4);
+                ctx.fillRect(this.x, this.y, 3, 3);
                 ctx.globalAlpha = 1.0;
             }
         }
 
         function takeDamage() {
             energy -= 10;
-            if (energy <= 0) {
-                energy = 0;
-                gameOver();
-            }
-            energyBar.style.width = energy + '%';
+            energyBar.style.width = Math.max(0, energy) + '%';
+            if (energy <= 0) gameOver();
         }
 
         function levelUp() {
             level++;
             gameSpeed += 0.2;
-            spawnInterval = Math.max(40, 120 - (level * 8));
-            levelDisplay.innerText = `LEVEL: ${level} (${level > 3 ? 'HARD' : 'NORMAL'})`;
+            spawnInterval = Math.max(30, 100 - (level * 7));
+            levelDisplay.innerText = `LV ${level}`;
         }
 
         function gameOver() {
@@ -332,75 +333,52 @@
             enemies = [];
             bullets = [];
             particles = [];
-            gameSpeed = 1;
-            spawnInterval = 120;
+            gameSpeed = 1.0;
+            spawnInterval = 100;
             gameState = 'playing';
             messageBox.style.display = 'none';
             energyBar.style.width = '100%';
             scoreDisplay.innerText = 'SCORE: 0';
-            levelDisplay.innerText = 'LEVEL: 1 (BASIC)';
+            levelDisplay.innerText = 'LV 1';
             input.value = '';
             input.focus();
             animate();
         }
 
-        // 입력 처리
         input.addEventListener('input', (e) => {
             if (gameState !== 'playing') return;
-            
             const val = e.target.value.trim();
             if (val === '') return;
 
-            // 아직 타겟팅되지 않은 적들 중에서 정답 찾기
-            const targetEnemy = enemies.find(en => en.answer === val && !en.isTargeted && !en.isDead);
-            
-            if (targetEnemy) {
-                targetEnemy.isTargeted = true;
-                bullets.push(new Bullet(targetEnemy));
-                input.value = ''; // 정답이면 즉시 비우기
+            const target = enemies.find(en => en.answer === val && !en.isTargeted && !en.isDead);
+            if (target) {
+                target.isTargeted = true;
+                bullets.push(new Bullet(target));
+                input.value = '';
             }
         });
 
         function createExplosion(x, y) {
-            for (let i = 0; i < 15; i++) {
-                particles.push(new Particle(x, y));
-            }
+            for (let i = 0; i < 12; i++) particles.push(new Particle(x, y));
         }
 
         function drawBackground() {
-            // 별무리 배경
-            ctx.fillStyle = '#fff';
-            for(let i=0; i<15; i++) {
-                ctx.globalAlpha = 0.3;
-                const tx = (Math.sin(Date.now()*0.0005 + i*100)*0.5+0.5)*canvas.width;
-                const ty = (i * (canvas.height/15));
-                ctx.beginPath();
-                ctx.arc(tx, ty, 1, 0, Math.PI*2);
-                ctx.fill();
-            }
-            ctx.globalAlpha = 1;
-
-            // 지구
-            const grad = ctx.createRadialGradient(canvas.width/2, canvas.height + 200, 50, canvas.width/2, canvas.height + 200, 400);
-            grad.addColorStop(0, '#2196f3');
+            // 행성/지구 배경
+            const grad = ctx.createRadialGradient(canvas.width/2, canvas.height + 250, 50, canvas.width/2, canvas.height + 250, 450);
+            grad.addColorStop(0, '#1565c0');
             grad.addColorStop(1, '#000');
             ctx.fillStyle = grad;
             ctx.beginPath();
-            ctx.arc(canvas.width/2, canvas.height + 200, 350, 0, Math.PI, true);
+            ctx.arc(canvas.width/2, canvas.height + 250, 400, 0, Math.PI, true);
             ctx.fill();
 
-            // 대륙
-            ctx.fillStyle = '#4caf50';
-            ctx.fillRect(canvas.width/2 - 80, canvas.height - 40, 70, 20);
-            ctx.fillRect(canvas.width/2 + 30, canvas.height - 50, 60, 25);
-
-            // 포탑 기지
-            ctx.fillStyle = '#9e9e9e';
-            ctx.fillRect(canvas.width/2 - 15, canvas.height - 30, 30, 30);
+            // 기지 포탑
+            ctx.fillStyle = '#78909c';
+            ctx.fillRect(canvas.width/2 - 20, canvas.height - 40, 40, 40);
             ctx.fillStyle = '#fff';
-            ctx.fillRect(canvas.width/2 - 3, canvas.height - 55, 6, 25);
-            ctx.fillStyle = '#f44336';
-            ctx.fillRect(canvas.width/2 - 10, canvas.height - 60, 20, 8);
+            ctx.fillRect(canvas.width/2 - 4, canvas.height - 65, 8, 30);
+            ctx.fillStyle = '#d32f2f';
+            ctx.fillRect(canvas.width/2 - 12, canvas.height - 70, 24, 10);
         }
 
         function animate() {
@@ -409,23 +387,17 @@
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             drawBackground();
 
-            // 상단 가이드라인
-            ctx.strokeStyle = '#4caf50';
-            ctx.setLineDash([5, 5]);
-            ctx.beginPath();
-            ctx.moveTo(0, 60);
-            ctx.lineTo(canvas.width, 60);
-            ctx.stroke();
-            ctx.setLineDash([]);
+            // 상단 라인
+            ctx.strokeStyle = '#2e7d32';
+            ctx.lineWidth = 1;
+            ctx.beginPath(); ctx.moveTo(0, 50); ctx.lineTo(canvas.width, 50); ctx.stroke();
 
-            // 스폰
             spawnTimer++;
             if (spawnTimer >= spawnInterval) {
                 enemies.push(new Enemy());
                 spawnTimer = 0;
             }
 
-            // 업데이트 및 드로잉 순서 (총알이 적 뒤에 그려지도록)
             enemies = enemies.filter(enemy => {
                 const active = enemy.update();
                 if (active) enemy.draw();
@@ -447,12 +419,12 @@
             requestAnimationFrame(animate);
         }
 
-        // 포커스 유지
-        document.addEventListener('click', () => {
+        // 터치 시 입력창 포커스 (모바일 최적화)
+        canvas.addEventListener('touchstart', (e) => {
             if (gameState === 'playing') input.focus();
         });
 
-        animate();
+        resetGame();
     </script>
 </body>
 </html>
