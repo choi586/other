@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>발차기 100회 스피드런 - 월드 랭킹</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Black+Han+Sans&display=swap');
+
+    * {
+      box-sizing: border-box;
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      margin: 0;
+      background: #1a202c;
+      font-family: 'Black Han Sans', sans-serif;
+      overflow: hidden;
+      color: white;
+    }
+
+    .game-container {
+      max-width: 600px;
+      margin: 0 auto;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      background: linear-gradient(to bottom, #1a202c, #2d3748);
+    }
+
+    /* Arena Styling */
+    .arena {
+      flex: 1;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      justify-content: center;
+      align-items: flex-end; /* 바닥 기준 정렬로 위치 고정 */
+      padding-bottom: 20px;
+      cursor: pointer;
+    }
+
+    /* 액션 존: 캐릭터와 샌드백의 상대적 위치 고정 */
+    .action-zone {
+      position: relative;
+      width: 100%;
+      max-width: 500px;
+      height: 380px; 
+      z-index: 5;
+      display: flex;
+      justify-content: center;
+      align-items: flex-end;
+    }
+
+    .floor {
+      position: absolute;
+      bottom: 0;
+      width: 100%;
+      height: 60px;
+      background: #2d3748;
+      border-top: 6px solid #4a5568;
+      z-index: 1;
+      opacity: 0.6;
+    }
+
+    /* 캐릭터 크기 및 위치 */
+    .player {
+      position: absolute;
+      left: 10px;
+      bottom: 10px; 
+      width: 280px;
+      height: auto;
+      z-index: 10;
+      transition: transform 0.05s ease;
+      pointer-events: none;
+    }
+
+    .player.kick-anim {
+      transform: translateX(90px) scale(1.05);
+    }
+
+    /* 샌드백 위치 및 줄 설정 */
+    .sandbag-wrap {
+      position: absolute;
+      right: 40px;
+      bottom: 110px; 
+      width: 130px;
+      height: 240px;
+      transform-origin: top center;
+      z-index: 8;
+      pointer-events: none;
+    }
+
+    .sandbag-wrap::before {
+      content: "";
+      position: absolute;
+      top: -200px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 8px;
+      height: 210px;
+      background: #4a5568;
+      border-left: 2px solid #000;
+      border-right: 2px solid #000;
+    }
+
+    .sandbag {
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(to right, #c53030, #f56565, #c53030);
+      border: 5px solid #000;
+      border-radius: 50px 50px 40px 40px;
+      position: relative;
+      box-shadow: inset -15px 0 0 rgba(0,0,0,0.2), 0 15px 30px rgba(0,0,0,0.4);
+    }
+
+    @keyframes shake {
+      0% { transform: rotate(0deg); }
+      25% { transform: rotate(18deg) translateX(25px); }
+      50% { transform: rotate(-12deg) translateX(-10px); }
+      100% { transform: rotate(0deg); }
+    }
+
+    .hit-anim { animation: shake 0.15s ease-out; }
+
+    .stats-panel {
+      padding: 20px;
+      background: rgba(0,0,0,0.8);
+      z-index: 20;
+      border-bottom: 3px solid #f6e05e;
+    }
+
+    .progress-bar-container {
+      width: 100%;
+      height: 20px;
+      background: #1a202c;
+      border: 3px solid #000;
+      border-radius: 10px;
+      margin-top: 10px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      width: 0%;
+      height: 100%;
+      background: #f6e05e;
+      transition: width 0.1s linear;
+    }
+
+    .ranking-container {
+      background: #1a202c;
+      padding: 15px;
+      flex: 0 0 auto;
+      max-height: 25vh;
+      overflow-y: auto;
+      z-index: 20;
+      border-top: 2px solid #4a5568;
+    }
+
+    .ranking-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 10px 12px;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      font-family: sans-serif;
+    }
+
+    .ranking-item:nth-child(1) { color: #f6e05e; font-weight: bold; background: rgba(246, 224, 94, 0.15); border-radius: 8px; }
+
+    /* 결과 모달 스타일 및 간격 조정 */
+    #finishModal {
+      position: absolute;
+      inset: 0;
+      background: rgba(0,0,0,0.98);
+      z-index: 100;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 30px;
+      text-align: center;
+    }
+
+    #finishModal h1 {
+      font-size: 3.5rem;
+      margin-bottom: 10px;
+      color: #f6e05e;
+    }
+
+    #finishModal p {
+      font-size: 1.8rem;
+      margin-bottom: 30px;
+    }
+
+    input {
+      background-color: #ffffff !important;
+      color: #000000 !important;
+      -webkit-text-fill-color: #000000 !important;
+      padding: 18px;
+      border: 4px solid #f6e05e;
+      border-radius: 16px;
+      margin-bottom: 50px !important; /* 버튼과 충분한 간격 확보 */
+      font-size: 1.4rem;
+      width: 100%;
+      max-width: 340px;
+      text-align: center;
+      outline: none;
+      font-family: 'Black Han Sans', sans-serif;
+    }
+
+    .btn-primary {
+      background: #f6e05e;
+      color: #000;
+      padding: 20px 50px;
+      border-radius: 18px;
+      font-weight: bold;
+      font-size: 1.4rem;
+      box-shadow: 0 6px 0 #b7791f;
+      transition: all 0.1s;
+      margin-bottom: 30px;
+    }
+
+    .btn-primary:active {
+      transform: translateY(4px);
+      box-shadow: 0 2px 0 #b7791f;
+    }
+
+    .impact-effect {
+      position: absolute;
+      font-size: 80px;
+      pointer-events: none;
+      z-index: 15;
+      display: none;
+    }
+
+    #tapNotice {
+      text-shadow: 0 0 10px rgba(0,0,0,1);
+      z-index: 30;
+      background: rgba(0,0,0,0.8);
+      padding: 16px 32px;
+      border-radius: 40px;
+      border: 2px solid #f6e05e;
+      pointer-events: none;
+    }
+
+    /* 모바일 대응 레이아웃 */
+    @media (max-width: 450px) {
+      .arena { 
+        align-items: flex-end; 
+        padding-top: 0; 
+        padding-bottom: 10px; 
+      } 
+      .action-zone { 
+        height: 310px;
+      }
+      .player { width: 230px; left: -10px; bottom: 10px; }
+      .sandbag-wrap { width: 100px; height: 180px; right: 20px; bottom: 90px; }
+      #finishModal h1 { font-size: 2.5rem; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="game-container" id="game">
+  <!-- 상단 대시보드 -->
+  <div class="stats-panel">
+    <div class="flex justify-between items-center">
+      <div>
+        <p class="text-[10px] text-gray-400">WORLD RECORD TIME</p>
+        <h2 id="timerText" class="text-3xl text-yellow-400 font-mono font-bold">0.00S</h2>
+      </div>
+      <div class="text-right">
+        <p class="text-[10px] text-gray-400">KICK COUNT</p>
+        <h2 id="kickCountText" class="text-3xl text-white font-mono font-bold"><span id="currKicks" class="text-yellow-400">0</span> / 100</h2>
+      </div>
+    </div>
+    <div class="progress-bar-container">
+      <div id="progressFill" class="progress-fill"></div>
+    </div>
+  </div>
+
+  <!-- 메인 아레나 -->
+  <div class="arena" id="arena">
+    <div class="action-zone">
+      <div id="impact" class="impact-effect">💥</div>
+      <img id="player" class="player" src="https://i.ibb.co/Zk3HVcP/10.png" alt="player">
+      <div id="sandbagWrap" class="sandbag-wrap">
+        <div class="sandbag"></div>
+      </div>
+    </div>
+    <div class="floor"></div>
+    <div id="tapNotice" class="absolute top-[30%] left-1/2 -translate-x-1/2 -translate-y-1/2 text-2xl animate-bounce text-yellow-300 font-bold">
+       터치해서 시작!
+    </div>
+  </div>
+
+  <!-- 리더보드 영역 -->
+  <div class="ranking-container">
+    <div class="flex justify-between items-center mb-3 px-1">
+      <h3 class="text-sm text-yellow-400 font-bold">🏆 실시간 글로벌 랭킹 (TOP 10)</h3>
+      <button id="refreshBtn" onclick="loadLeaderboard()" class="text-xs text-gray-400 underline">새로고침</button>
+    </div>
+    <div id="rankingList">
+      <div class="text-center py-4 text-gray-500 text-sm">기록 동기화 중...</div>
+    </div>
+  </div>
+
+  <!-- 승리 팝업 -->
+  <div id="finishModal">
+    <h1>RECORD!</h1>
+    <p>당신의 시간: <span id="finalTime" class="font-bold text-white">0.00s</span></p>
+    <div class="w-full max-w-[340px]">
+      <input type="text" id="nickname" placeholder="이름을 입력하세요" maxlength="8">
+    </div>
+    <button id="submitBtn" class="btn-primary" onclick="submitRecord()">월드 랭킹 등록하기</button>
+    <button class="text-gray-400 underline text-sm" onclick="resetGame()">기록 없이 다시하기</button>
+  </div>
+</div>
+
+<!-- Firebase 연동 스크립트 -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+  import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+  import { getFirestore, collection, addDoc, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+  // 시스템 설정
+  const firebaseConfig = JSON.parse(__firebase_config);
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+  
+  // 공용 데이터 ID
+  const appId = typeof __app_id !== 'undefined' ? __app_id : 'global-speedrun-challenge-v11';
+
+  let clicks = 0;
+  let startTime = null;
+  let timerInterval = null;
+  let isFinished = false;
+  let currentUser = null;
+
+  const images = {
+    idle: "https://i.ibb.co/Zk3HVcP/10.png",
+    kick: "https://i.ibb.co/HDB1V3pF/11.png"
+  };
+
+  const playerEl = document.getElementById('player');
+  const bagWrapEl = document.getElementById('sandbagWrap');
+  const arenaEl = document.getElementById('arena');
+  const impactEl = document.getElementById('impact');
+  const timerEl = document.getElementById('timerText');
+  const currKicksEl = document.getElementById('currKicks');
+  const progressEl = document.getElementById('progressFill');
+  const finishModal = document.getElementById('finishModal');
+  const tapNotice = document.getElementById('tapNotice');
+  const rankingList = document.getElementById('rankingList');
+
+  // 이미지 사전 로드
+  Object.values(images).forEach(src => { new Image().src = src; });
+
+  // 인증 시스템
+  async function initAuth() {
+    try {
+      if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+        await signInWithCustomToken(auth, __initial_auth_token);
+      } else {
+        await signInAnonymously(auth);
+      }
+    } catch (e) {
+      console.error("Auth Fail", e);
+    }
+  }
+
+  onAuthStateChanged(auth, (u) => {
+    currentUser = u;
+    if (currentUser) {
+      loadLeaderboard();
+    }
+  });
+
+  // 리더보드 로드
+  window.loadLeaderboard = function() {
+    if (!currentUser) return;
+    const scoresRef = collection(db, 'artifacts', appId, 'public', 'data', 'scores');
+    onSnapshot(scoresRef, (snapshot) => {
+      let scores = [];
+      snapshot.forEach(doc => {
+        const data = doc.data();
+        if (data.time && data.name) scores.push(data);
+      });
+      // 오름차순(빠른 순) 정렬
+      scores.sort((a, b) => a.time - b.time);
+      
+      if (scores.length === 0) {
+        rankingList.innerHTML = '<div class="text-center py-4 text-gray-500 text-sm">연결 성공! 기록을 세워보세요.</div>';
+        return;
+      }
+      rankingList.innerHTML = scores.slice(0, 10).map((s, idx) => `
+        <div class="ranking-item">
+          <span>${idx + 1}. ${escapeHtml(s.name)}</span>
+          <span class="text-yellow-400 font-mono font-bold">${s.time.toFixed(2)}s</span>
+        </div>
+      `).join('');
+    }, (err) => {
+      rankingList.innerHTML = '<div class="text-center py-4 text-red-400 text-xs">데이터 연동 중...</div>';
+    });
+  }
+
+  function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  }
+
+  // 발차기 로직
+  function handleKick() {
+    if (isFinished) return;
+    if (!startTime) {
+      startTime = Date.now();
+      tapNotice.style.display = 'none';
+      timerInterval = setInterval(() => {
+        const elapsed = (Date.now() - startTime) / 1000;
+        timerEl.textContent = elapsed.toFixed(2) + 'S';
+      }, 10);
+    }
+    clicks++;
+    
+    // 시각 효과
+    playerEl.src = images.kick;
+    playerEl.classList.add('kick-anim');
+    bagWrapEl.classList.remove('hit-anim');
+    void bagWrapEl.offsetWidth;
+    bagWrapEl.classList.add('hit-anim');
+    
+    impactEl.style.display = 'block';
+    impactEl.style.left = (65 + Math.random() * 15) + '%';
+    impactEl.style.bottom = (45 + Math.random() * 15) + '%';
+
+    setTimeout(() => {
+      playerEl.src = images.idle;
+      playerEl.classList.remove('kick-anim');
+      impactEl.style.display = 'none';
+    }, 100);
+
+    currKicksEl.textContent = clicks;
+    progressEl.style.width = (clicks / 100 * 100) + '%';
+
+    if (clicks >= 100) {
+      isFinished = true;
+      clearInterval(timerInterval);
+      const finalVal = (Date.now() - startTime) / 1000;
+      document.getElementById('finalTime').textContent = finalVal.toFixed(2) + 's';
+      finishModal.style.display = 'flex';
+    }
+  }
+
+  // 기록 등록
+  window.submitRecord = async function() {
+    const name = document.getElementById('nickname').value.trim() || '익명';
+    const finalVal = parseFloat(document.getElementById('finalTime').textContent);
+    if (!currentUser) return;
+    const btn = document.getElementById('submitBtn');
+    btn.disabled = true;
+    btn.textContent = "저장 중...";
+    try {
+      const scoresRef = collection(db, 'artifacts', appId, 'public', 'data', 'scores');
+      await addDoc(scoresRef, {
+        name: name,
+        time: finalVal,
+        uid: currentUser.uid,
+        timestamp: serverTimestamp()
+      });
+      alert("월드 랭킹에 등록되었습니다!");
+      resetGame();
+    } catch (e) {
+      alert("저장 중 오류가 발생했습니다.");
+      btn.disabled = false;
+      btn.textContent = "월드 랭킹 등록하기";
+    }
+  };
+
+  // 게임 리셋
+  window.resetGame = function() {
+    clicks = 0; startTime = null; isFinished = false;
+    clearInterval(timerInterval);
+    timerEl.textContent = '0.00S'; currKicksEl.textContent = '0';
+    progressEl.style.width = '0%'; finishModal.style.display = 'none';
+    tapNotice.style.display = 'block';
+    document.getElementById('submitBtn').disabled = false;
+    document.getElementById('submitBtn').textContent = "월드 랭킹 등록하기";
+    document.getElementById('nickname').value = "";
+  };
+
+  // 이벤트 리스너 등록
+  arenaEl.addEventListener('touchstart', (e) => { e.preventDefault(); handleKick(); }, { passive: false });
+  arenaEl.addEventListener('mousedown', (e) => { handleKick(); });
+  document.addEventListener('keydown', (e) => { if(e.code === 'Space') { e.preventDefault(); handleKick(); }});
+
+  // 초기화 시작
+  initAuth();
+</script>
+
+</body>
+</html>
