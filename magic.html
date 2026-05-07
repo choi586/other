@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>에테리아의 마법진 - 반응속도 테스트</title>
+    
+    <!-- PWA Meta Tags -->
+    <meta name="theme-color" content="#6366f1">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="마법진 반응">
+    
+    <!-- PWA Manifest (Data URI) -->
+    <link rel="manifest" href='data:application/json;base64,ewogICJpbnRlcm5hdGlvbmFsaXplZCI6IGZhbHNlLAogICJuYW1lIjogIure2FjOumrOyVhOydmCDrp4TrspXsp4QiLAogICJzaG9ydF9uYW1lIjogIuunpOuyVeypogIsCiAgInN0YXJ0X3VybCI6ICIuIiwKICAiZGlzcGxheSI6ICJzdGFuZGFsb25lIiwKICAiYmFja2dyb3VuZF9jb2xvciI6ICIjMGYxNzJhIiwKICAidGhlbWVfY29sb3IiOiAiIzYzNjZmMSIsCiAgImljb25zIjogWwogICAgewogICAgICAic3JjIjogImRhdGE6aW1hZ2Uvc3ZnK3htbDtbase64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI1MTIiIGhlaWdodD0iNTEyIiB2aWV3Qm94PSIwIDAgNTEyIDUxMiI+PGZpbGwgcmVjdD0iMCIgd2lkdGg9IjUxMiIgaGVpZ2h0PSI1MTIiIGZpbGw9IiMwZjE3MmEiLz48ZyBzdHJva2U9IiM2MzY2ZjEiIGZpbGw9Im5vbmUiIHN0cm9rZS13aWR0aD0iMTYiPjxjaXJjbGUgY3g9IjI1NiIgY3k9IjI1NiIgcj0iMjAwIiBzdHJva2UtZGFzaGFycmF5PSIyMCAxMCIvPjxjaXJjbGUgY3g9IjI1NiIgY3k9IjI1NiIgcj0iMTYwIi8+PHBhdGggZD0iTTI1NiAyMEwyOTUgMTgySDQ3MEwzMjggMjg2TDM4MiA0NDhMMjU2IDM0OEwxMzAgNDQ4TDE4NCAyODZMMzAgMTgySDE4NkwyNTYgMjBaIiBzdHJva2U9IiNmYmJmMjQiLz48L2c+PC9zdmc+IiwKICAgICAgInNpemVzIjogIjUxMng1MTIiLAogICAgICAidHlwZSI6ICJpbWFnZS9zdmcreG1sIiwKICAgICAgInB1cnBvc2UiOiAiYW55IG1hc2thYmxlIgogICAgfQogIF0KfQ=='>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=Noto+Serif+KR:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', 'Noto Serif KR', serif;
+            background-color: #0f172a;
+            color: #f8fafc;
+            overflow-x: hidden;
+            touch-action: manipulation;
+            user-select: none;
+        }
+        .magic-glow {
+            box-shadow: 0 0 20px rgba(139, 92, 246, 0.5), 0 0 40px rgba(139, 92, 246, 0.3);
+        }
+        .magic-circle-active {
+            filter: drop-shadow(0 0 25px #fbbf24);
+            animation: pulse 0.4s infinite alternate;
+        }
+        @keyframes pulse {
+            from { transform: scale(1); opacity: 0.9; }
+            to { transform: scale(1.08); opacity: 1; }
+        }
+        .spell-text {
+            text-shadow: 0 0 10px rgba(139, 92, 246, 0.8);
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: rgba(30, 41, 59, 0.5);
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #6366f1;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center justify-center p-4">
+
+    <!-- PWA Install Prompt (Custom UI) -->
+    <div id="install-prompt" class="hidden fixed top-4 left-4 right-4 bg-indigo-600 p-4 rounded-2xl shadow-2xl z-[100] flex justify-between items-center animate-bounce">
+        <span class="text-sm font-bold">홈 화면에 추가하여 더 빠르게 시작하세요!</span>
+        <button onclick="triggerPWAInstall()" class="bg-white text-indigo-600 px-4 py-1 rounded-lg text-sm font-black">추가</button>
+    </div>
+
+    <div id="app" class="max-w-2xl w-full bg-slate-900/80 backdrop-blur-md p-8 rounded-3xl border border-indigo-500/30 shadow-2xl relative overflow-hidden">
+        
+        <!-- Background Magic Particles -->
+        <div class="absolute inset-0 pointer-events-none opacity-20">
+            <svg width="100%" height="100%">
+                <circle cx="10%" cy="10%" r="2" fill="white" />
+                <circle cx="90%" cy="20%" r="3" fill="white" />
+                <circle cx="50%" cy="80%" r="2" fill="white" />
+                <circle cx="20%" cy="70%" r="1" fill="white" />
+            </svg>
+        </div>
+
+        <!-- Start Screen -->
+        <div id="start-screen" class="text-center space-y-6">
+            <h1 class="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-400 mb-2">에테리아의 마법진</h1>
+            <p class="text-slate-400 leading-relaxed italic">
+                "위대한 마법사가 되기 위해서는 찰나의 마력을 포착해야 한다네.<br>마법진이 황금빛으로 물드는 순간, 마력을 방출하게!"
+            </p>
+            <div class="space-y-4">
+                <input type="text" id="username" placeholder="마법사 이름을 입력하세요" maxlength="10" 
+                    class="w-full bg-slate-800 border border-indigo-500/50 rounded-xl px-4 py-3 text-center focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all text-white">
+                <button onclick="startGame()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 rounded-xl transition-all shadow-lg hover:shadow-indigo-500/25">
+                    수행 시작하기
+                </button>
+            </div>
+            <div class="pt-6 border-t border-slate-800">
+                <button onclick="showRankings()" class="text-indigo-400 hover:text-indigo-300 text-sm underline decoration-indigo-500/30">마법 기록관(랭킹) 보기</button>
+            </div>
+        </div>
+
+        <!-- Game Screen -->
+        <div id="game-screen" class="hidden text-center space-y-8">
+            <div id="status-text" class="text-xl font-medium text-slate-300 h-8 spell-text">마법을 준비하는 중...</div>
+            
+            <div id="magic-target" onclick="handleInput()" class="relative cursor-pointer group flex justify-center items-center py-12">
+                <svg id="magic-circle" class="w-64 h-64 transition-all duration-300 text-indigo-500" viewBox="0 0 200 200">
+                    <circle cx="100" cy="100" r="90" fill="none" stroke="currentColor" stroke-width="2" stroke-dasharray="10 5" class="opacity-30" />
+                    <circle cx="100" cy="100" r="70" fill="none" stroke="currentColor" stroke-width="1" class="opacity-50" />
+                    <path d="M100 10 L126 80 L190 80 L138 125 L158 190 L100 150 L42 190 L62 125 L10 80 L74 80 Z" fill="none" stroke="currentColor" stroke-width="2" class="opacity-40" />
+                    <circle id="inner-glow" cx="100" cy="100" r="40" fill="currentColor" class="opacity-0 transition-opacity duration-75" />
+                </svg>
+                
+                <div id="now-signal" class="absolute inset-0 flex items-center justify-center opacity-0 pointer-events-none transition-opacity duration-75">
+                    <span class="text-5xl font-black text-amber-400 drop-shadow-2xl">지금이야!</span>
+                </div>
+            </div>
+
+            <p class="text-slate-500 text-sm">마법진이 황금빛으로 빛날 때 화면을 터치하세요!</p>
+        </div>
+
+        <!-- Result Screen -->
+        <div id="result-screen" class="hidden text-center space-y-6">
+            <h2 class="text-3xl font-bold text-slate-200">결과 보고</h2>
+            <div class="py-8 bg-slate-800/50 rounded-2xl border border-indigo-500/20">
+                <div id="result-time" class="text-6xl font-black text-indigo-400 mb-2">0ms</div>
+                <div id="result-message" class="text-slate-400 font-medium italic">대단한 집중력이군!</div>
+            </div>
+            <div class="flex flex-col gap-3">
+                <button id="save-btn" onclick="saveRecord()" class="w-full bg-amber-600 hover:bg-amber-500 text-white font-bold py-3 rounded-xl transition-all shadow-lg">명예의 전당에 기록 저장</button>
+                <button onclick="resetGame()" class="w-full bg-slate-700 hover:bg-slate-600 text-white font-bold py-3 rounded-xl transition-all">다시 수행</button>
+            </div>
+        </div>
+
+        <!-- Ranking Screen -->
+        <div id="ranking-screen" class="hidden space-y-4">
+            <div class="flex justify-between items-center">
+                <h2 class="text-2xl font-bold text-indigo-400">명예의 전당</h2>
+                <button onclick="showStartScreen()" class="text-slate-400 hover:text-white p-2">닫기</button>
+            </div>
+            <div id="rank-list" class="max-h-[60vh] overflow-y-auto custom-scrollbar space-y-2 pr-2">
+                <div class="text-center py-10 text-slate-500">마력을 읽어오는 중...</div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Custom Modal/Notification -->
+    <div id="toast" class="fixed bottom-10 left-1/2 -translate-x-1/2 bg-slate-800 border border-indigo-500 text-white px-6 py-3 rounded-full opacity-0 pointer-events-none transition-all duration-300 shadow-2xl z-50 whitespace-nowrap">
+        메시지
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, query, getDocs, addDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // --- PWA Service Worker Registration (Single File Hack) ---
+        if ('serviceWorker' in navigator) {
+            const swCode = `
+                const CACHE_NAME = 'etheria-v1';
+                self.addEventListener('install', (e) => {
+                    e.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(['/'])));
+                });
+                self.addEventListener('fetch', (e) => {
+                    e.respondWith(caches.match(e.request).then((res) => res || fetch(e.request)));
+                });
+            `;
+            const blob = new Blob([swCode], { type: 'text/javascript' });
+            const swUrl = URL.createObjectURL(blob);
+            navigator.serviceWorker.register(swUrl).catch(err => console.log('SW Load failed (common in development):', err));
+        }
+
+        // PWA Install Prompt Logic
+        let deferredPrompt;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            document.getElementById('install-prompt').classList.remove('hidden');
+        });
+
+        window.triggerPWAInstall = async () => {
+            if (!deferredPrompt) return;
+            deferredPrompt.prompt();
+            const { outcome } = await deferredPrompt.userChoice;
+            if (outcome === 'accepted') {
+                document.getElementById('install-prompt').classList.add('hidden');
+            }
+            deferredPrompt = null;
+        };
+
+        // --- Firebase Config ---
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'magic-reaction-test';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
+            apiKey: "",
+            authDomain: "",
+            projectId: "default",
+            storageBucket: "",
+            messagingSenderId: "",
+            appId: ""
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+
+        let currentUser = null;
+        let lastResult = null;
+
+        async function initAuth() {
+            try {
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    await signInAnonymously(auth);
+                }
+            } catch (error) {
+                console.error("Auth Error:", error);
+            }
+        }
+
+        onAuthStateChanged(auth, (user) => {
+            if (user) currentUser = user;
+        });
+
+        initAuth();
+
+        // --- Game State & Logic ---
+        const state = {
+            status: 'START', 
+            startTime: 0,
+            timer: null,
+            username: ''
+        };
+
+        const screens = {
+            start: document.getElementById('start-screen'),
+            game: document.getElementById('game-screen'),
+            result: document.getElementById('result-screen'),
+            ranking: document.getElementById('ranking-screen')
+        };
+
+        const circle = document.getElementById('magic-circle');
+        const innerGlow = document.getElementById('inner-glow');
+        const nowSignal = document.getElementById('now-signal');
+        const statusText = document.getElementById('status-text');
+
+        window.startGame = () => {
+            const nameInput = document.getElementById('username');
+            if (!nameInput.value.trim()) {
+                showToast("마법사의 이름을 먼저 정해야 합니다.");
+                return;
+            }
+            state.username = nameInput.value.trim();
+            showScreen('game');
+            startWaiting();
+        };
+
+        function showScreen(screenKey) {
+            Object.values(screens).forEach(s => s.classList.add('hidden'));
+            screens[screenKey].classList.remove('hidden');
+        }
+
+        function startWaiting() {
+            state.status = 'WAITING';
+            statusText.innerText = "마력을 모으는 중...";
+            
+            // Reset UI States
+            circle.classList.remove('text-amber-400', 'magic-circle-active');
+            circle.classList.add('text-indigo-500');
+            innerGlow.classList.replace('opacity-100', 'opacity-0');
+            nowSignal.classList.replace('opacity-100', 'opacity-0');
+
+            const delay = Math.floor(Math.random() * 3000) + 2000; 
+            state.timer = setTimeout(triggerNow, delay);
+        }
+
+        function triggerNow() {
+            if (state.status !== 'WAITING') return;
+            state.status = 'ACTIVE';
+            state.startTime = performance.now();
+            
+            circle.classList.remove('text-indigo-500');
+            circle.classList.add('text-amber-400', 'magic-circle-active');
+            innerGlow.classList.replace('opacity-0', 'opacity-100');
+            nowSignal.classList.replace('opacity-0', 'opacity-100');
+            statusText.innerText = "지금이야!!!";
+        }
+
+        window.handleInput = () => {
+            if (state.status === 'WAITING') {
+                clearTimeout(state.timer);
+                endGame(true);
+            } else if (state.status === 'ACTIVE') {
+                const reactionTime = Math.round(performance.now() - state.startTime);
+                endGame(false, reactionTime);
+            }
+        };
+
+        function endGame(isTooEarly, time = 0) {
+            state.status = 'RESULT';
+            showScreen('result');
+            const resultTimeEl = document.getElementById('result-time');
+            const resultMsgEl = document.getElementById('result-message');
+            const saveBtn = document.getElementById('save-btn');
+
+            if (isTooEarly) {
+                resultTimeEl.innerText = "너무 빨라!";
+                resultTimeEl.classList.replace('text-indigo-400', 'text-red-400');
+                resultMsgEl.innerText = "마법진이 완성되기 전에 마력이 폭주했네.";
+                saveBtn.classList.add('hidden');
+                lastResult = null;
+            } else {
+                resultTimeEl.innerText = `${time}ms`;
+                resultTimeEl.classList.replace('text-red-400', 'text-indigo-400');
+                saveBtn.classList.remove('hidden');
+                lastResult = time;
+
+                if (time < 180) resultMsgEl.innerText = "전설적인 대마법사의 속도군!";
+                else if (time < 260) resultMsgEl.innerText = "훌륭한 마법사의 자질이 있어.";
+                else if (time < 400) resultMsgEl.innerText = "조금 더 수행이 필요하겠군.";
+                else resultMsgEl.innerText = "책을 더 읽고 오게나.";
+            }
+        }
+
+        window.resetGame = () => {
+            startWaiting();
+            showScreen('game');
+        };
+
+        window.showStartScreen = () => showScreen('start');
+
+        window.saveRecord = async () => {
+            if (!currentUser || lastResult === null) return;
+
+            const saveBtn = document.getElementById('save-btn');
+            const originalText = saveBtn.innerText;
+            saveBtn.disabled = true;
+            saveBtn.innerText = "기록 저장 중...";
+
+            try {
+                const rankingRef = collection(db, 'artifacts', appId, 'public', 'data', 'rankings');
+                await addDoc(rankingRef, {
+                    name: state.username,
+                    score: lastResult,
+                    timestamp: Date.now(),
+                    uid: currentUser.uid
+                });
+                showToast("명예의 전당에 이름을 올렸습니다!");
+                showRankings();
+            } catch (e) {
+                console.error(e);
+                showToast("기록 전송에 실패했습니다.");
+            } finally {
+                saveBtn.disabled = false;
+                saveBtn.innerText = originalText;
+            }
+        };
+
+        window.showRankings = async () => {
+            showScreen('ranking');
+            const rankList = document.getElementById('rank-list');
+            rankList.innerHTML = '<div class="text-center py-10 text-slate-500">기록관의 먼지를 털어내는 중...</div>';
+
+            try {
+                const rankingRef = collection(db, 'artifacts', appId, 'public', 'data', 'rankings');
+                const querySnapshot = await getDocs(rankingRef);
+                
+                let rankings = [];
+                querySnapshot.forEach(doc => rankings.push(doc.data()));
+                rankings.sort((a, b) => a.score - b.score);
+                rankings = rankings.slice(0, 50);
+
+                if (rankings.length === 0) {
+                    rankList.innerHTML = '<div class="text-center py-10 text-slate-500">아직 전설이 기록되지 않았습니다.</div>';
+                    return;
+                }
+
+                rankList.innerHTML = rankings.map((r, i) => `
+                    <div class="flex items-center justify-between p-4 rounded-xl ${i < 3 ? 'bg-indigo-500/20 border border-indigo-500/30' : 'bg-slate-800/50'}">
+                        <div class="flex items-center gap-4">
+                            <span class="w-8 text-center font-black ${i === 0 ? 'text-amber-400 text-xl' : i === 1 ? 'text-slate-300' : i === 2 ? 'text-orange-400' : 'text-slate-500'}">
+                                ${i + 1}
+                            </span>
+                            <span class="font-bold text-slate-100">${r.name}</span>
+                        </div>
+                        <span class="font-mono text-amber-400 font-black">${r.score}ms</span>
+                    </div>
+                `).join('');
+            } catch (e) {
+                rankList.innerHTML = '<div class="text-center py-10 text-red-400">마법 기록을 읽는 데 실패했습니다.</div>';
+            }
+        };
+
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            toast.innerText = msg;
+            toast.classList.replace('opacity-0', 'opacity-100');
+            toast.classList.remove('pointer-events-none');
+            setTimeout(() => {
+                toast.classList.replace('opacity-100', 'opacity-0');
+                toast.classList.add('pointer-events-none');
+            }, 2500);
+        }
+
+        // Animation Loop for Magic Circle
+        function animate() {
+            const rotation = (Date.now() / 40) % 360;
+            if (circle) circle.style.transform = `rotate(${rotation}deg)`;
+            requestAnimationFrame(animate);
+        }
+        animate();
+
+    </script>
+</body>
+</html>
