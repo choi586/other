@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>일본어 단어 퀴즈 — 4과</title>
+<title>일본어 단어 퀴즈 — 위치</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;700&family=Noto+Sans+JP:wght@400;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -344,8 +344,8 @@ const WORDS = [
   {kr:"새로운", jp:"あたらしい", tiles:["あ","た","ら","し","い","の","く","も","ね"]},
   {kr:"여기", jp:"ここ", tiles:["こ","こ","そ","あ","ど","か","き"]},
   {kr:"저기", jp:"あそこ", tiles:["あ","そ","こ","ど","こ","か","き","に"]},
-  {kr:"위 (うえ)", jp:"うえ", tiles:["う","え","お","い","あ","ね","の"]},
-  {kr:"앞 (まえ)", jp:"まえ", tiles:["ま","え","も","お","あ","こ","か"]},
+  {kr:"위", jp:"うえ", tiles:["う","え","お","い","あ","ね","の"]},
+  {kr:"앞", jp:"まえ", tiles:["ま","え","も","お","あ","こ","か"]},
 ];
 
 function shuffle(arr) {
@@ -375,7 +375,7 @@ function render() {
 
   app.innerHTML = `
     <header>
-      <div class="logo">일본어 4과 퀴즈<span>ひらがな / カタカナ</span></div>
+      <div class="logo">일본어 위치 퀴즈<span>ひらがな / カタカナ</span></div>
       <div class="score-pill">정답 <strong id="sc">${score}</strong> / ${answered}</div>
     </header>
 
@@ -501,7 +501,7 @@ function renderResult() {
   const app = document.getElementById('app');
   app.innerHTML = `
     <header>
-      <div class="logo">일본어 4과 퀴즈<span>결과</span></div>
+      <div class="logo">일본어 위치 퀴즈<span>결과</span></div>
       <div class="score-pill">${new Date().toLocaleDateString('ko-KR')}</div>
     </header>
     <div class="result">
