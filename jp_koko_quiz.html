@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>일본어 단어 퀴즈 — 4과</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;700&family=Noto+Sans+JP:wght@400;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0e0e12;
+    --surface: #17171e;
+    --surface2: #1f1f29;
+    --border: rgba(255,255,255,0.08);
+    --border-strong: rgba(255,255,255,0.18);
+    --accent: #e8c97a;
+    --accent2: #7ac4e8;
+    --red: #e87a7a;
+    --green: #7ae8a8;
+    --text: #f0ede6;
+    --muted: rgba(240,237,230,0.45);
+    --radius: 12px;
+  }
+
+  html, body {
+    height: 100%;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    overflow-x: hidden;
+  }
+
+  /* grain overlay */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.035'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .wrap {
+    position: relative;
+    z-index: 1;
+    max-width: 680px;
+    margin: 0 auto;
+    padding: 3rem 1.5rem 4rem;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  /* Header */
+  header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 3rem;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 1rem;
+  }
+  .logo {
+    font-family: 'Noto Serif KR', serif;
+    font-size: 1.05rem;
+    color: var(--accent);
+    letter-spacing: 0.02em;
+  }
+  .logo span { color: var(--muted); font-family: 'DM Mono', monospace; font-size: 0.8rem; margin-left: 8px; }
+  .score-pill {
+    font-size: 0.75rem;
+    color: var(--muted);
+    border: 1px solid var(--border);
+    border-radius: 99px;
+    padding: 4px 14px;
+    letter-spacing: 0.08em;
+  }
+  .score-pill strong { color: var(--accent); }
+
+  /* Progress */
+  .prog-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 2.5rem;
+  }
+  .prog-track {
+    flex: 1;
+    height: 3px;
+    background: var(--border);
+    border-radius: 99px;
+    overflow: hidden;
+  }
+  .prog-fill {
+    height: 100%;
+    background: var(--accent);
+    border-radius: 99px;
+    transition: width 0.5s cubic-bezier(0.4,0,0.2,1);
+  }
+  .prog-label {
+    font-size: 0.7rem;
+    color: var(--muted);
+    white-space: nowrap;
+    letter-spacing: 0.08em;
+  }
+
+  /* Prompt */
+  .prompt-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 2.5rem 2rem;
+    text-align: center;
+    margin-bottom: 2rem;
+    position: relative;
+    overflow: hidden;
+  }
+  .prompt-card::after {
+    content: '';
+    position: absolute;
+    top: -40px; right: -40px;
+    width: 120px; height: 120px;
+    background: radial-gradient(circle, rgba(232,201,122,0.08) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .prompt-kr {
+    font-family: 'Noto Serif KR', serif;
+    font-size: 3rem;
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: -0.02em;
+    margin-bottom: 0.75rem;
+    animation: fadeUp 0.3s ease;
+  }
+  .prompt-meta {
+    font-size: 0.72rem;
+    color: var(--muted);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Answer zone */
+  .answer-label {
+    font-size: 0.68rem;
+    color: var(--muted);
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    margin-bottom: 0.6rem;
+  }
+  .answer-zone {
+    min-height: 68px;
+    border: 1.5px dashed var(--border-strong);
+    border-radius: var(--radius);
+    padding: 10px 14px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+    margin-bottom: 0.75rem;
+    transition: border-color 0.2s, background 0.2s;
+  }
+  .answer-zone.correct {
+    border-color: var(--green);
+    background: rgba(122,232,168,0.06);
+    border-style: solid;
+  }
+  .answer-zone.wrong {
+    border-color: var(--red);
+    background: rgba(232,122,122,0.06);
+    border-style: solid;
+    animation: shake 0.35s ease;
+  }
+  @keyframes shake {
+    0%,100%{transform:translateX(0)}
+    20%{transform:translateX(-7px)}
+    50%{transform:translateX(7px)}
+    70%{transform:translateX(-4px)}
+  }
+  .az-hint { font-size: 0.78rem; color: rgba(240,237,230,0.2); font-style: italic; width: 100%; text-align: center; }
+
+  /* Cards */
+  .kana-card {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 50px;
+    height: 52px;
+    padding: 0 12px;
+    border-radius: 10px;
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 1.3rem;
+    font-weight: 700;
+    cursor: pointer;
+    user-select: none;
+    transition: transform 0.15s, background 0.15s, opacity 0.2s, border-color 0.2s;
+    border: 1.5px solid var(--border-strong);
+    background: var(--surface2);
+    color: var(--text);
+  }
+  .kana-card:hover { transform: translateY(-3px); border-color: var(--accent); color: var(--accent); }
+  .kana-card:active { transform: scale(0.94); }
+  .kana-card.in-answer {
+    background: rgba(122,196,232,0.12);
+    border-color: var(--accent2);
+    color: var(--accent2);
+  }
+  .kana-card.in-answer:hover { border-color: var(--red); color: var(--red); transform: translateY(-2px); }
+  .kana-card.used { opacity: 0.18; pointer-events: none; }
+
+  /* Tile zone */
+  .tile-label {
+    font-size: 0.68rem;
+    color: var(--muted);
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    margin-top: 1.5rem;
+    margin-bottom: 0.6rem;
+  }
+  .tile-zone {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+    min-height: 60px;
+  }
+
+  /* Feedback */
+  .feedback {
+    min-height: 22px;
+    font-size: 0.8rem;
+    letter-spacing: 0.06em;
+    transition: opacity 0.3s;
+    text-align: center;
+    margin: 0.4rem 0;
+  }
+  .feedback.ok { color: var(--green); }
+  .feedback.ng { color: var(--red); }
+
+  /* Buttons */
+  .action-row {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    margin-top: 1.5rem;
+  }
+  .btn {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.8rem;
+    letter-spacing: 0.08em;
+    padding: 10px 22px;
+    border-radius: 8px;
+    border: 1px solid var(--border-strong);
+    background: transparent;
+    color: var(--muted);
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+  }
+  .btn:hover { background: var(--surface2); color: var(--text); }
+  .btn.primary {
+    background: var(--accent);
+    color: #0e0e12;
+    border-color: var(--accent);
+    font-weight: 500;
+  }
+  .btn.primary:hover { background: #f0d98c; border-color: #f0d98c; }
+
+  /* Result */
+  .result {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 4rem 0;
+    animation: fadeUp 0.4s ease;
+  }
+  .result-big { font-size: 4rem; margin-bottom: 1rem; }
+  .result-score {
+    font-family: 'Noto Serif KR', serif;
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: var(--accent);
+    margin-bottom: 0.5rem;
+  }
+  .result-sub { font-size: 0.85rem; color: var(--muted); margin-bottom: 2.5rem; line-height: 1.7; }
+  .result-bar {
+    width: 280px;
+    height: 6px;
+    background: var(--border);
+    border-radius: 99px;
+    overflow: hidden;
+    margin-bottom: 2.5rem;
+  }
+  .result-bar-fill { height: 100%; background: var(--accent); border-radius: 99px; transition: width 1s ease 0.3s; }
+
+  /* Review list */
+  .review { width: 100%; max-width: 480px; }
+  .review h3 { font-size: 0.7rem; color: var(--muted); letter-spacing: 0.14em; text-transform: uppercase; margin-bottom: 1rem; }
+  .review-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 14px;
+    border-radius: 8px;
+    margin-bottom: 6px;
+    background: var(--surface);
+    font-size: 0.85rem;
+  }
+  .review-item .kr { color: var(--muted); }
+  .review-item .jp { font-family: 'Noto Sans JP', sans-serif; color: var(--text); }
+  .review-item .dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .review-item.ok .dot { background: var(--green); }
+  .review-item.ng .dot { background: var(--red); }
+  .review-item.ng .kr { color: var(--red); }
+</style>
+</head>
+<body>
+<div class="wrap" id="app"></div>
+
+<script>
+const WORDS = [
+  {kr:"화장실", jp:"トイレ", tiles:["ト","イ","レ","ア","ウ","ス"]},
+  {kr:"문 / 도어", jp:"ドア", tiles:["ド","ア","イ","ウ","エ","ス"]},
+  {kr:"스마트폰", jp:"スマホ", tiles:["ス","マ","ホ","ケ","タ","ノ"]},
+  {kr:"컴퓨터", jp:"パソコン", tiles:["パ","ソ","コ","ン","タ","ス","ア"]},
+  {kr:"노트", jp:"ノート", tiles:["ノ","ー","ト","テ","ス","カ","ア"]},
+  {kr:"책상", jp:"つくえ", tiles:["つ","く","え","お","か","き","あ"]},
+  {kr:"의자", jp:"いす", tiles:["い","す","う","し","き","く","え"]},
+  {kr:"연필", jp:"えんぴつ", tiles:["え","ん","ぴ","つ","お","く","か","は"]},
+  {kr:"가방", jp:"かばん", tiles:["か","ば","ん","き","く","た","な","さ"]},
+  {kr:"책", jp:"ほん", tiles:["ほ","ん","は","の","へ","よ","お"]},
+  {kr:"침대", jp:"ベッド", tiles:["ベ","ッ","ド","デ","ブ","ア","ダ"]},
+  {kr:"있습니다 (사물)", jp:"あります", tiles:["あ","り","ま","す","い","お","う","は","が"]},
+  {kr:"있습니다 (사람)", jp:"います", tiles:["い","ま","す","あ","う","き","は","ら"]},
+  {kr:"와 / 과", jp:"と", tiles:["と","に","は","が","の","も","で"]},
+  {kr:"친구", jp:"ともだち", tiles:["と","も","だ","ち","で","な","か","に"]},
+  {kr:"새로운", jp:"あたらしい", tiles:["あ","た","ら","し","い","の","く","も","ね"]},
+  {kr:"여기", jp:"ここ", tiles:["こ","こ","そ","あ","ど","か","き"]},
+  {kr:"저기", jp:"あそこ", tiles:["あ","そ","こ","ど","こ","か","き","に"]},
+  {kr:"위 (うえ)", jp:"うえ", tiles:["う","え","お","い","あ","ね","の"]},
+  {kr:"앞 (まえ)", jp:"まえ", tiles:["ま","え","も","お","あ","こ","か"]},
+];
+
+function shuffle(arr) {
+  const a=[...arr];
+  for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}
+  return a;
+}
+
+let queue, current, answerArr, usedIdxs, score, answered, results;
+
+function init() {
+  queue = shuffle(WORDS);
+  score = 0; answered = 0;
+  results = [];
+  render();
+}
+
+function render() {
+  if (answered >= queue.length) { renderResult(); return; }
+  current = queue[answered];
+  answerArr = [];
+  usedIdxs = new Set();
+  const shuffledTiles = shuffle(current.tiles.map((ch, i) => ({ch, id: i})));
+
+  const app = document.getElementById('app');
+  const pct = Math.round(answered / queue.length * 100);
+
+  app.innerHTML = `
+    <header>
+      <div class="logo">일본어 4과 퀴즈<span>ひらがな / カタカナ</span></div>
+      <div class="score-pill">정답 <strong id="sc">${score}</strong> / ${answered}</div>
+    </header>
+
+    <div class="prog-row">
+      <div class="prog-track"><div class="prog-fill" id="prog" style="width:${pct}%"></div></div>
+      <div class="prog-label">${answered+1} / ${queue.length}</div>
+    </div>
+
+    <div class="prompt-card">
+      <div class="prompt-kr" id="pkr">${current.kr}</div>
+      <div class="prompt-meta">글자 수: ${current.jp.length}자</div>
+    </div>
+
+    <div class="answer-label">정답 배열</div>
+    <div class="answer-zone" id="az"><span class="az-hint">카드를 눌러 순서대로 배치하세요</span></div>
+    <div class="feedback" id="fb"></div>
+
+    <div class="tile-label">히라가나 / 카타카나 카드</div>
+    <div class="tile-zone" id="tz"></div>
+
+    <div class="action-row">
+      <button class="btn" id="btn-clear">지우기</button>
+      <button class="btn primary" id="btn-check">확인 →</button>
+    </div>
+  `;
+
+  // Render tiles
+  const tz = document.getElementById('tz');
+  shuffledTiles.forEach(({ch, id}) => {
+    const c = document.createElement('div');
+    c.className = 'kana-card';
+    c.textContent = ch;
+    c.dataset.id = id;
+    c.dataset.ch = ch;
+    c.addEventListener('click', () => addTile(c, id, ch));
+    tz.appendChild(c);
+  });
+
+  document.getElementById('btn-check').addEventListener('click', checkAnswer);
+  document.getElementById('btn-clear').addEventListener('click', clearAnswer);
+}
+
+function renderAZ() {
+  const az = document.getElementById('az');
+  az.innerHTML = '';
+  if (!answerArr.length) {
+    az.innerHTML = '<span class="az-hint">카드를 눌러 순서대로 배치하세요</span>';
+    return;
+  }
+  answerArr.forEach((item, pos) => {
+    const c = document.createElement('div');
+    c.className = 'kana-card in-answer';
+    c.textContent = item.ch;
+    c.title = '클릭하여 제거';
+    c.addEventListener('click', () => removeTile(pos, item.id));
+    az.appendChild(c);
+  });
+}
+
+function addTile(el, id, ch) {
+  if (usedIdxs.has(id)) return;
+  usedIdxs.add(id);
+  answerArr.push({ch, id});
+  el.classList.add('used');
+  renderAZ();
+}
+
+function removeTile(pos, id) {
+  answerArr.splice(pos, 1);
+  usedIdxs.delete(id);
+  document.querySelectorAll('#tz .kana-card').forEach(c => {
+    if (parseInt(c.dataset.id) === id) c.classList.remove('used');
+  });
+  renderAZ();
+}
+
+function checkAnswer() {
+  const user = answerArr.map(a => a.ch).join('');
+  const az = document.getElementById('az');
+  const fb = document.getElementById('fb');
+  if (user === current.jp) {
+    az.className = 'answer-zone correct';
+    fb.className = 'feedback ok';
+    fb.textContent = '✓ 정답!　→ ' + current.jp;
+    score++;
+    results.push({kr: current.kr, jp: current.jp, ok: true});
+    answered++;
+    document.getElementById('sc').textContent = score;
+    setTimeout(render, 1000);
+  } else if (answerArr.length === 0) {
+    fb.className = 'feedback ng';
+    fb.textContent = '카드를 먼저 배치해주세요.';
+  } else {
+    az.className = 'answer-zone wrong';
+    fb.className = 'feedback ng';
+    fb.textContent = '틀렸어요. 다시 해보세요!';
+    setTimeout(() => { az.className = 'answer-zone'; }, 500);
+  }
+}
+
+function clearAnswer() {
+  answerArr = [];
+  usedIdxs = new Set();
+  document.getElementById('az').className = 'answer-zone';
+  document.getElementById('fb').textContent = '';
+  renderAZ();
+  document.querySelectorAll('#tz .kana-card').forEach(c => c.classList.remove('used'));
+}
+
+function renderResult() {
+  const pct = Math.round(score / queue.length * 100);
+  const emoji = score === queue.length ? '🎉' : pct >= 70 ? '👍' : '💪';
+  const msg = score === queue.length
+    ? '완벽합니다! 満点です！'
+    : pct >= 70
+    ? '잘했어요! よくできました！'
+    : '계속 연습해봐요! もう一度挑戦！';
+
+  const wrongItems = results.filter(r => !r.ok);
+  // add unanswered (skipped)
+  const answered_krs = results.map(r => r.kr);
+
+  const app = document.getElementById('app');
+  app.innerHTML = `
+    <header>
+      <div class="logo">일본어 4과 퀴즈<span>결과</span></div>
+      <div class="score-pill">${new Date().toLocaleDateString('ko-KR')}</div>
+    </header>
+    <div class="result">
+      <div class="result-big">${emoji}</div>
+      <div class="result-score">${score} / ${queue.length}</div>
+      <div class="result-sub">${msg}<br><span style="color:rgba(240,237,230,0.3);font-size:0.75rem;">정답률 ${pct}%</span></div>
+      <div class="result-bar"><div class="result-bar-fill" id="rbar" style="width:0%"></div></div>
+      <div class="review">
+        <h3>단어 목록 복습</h3>
+        ${queue.map(w => {
+          const r = results.find(x => x.kr === w.kr);
+          const ok = r ? r.ok : false;
+          return `<div class="review-item ${ok?'ok':'ng'}">
+            <span class="kr">${w.kr}</span>
+            <span class="jp">${w.jp}</span>
+            <span class="dot"></span>
+          </div>`;
+        }).join('')}
+      </div>
+      <div style="margin-top:2rem;">
+        <button class="btn primary" onclick="init()">다시 시작 →</button>
+      </div>
+    </div>
+  `;
+  setTimeout(() => {
+    const bar = document.getElementById('rbar');
+    if (bar) bar.style.width = pct + '%';
+  }, 100);
+}
+
+init();
+</script>
+</body>
+</html>
