@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>히라가나 디펜스 - 전자칠판 16:9</title>
+<style>
+  :root{
+    --bg1:#12122b;
+    --bg2:#202a57;
+    --panel:rgba(255,255,255,.12);
+    --panel2:rgba(255,255,255,.18);
+    --text:#ffffff;
+    --muted:rgba(255,255,255,.72);
+    --accent:#ffd86b;
+    --danger:#ff6680;
+    --good:#74f2ce;
+    --blue:#85c7ff;
+  }
+  *{box-sizing:border-box; user-select:none; -webkit-tap-highlight-color:transparent;}
+  body{
+    margin:0;
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:radial-gradient(circle at top, #38468c 0%, var(--bg1) 58%, #070713 100%);
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans KR", sans-serif;
+    color:var(--text);
+    overflow:hidden;
+  }
+  .stage{
+    width:min(100vw, 177.78vh);
+    aspect-ratio:16/9;
+    position:relative;
+    overflow:hidden;
+    border-radius:clamp(0px, 1vw, 22px);
+    box-shadow:0 24px 80px rgba(0,0,0,.45);
+    background:
+      linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,0)),
+      radial-gradient(circle at 18% 15%, rgba(118, 190, 255, .35), transparent 26%),
+      radial-gradient(circle at 78% 16%, rgba(255, 216, 107, .26), transparent 25%),
+      linear-gradient(135deg, var(--bg2), var(--bg1));
+  }
+  .stage::before{
+    content:"";
+    position:absolute; inset:0;
+    background-image:
+      linear-gradient(rgba(255,255,255,.045) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,.045) 1px, transparent 1px);
+    background-size:38px 38px;
+    mask-image:linear-gradient(to bottom, rgba(0,0,0,.7), transparent 75%);
+    pointer-events:none;
+  }
+  header{
+    height:12%;
+    padding:1.5% 2.2% 0;
+    display:grid;
+    grid-template-columns: 1.15fr .9fr 1.15fr;
+    gap:1.2%;
+    position:relative;
+    z-index:4;
+  }
+  .infoBox{
+    background:var(--panel);
+    border:1px solid rgba(255,255,255,.2);
+    border-radius:16px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:.6em;
+    backdrop-filter: blur(10px);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.2);
+  }
+  .label{font-size:clamp(14px, 1.15vw, 24px); color:var(--muted); font-weight:700; letter-spacing:.06em;}
+  .value{font-size:clamp(28px, 2.55vw, 52px); font-weight:900; line-height:1;}
+  .energyWrap{flex-direction:column; gap:.35em; padding:0 5%;}
+  .energyMeta{width:100%; display:flex; justify-content:space-between; align-items:center;}
+  .bar{width:100%; height:26%; background:rgba(0,0,0,.25); border-radius:999px; overflow:hidden; border:1px solid rgba(255,255,255,.2);}
+  .barFill{width:100%; height:100%; background:linear-gradient(90deg, var(--good), var(--accent)); border-radius:999px; transition:width .25s ease;}
+  main{
+    height:58%;
+    position:relative;
+    display:grid;
+    grid-template-columns: 1fr 30%;
+    gap:1.4%;
+    padding:1.2% 2.2% 0;
+    z-index:2;
+  }
+  .gameArea{
+    position:relative;
+    border-radius:22px;
+    background:rgba(5,8,24,.38);
+    border:1px solid rgba(255,255,255,.18);
+    overflow:hidden;
+    box-shadow: inset 0 0 80px rgba(0,0,0,.28);
+  }
+  .baseline{
+    position:absolute;
+    left:0; right:0; bottom:0;
+    height:10%;
+    background:linear-gradient(90deg, rgba(255,102,128,.22), rgba(255,216,107,.22));
+    border-top:3px dashed rgba(255,255,255,.5);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    color:rgba(255,255,255,.75);
+    font-weight:900;
+    font-size:clamp(16px, 1.4vw, 28px);
+    letter-spacing:.05em;
+  }
+  .kanaCard{
+    position:absolute;
+    width:12.5%;
+    aspect-ratio:1/1;
+    border-radius:22px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:.05em;
+    background:linear-gradient(180deg, rgba(255,255,255,.98), rgba(226,239,255,.94));
+    color:#171b49;
+    border:4px solid rgba(255,216,107,.95);
+    box-shadow:0 18px 32px rgba(0,0,0,.32), inset 0 1px 0 #fff;
+    transform:translate(-50%, -50%);
+    transition:filter .16s ease, transform .16s ease;
+  }
+  .kanaCard.hit{filter:brightness(1.4); transform:translate(-50%, -50%) scale(1.18);}
+  .kana{font-size:clamp(42px, 4.9vw, 96px); font-weight:900; line-height:.9;}
+  .hint{font-size:clamp(13px, 1.05vw, 22px); font-weight:900; color:#58637a; opacity:.9;}
+  .sidePanel{
+    border-radius:22px;
+    background:var(--panel);
+    border:1px solid rgba(255,255,255,.18);
+    padding:5%;
+    backdrop-filter: blur(10px);
+    display:flex;
+    flex-direction:column;
+    gap:4%;
+  }
+  .targetBox{
+    flex:1;
+    border-radius:18px;
+    background:rgba(0,0,0,.22);
+    border:1px solid rgba(255,255,255,.16);
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+  }
+  .targetLabel{font-size:clamp(16px,1.2vw,24px); color:var(--muted); font-weight:800;}
+  .targetText{font-size:clamp(42px,4vw,78px); font-weight:950; color:var(--accent); text-shadow:0 4px 14px rgba(0,0,0,.3);}
+  .inputBox{
+    min-height:24%;
+    border-radius:18px;
+    background:rgba(255,255,255,.92);
+    color:#171b49;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:clamp(34px,3.2vw,66px);
+    font-weight:950;
+    letter-spacing:.06em;
+    box-shadow:inset 0 0 0 4px rgba(255,216,107,.4);
+  }
+  .guide{
+    font-size:clamp(14px,1.05vw,22px);
+    color:var(--muted);
+    line-height:1.45;
+    font-weight:700;
+  }
+  .keyboard{
+    height:30%;
+    padding:1.1% 2.2% 1.7%;
+    display:grid;
+    grid-template-rows: repeat(3, 1fr);
+    gap:8px;
+    position:relative;
+    z-index:4;
+  }
+  .keyRow{display:grid; gap:8px;}
+  .row1{grid-template-columns: repeat(10, 1fr);}
+  .row2{grid-template-columns: .45fr repeat(9, 1fr) .45fr;}
+  .row3{grid-template-columns: 1.2fr repeat(7, 1fr) 1.55fr;}
+  button{
+    border:0;
+    border-radius:14px;
+    font-weight:950;
+    cursor:pointer;
+    color:white;
+    background:linear-gradient(180deg, rgba(255,255,255,.25), rgba(255,255,255,.10));
+    border:1px solid rgba(255,255,255,.24);
+    box-shadow:0 7px 0 rgba(0,0,0,.27), inset 0 1px 0 rgba(255,255,255,.35);
+    text-shadow:0 2px 8px rgba(0,0,0,.3);
+  }
+  button:active{transform:translateY(5px); box-shadow:0 2px 0 rgba(0,0,0,.27);}
+  .key{font-size:clamp(26px, 2.4vw, 48px);}
+  .wideKey{font-size:clamp(17px,1.55vw,32px); background:linear-gradient(180deg, rgba(255,216,107,.42), rgba(255,138,0,.28));}
+  .dangerKey{background:linear-gradient(180deg, rgba(255,102,128,.52), rgba(255,102,128,.25));}
+  .startOverlay, .gameOver{
+    position:absolute; inset:0;
+    z-index:20;
+    background:rgba(5,8,24,.82);
+    backdrop-filter: blur(16px);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:4%;
+  }
+  .modal{
+    width:min(74%, 980px);
+    border-radius:32px;
+    background:linear-gradient(180deg, rgba(255,255,255,.18), rgba(255,255,255,.08));
+    border:1px solid rgba(255,255,255,.28);
+    box-shadow:0 28px 80px rgba(0,0,0,.45);
+    padding:4%;
+    text-align:center;
+  }
+  h1{margin:0 0 .2em; font-size:clamp(44px,5vw,92px); line-height:1;}
+  .sub{font-size:clamp(19px,1.75vw,34px); color:var(--muted); font-weight:800; margin-bottom:1.3em;}
+  .startBtn{width:62%; padding:.45em 1em; font-size:clamp(30px,3vw,58px); background:linear-gradient(180deg, #ffe58a, #ff9f43); color:#171b49; text-shadow:none;}
+  .hidden{display:none!important;}
+  .flashGood{animation:good .32s ease;}
+  .flashBad{animation:bad .32s ease;}
+  @keyframes good{0%{box-shadow:inset 0 0 0 0 rgba(116,242,206,0)} 100%{box-shadow:inset 0 0 0 999px rgba(116,242,206,.13)}}
+  @keyframes bad{0%{box-shadow:inset 0 0 0 0 rgba(255,102,128,0)} 100%{box-shadow:inset 0 0 0 999px rgba(255,102,128,.16)}}
+  @media (max-aspect-ratio:16/9){.stage{width:100vw;height:auto}} 
+</style>
+</head>
+<body>
+<div class="stage" id="stage">
+  <header>
+    <div class="infoBox"><span class="label">SCORE</span><span class="value" id="score">0</span></div>
+    <div class="infoBox"><span class="label">LV</span><span class="value" id="level">1</span></div>
+    <div class="infoBox energyWrap">
+      <div class="energyMeta"><span class="label">ENERGY</span><span class="label" id="energyText">100%</span></div>
+      <div class="bar"><div class="barFill" id="energyFill"></div></div>
+    </div>
+  </header>
+
+  <main>
+    <section class="gameArea" id="gameArea">
+      <div class="baseline">여기까지 내려오면 에너지가 줄어들어요!</div>
+    </section>
+    <aside class="sidePanel">
+      <div class="targetBox">
+        <div class="targetLabel">지금 맞힐 글자</div>
+        <div class="targetText" id="targetKana">あ</div>
+      </div>
+      <div class="inputBox" id="inputBox">-</div>
+      <div class="guide">전자칠판에서 아래 가상 키보드를 눌러 로마자를 입력하세요. 예: あ = a, し = shi, つ = tsu</div>
+    </aside>
+  </main>
+
+  <section class="keyboard" id="keyboard">
+    <div class="keyRow row1" id="row1"></div>
+    <div class="keyRow row2" id="row2"></div>
+    <div class="keyRow row3" id="row3"></div>
+  </section>
+
+  <div class="startOverlay" id="startOverlay">
+    <div class="modal">
+      <h1>ひらがな DEFENSE</h1>
+      <div class="sub">떨어지는 히라가나의 로마자 발음을 눌러 맞히세요.</div>
+      <button class="startBtn" id="startBtn">시작하기</button>
+    </div>
+  </div>
+
+  <div class="gameOver hidden" id="gameOver">
+    <div class="modal">
+      <h1>GAME OVER</h1>
+      <div class="sub">최종 점수: <strong id="finalScore">0</strong></div>
+      <button class="startBtn" id="restartBtn">다시 시작</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const kanaList = [
+  ['あ','a'],['い','i'],['う','u'],['え','e'],['お','o'],
+  ['か','ka'],['き','ki'],['く','ku'],['け','ke'],['こ','ko'],
+  ['さ','sa'],['し','shi'],['す','su'],['せ','se'],['そ','so'],
+  ['た','ta'],['ち','chi'],['つ','tsu'],['て','te'],['と','to'],
+  ['な','na'],['に','ni'],['ぬ','nu'],['ね','ne'],['の','no'],
+  ['は','ha'],['ひ','hi'],['ふ','fu'],['へ','he'],['ほ','ho'],
+  ['ま','ma'],['み','mi'],['む','mu'],['め','me'],['も','mo'],
+  ['や','ya'],['ゆ','yu'],['よ','yo'],
+  ['ら','ra'],['り','ri'],['る','ru'],['れ','re'],['ろ','ro'],
+  ['わ','wa'],['を','wo'],['ん','n']
+];
+
+const gameArea = document.getElementById('gameArea');
+const scoreEl = document.getElementById('score');
+const levelEl = document.getElementById('level');
+const energyFill = document.getElementById('energyFill');
+const energyText = document.getElementById('energyText');
+const targetKanaEl = document.getElementById('targetKana');
+const inputBox = document.getElementById('inputBox');
+const startOverlay = document.getElementById('startOverlay');
+const gameOver = document.getElementById('gameOver');
+const finalScore = document.getElementById('finalScore');
+
+let score = 0;
+let level = 1;
+let energy = 100;
+let cards = [];
+let typed = '';
+let running = false;
+let lastSpawn = 0;
+let animationId = null;
+let lastTime = 0;
+
+function buildKeyboard(){
+  const rows = [
+    ['q','w','e','r','t','y','u','i','o','p'],
+    ['','a','s','d','f','g','h','j','k','l',''],
+    ['CLEAR','z','x','c','v','b','n','m','ENTER']
+  ];
+  ['row1','row2','row3'].forEach((id, idx)=>{
+    const row = document.getElementById(id);
+    rows[idx].forEach(k=>{
+      const btn = document.createElement('button');
+      if(k==='') { btn.style.visibility='hidden'; row.appendChild(btn); return; }
+      btn.textContent = k;
+      btn.className = (k.length===1) ? 'key' : 'wideKey';
+      if(k==='CLEAR') btn.classList.add('dangerKey');
+      btn.addEventListener('click', ()=>handleKey(k));
+      row.appendChild(btn);
+    });
+  });
+}
+
+function resetGame(){
+  score = 0; level = 1; energy = 100; cards = []; typed = ''; running = true;
+  lastSpawn = 0; lastTime = performance.now();
+  document.querySelectorAll('.kanaCard').forEach(el=>el.remove());
+  gameOver.classList.add('hidden');
+  startOverlay.classList.add('hidden');
+  updateUI();
+  spawnCard();
+  cancelAnimationFrame(animationId);
+  animationId = requestAnimationFrame(loop);
+}
+
+function randomKana(){
+  const max = Math.min(kanaList.length, 12 + level * 4);
+  return kanaList[Math.floor(Math.random() * max)];
+}
+
+function spawnCard(){
+  const [kana, romaji] = randomKana();
+  const el = document.createElement('div');
+  el.className = 'kanaCard';
+  el.innerHTML = `<div class="kana">${kana}</div><div class="hint">?</div>`;
+  gameArea.appendChild(el);
+  const x = 8 + Math.random() * 84;
+  const card = {el, kana, romaji, x, y:-8, speed: 5.2 + level * .95 + Math.random()*1.8};
+  cards.push(card);
+  updateTarget();
+}
+
+function updateTarget(){
+  if(cards.length === 0){ targetKanaEl.textContent = '-'; return; }
+  const lowest = cards.reduce((a,b)=> a.y > b.y ? a : b);
+  targetKanaEl.textContent = lowest.kana;
+}
+
+function handleKey(key){
+  if(!running && key !== 'ENTER') return;
+  if(key === 'CLEAR') typed = '';
+  else if(key === 'ENTER') checkAnswer();
+  else if(typed.length < 4) typed += key;
+  inputBox.textContent = typed || '-';
+  autoCheck();
+}
+
+function autoCheck(){
+  const possible = cards.some(c => c.romaji.startsWith(typed));
+  if(typed && !possible){
+    flash(false);
+    typed = '';
+    inputBox.textContent = '-';
+    energy = Math.max(0, energy - 2);
+    updateUI();
+  }
+  const exact = cards.find(c => c.romaji === typed);
+  if(exact) hitCard(exact);
+}
+
+function checkAnswer(){
+  const exact = cards.find(c => c.romaji === typed);
+  if(exact) hitCard(exact);
+  else if(typed){ flash(false); energy = Math.max(0, energy - 3); typed=''; inputBox.textContent='-'; updateUI(); }
+}
+
+function hitCard(card){
+  flash(true);
+  card.el.classList.add('hit');
+  setTimeout(()=>card.el.remove(), 120);
+  cards = cards.filter(c => c !== card);
+  score += 10 + level;
+  level = Math.floor(score / 100) + 1;
+  energy = Math.min(100, energy + 1.5);
+  typed = '';
+  inputBox.textContent = '-';
+  updateUI();
+  updateTarget();
+}
+
+function loop(now){
+  if(!running) return;
+  const dt = Math.min(0.05, (now - lastTime) / 1000);
+  lastTime = now;
+  const spawnInterval = Math.max(620, 1650 - level * 95);
+  if(now - lastSpawn > spawnInterval){ spawnCard(); lastSpawn = now; }
+  cards.forEach(card=>{
+    card.y += card.speed * dt;
+    card.el.style.left = card.x + '%';
+    card.el.style.top = card.y + '%';
+  });
+  const missed = cards.filter(c=>c.y > 91);
+  if(missed.length){
+    missed.forEach(c=>c.el.remove());
+    cards = cards.filter(c=>c.y <= 91);
+    energy = Math.max(0, energy - missed.length * 12);
+    flash(false);
+    updateUI();
+    updateTarget();
+  }
+  if(energy <= 0) endGame();
+  else animationId = requestAnimationFrame(loop);
+}
+
+function updateUI(){
+  scoreEl.textContent = score;
+  levelEl.textContent = level;
+  energyFill.style.width = energy + '%';
+  energyText.textContent = Math.round(energy) + '%';
+}
+
+function flash(good){
+  const cls = good ? 'flashGood' : 'flashBad';
+  gameArea.classList.remove('flashGood','flashBad');
+  void gameArea.offsetWidth;
+  gameArea.classList.add(cls);
+}
+
+function endGame(){
+  running = false;
+  cancelAnimationFrame(animationId);
+  finalScore.textContent = score;
+  gameOver.classList.remove('hidden');
+}
+
+document.addEventListener('keydown', e=>{
+  const k = e.key.toLowerCase();
+  if(/^[a-z]$/.test(k)) handleKey(k);
+  if(e.key === 'Enter') handleKey('ENTER');
+  if(e.key === 'Backspace' || e.key === 'Escape') handleKey('CLEAR');
+});
+
+document.getElementById('startBtn').addEventListener('click', resetGame);
+document.getElementById('restartBtn').addEventListener('click', resetGame);
+buildKeyboard();
+updateUI();
+</script>
+</body>
+</html>
