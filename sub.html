@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>도쿄 노선 퀴즈</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{font-family:-apple-system,"Helvetica Neue","Hiragino Sans","Yu Gothic",sans-serif;background:#07091f;color:#eef0ff;height:100dvh;overflow:hidden;display:flex;flex-direction:column}
+.pg{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:20px}
+.pg.off{display:none}
+#pg-title{background:radial-gradient(ellipse at 35% 25%,#1b2b7a,#07091f 65%)}
+.badge{font-size:11px;letter-spacing:.14em;color:#f5c440;border:1px solid #f5c440;border-radius:99px;padding:3px 13px}
+.t-main{font-size:30px;font-weight:900}
+.t-sub{font-size:13px;color:rgba(238,240,255,.5)}
+.tmap{width:100%;max-width:290px}
+.sbtn{background:#f5c440;color:#07091f;font-size:15px;font-weight:700;border:none;border-radius:13px;padding:14px 44px;cursor:pointer}
+.tnote{font-size:11px;color:rgba(238,240,255,.45)}
+#pg-game{padding:0;justify-content:flex-start;align-items:stretch;background:#07091f}
+.gh{background:#0e1235;border-bottom:1px solid rgba(255,255,255,.1);padding:9px 13px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.gh-t{font-size:14px;font-weight:700;color:#f5c440}
+.gh-s{font-size:13px;color:rgba(238,240,255,.5)}
+.gh-s b{color:#ffe066}
+.pbar{height:3px;background:rgba(255,255,255,.1);flex-shrink:0}
+.pbf{height:100%;background:#f5c440;transition:width .4s;width:0%}
+.mapa{flex:1;min-height:0;position:relative}
+.mapa svg{width:100%;height:100%;display:block}
+.bot{background:#101535;border-top:1px solid rgba(255,255,255,.1);padding:10px 12px;flex-shrink:0;display:flex;flex-direction:column;gap:7px}
+.steps{display:flex;gap:4px;justify-content:center}
+.stp{font-size:10px;padding:3px 8px;border-radius:99px;border:1px solid rgba(255,255,255,.1);color:rgba(238,240,255,.5)}
+.stp.on{background:#f5c440;color:#07091f;border-color:#f5c440;font-weight:700}
+.stp.dn{background:#00b87a;color:#fff;border-color:#00b87a}
+.trgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:5px}
+.trbtn{background:#16204a;border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:6px 3px;cursor:pointer;text-align:center;color:#eef0ff}
+.trbtn.on{background:rgba(59,130,246,.25);border-color:#3b82f6}
+.ti{font-size:17px;display:block;margin-bottom:1px}
+.tj{font-size:9px;color:rgba(238,240,255,.5);display:block}
+.tk{font-size:10px;font-weight:700;display:block}
+.sent{background:#16204a;border-radius:10px;padding:9px 11px;min-height:50px;display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:4px;border:1px solid rgba(255,255,255,.1)}
+.sw{font-size:14px;font-weight:700;padding:1px 2px;color:#eef0ff}
+.bl{display:inline-flex;align-items:center;justify-content:center;min-width:38px;height:30px;padding:0 7px;border-radius:7px;border:2px dashed #f5c440;background:rgba(245,196,64,.07);font-size:14px;font-weight:700;color:#eef0ff}
+.bl.fi{border-style:solid;border-color:#3b82f6;background:rgba(59,130,246,.18)}
+.bl.ok{border-color:#00b87a;background:rgba(0,184,122,.2)}
+.bl.ng{border-color:#e8374a;background:rgba(232,55,74,.18);animation:shk .3s}
+.sh{font-size:11px;color:rgba(238,240,255,.4)}
+.fb{text-align:center;font-size:12px;font-weight:700;min-height:16px}
+.fb.ok{color:#00b87a}
+.fb.ng{color:#e8374a}
+.chs{display:flex;gap:7px;justify-content:center;flex-wrap:wrap}
+.ch{font-size:16px;font-weight:700;background:#16204a;border:1.5px solid rgba(255,255,255,.14);color:#eef0ff;border-radius:9px;padding:8px 18px;cursor:pointer;min-width:54px;text-align:center}
+.ch.ud{opacity:.22;pointer-events:none}
+#pg-result{background:radial-gradient(ellipse at 60% 70%,#1b2b7a,#07091f 65%);overflow-y:auto}
+.re{font-size:52px}
+.rb{font-size:40px;font-weight:900;color:#f5c440}
+.rm{font-size:13px;color:rgba(238,240,255,.5);text-align:center}
+.rl{width:100%;max-width:350px}
+.rrow{display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:#0e1235;border-radius:9px;margin-bottom:5px;font-size:12px;color:#eef0ff}
+.rs{flex:1;text-align:left;word-break:break-all}
+.rd{width:8px;height:8px;border-radius:50%;margin-left:8px;flex-shrink:0}
+.rrow.ok .rd{background:#00b87a}
+.rrow.ng .rd{background:#e8374a}
+.rrow.ng .rs{opacity:.4}
+.hid{display:none!important}
+@keyframes shk{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+@keyframes pls{0%,100%{opacity:1}50%{opacity:.2}}
+.pls{animation:pls 1.4s ease infinite}
+</style>
+</head>
+<body>
+
+<div id="pg-title" class="pg">
+  <div class="badge">JAPANESE 8 · 이동표현</div>
+  <div class="t-main">東京ノ線クイズ</div>
+  <div class="t-sub">도쿄 노선 퀴즈</div>
+  <svg class="tmap" viewBox="0 0 290 135">
+    <ellipse cx="145" cy="67" rx="105" ry="50" fill="none" stroke="#9acd32" stroke-width="4" opacity=".45"/>
+    <line x1="38" y1="67" x2="252" y2="67" stroke="#f97316" stroke-width="4" opacity=".5"/>
+    <circle cx="80"  cy="67" r="6" fill="#9acd32"/>
+    <circle cx="145" cy="22" r="6" fill="#9acd32"/>
+    <circle cx="210" cy="67" r="6" fill="#f97316"/>
+    <circle cx="145" cy="112" r="6" fill="#9acd32"/>
+    <circle cx="48"  cy="44" r="6" fill="#9acd32"/>
+    <circle cx="242" cy="44" r="6" fill="#9acd32"/>
+    <text x="80"  y="80"  text-anchor="middle" fill="rgba(238,240,255,.45)" font-size="8">しぶや</text>
+    <text x="145" y="13"  text-anchor="middle" fill="rgba(238,240,255,.45)" font-size="8">しんじゅく</text>
+    <text x="210" y="80"  text-anchor="middle" fill="rgba(238,240,255,.45)" font-size="8">あきはばら</text>
+    <text x="145" y="127" text-anchor="middle" fill="rgba(238,240,255,.45)" font-size="8">うえの</text>
+    <text x="48"  y="33"  text-anchor="middle" fill="rgba(238,240,255,.45)" font-size="8">はらじゅく</text>
+    <text x="242" y="33"  text-anchor="middle" fill="rgba(238,240,255,.45)" font-size="8">あさくさ</text>
+  </svg>
+  <button class="sbtn" id="startbtn">시작하기 →</button>
+  <div class="tnote">역 탭 → 출발지·도착지 → 교통수단 → 조사 빈칸 채우기</div>
+</div>
+
+<div id="pg-game" class="pg off">
+  <div class="gh">
+    <div class="gh-t">🚃 도쿄 노선 퀴즈</div>
+    <div class="gh-s">정답 <b id="sc">0</b> / 8</div>
+  </div>
+  <div class="pbar"><div class="pbf" id="pbf"></div></div>
+  <div class="mapa">
+    <svg id="mapsvg" viewBox="0 0 340 255" preserveAspectRatio="xMidYMid meet">
+      <polyline points="170,26 258,53 283,115 258,185 170,212 82,185 57,115 82,53 170,26" fill="none" stroke="#9acd32" stroke-width="5" stroke-linejoin="round" opacity=".65"/>
+      <line x1="28" y1="118" x2="312" y2="118" stroke="#f97316" stroke-width="5" opacity=".55"/>
+      <line x1="57" y1="53"  x2="283" y2="185" stroke="#aaa" stroke-width="4" opacity=".4"/>
+      <line x1="28" y1="178" x2="312" y2="178" stroke="#00aadd" stroke-width="4" opacity=".45"/>
+      <rect x="6" y="6" width="90" height="68" rx="5" fill="rgba(7,9,31,.92)"/>
+      <line x1="12" y1="19" x2="22" y2="19" stroke="#9acd32" stroke-width="3"/><text x="25" y="23" font-size="8" fill="rgba(238,240,255,.6)">야마노테선</text>
+      <line x1="12" y1="33" x2="22" y2="33" stroke="#f97316" stroke-width="3"/><text x="25" y="37" font-size="8" fill="rgba(238,240,255,.6)">긴자선</text>
+      <line x1="12" y1="47" x2="22" y2="47" stroke="#aaa"    stroke-width="3"/><text x="25" y="51" font-size="8" fill="rgba(238,240,255,.6)">히비야선</text>
+      <line x1="12" y1="61" x2="22" y2="61" stroke="#00aadd" stroke-width="3"/><text x="25" y="65" font-size="8" fill="rgba(238,240,255,.6)">도자이선</text>
+      <text id="mhint" x="170" y="244" text-anchor="middle" font-size="11" fill="rgba(245,196,64,.85)" class="pls">출발역을 탭하세요</text>
+    </svg>
+  </div>
+  <div class="bot">
+    <div class="steps">
+      <div class="stp on" id="s1">① 출발역</div>
+      <div class="stp"    id="s2">② 도착역</div>
+      <div class="stp"    id="s3">③ 교통수단</div>
+      <div class="stp"    id="s4">④ 빈칸 채우기</div>
+    </div>
+    <div class="trgrid hid" id="trg">
+      <button class="trbtn" data-v="でんしゃ"><span class="ti">🚃</span><span class="tj">でんしゃ</span><span class="tk">전철</span></button>
+      <button class="trbtn" data-v="バス"    ><span class="ti">🚌</span><span class="tj">バス</span><span class="tk">버스</span></button>
+      <button class="trbtn" data-v="ちかてつ"><span class="ti">🚇</span><span class="tj">ちかてつ</span><span class="tk">지하철</span></button>
+      <button class="trbtn" data-v="タクシー"><span class="ti">🚕</span><span class="tj">タクシー</span><span class="tk">택시</span></button>
+    </div>
+    <div class="sent" id="sarea"><span class="sh">역을 선택하면 문장이 나타납니다</span></div>
+    <div class="fb"   id="fba"></div>
+    <div class="chs hid" id="cha"></div>
+  </div>
+</div>
+
+<div id="pg-result" class="pg off">
+  <div class="re"  id="remi">🎉</div>
+  <div class="rb"  id="rsc">0/8</div>
+  <div class="rm"  id="rmsg"></div>
+  <div class="rl"  id="rlist"></div>
+  <button class="sbtn" id="retrybtn">다시 도전 →</button>
+</div>
+
+<script>
+var STAS=[
+  {id:'shinjuku',jp:'しんじゅく',kr:'신쥬쿠',  x:170,y:26},
+  {id:'shibuya', jp:'しぶや',   kr:'시부야',   x:82, y:53},
+  {id:'harajuku',jp:'はらじゅく',kr:'하라쥬쿠', x:57, y:115},
+  {id:'ginza',   jp:'ぎんざ',   kr:'긴자',     x:82, y:185},
+  {id:'ueno',    jp:'うえの',   kr:'우에노',   x:170,y:212},
+  {id:'akiba',   jp:'あきはばら',kr:'아키하바라',x:283,y:115},
+  {id:'asakusa', jp:'あさくさ', kr:'아사쿠사',  x:258,y:53},
+  {id:'odaiba',  jp:'おだいば', kr:'오다이바',  x:258,y:185}
+];
+var PATS=[
+  function(f,t,r){return{parts:[f.jp,{g:'から'},t.jp,'へ',r+'で','いきます。'],opts:['から','まで','と','に'],ans:'から',full:f.jp+'から'+t.jp+'へ'+r+'でいきます。'}},
+  function(f,t,r){return{parts:[f.jp,'から',t.jp,{g:'へ'},r+'で','いきます。'],opts:['へ','から','で','は'],ans:'へ',full:f.jp+'から'+t.jp+'へ'+r+'でいきます。'}},
+  function(f,t,r){return{parts:[f.jp,'から',t.jp,'へ',r,{g:'で'},'いきます。'],opts:['で','に','を','が'],ans:'で',full:f.jp+'から'+t.jp+'へ'+r+'でいきます。'}},
+  function(f,t,r){return{parts:[f.jp,'から',t.jp,{g:'まで'},r+'で','いきます。'],opts:['まで','から','へ','に'],ans:'まで',full:f.jp+'から'+t.jp+'まで'+r+'でいきます。'}}
+];
+var SN='http://www.w3.org/2000/svg';
+function pick(a){return a[Math.floor(Math.random()*a.length)];}
+function shuf(a){var b=a.slice();for(var i=b.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=b[i];b[i]=b[j];b[j]=t;}return b;}
+function eid(id){return document.getElementById(id);}
+function show(id){['pg-title','pg-game','pg-result'].forEach(function(p){eid(p).classList.toggle('off',p!==id);});}
+function stp(n){for(var i=1;i<=4;i++){var e=eid('s'+i);e.className='stp'+(i===n?' on':i<n?' dn':'');}}
+function hint(t){eid('mhint').textContent=t;}
+function sfb(t,c){var f=eid('fba');f.textContent=t;f.className='fb'+(c?' '+c:'');}
+var G={from:null,to:null,tr:null,phase:'from',q:null,score:0,left:8,hist:[]};
+function startGame(){
+  G={from:null,to:null,tr:null,phase:'from',q:null,score:0,left:8,hist:[]};
+  buildMap();resetPanel();stp(1);hint('출발역을 탭하세요');updH();show('pg-game');
+}
+function updH(){eid('sc').textContent=G.score;eid('pbf').style.width=((8-G.left)/8*100)+'%';}
+function buildMap(){
+  var svg=eid('mapsvg');
+  var old=svg.querySelectorAll('.sta');
+  for(var i=0;i<old.length;i++)old[i].parentNode.removeChild(old[i]);
+  STAS.forEach(function(s){
+    var g=document.createElementNS(SN,'g');g.setAttribute('class','sta');g.setAttribute('data-id',s.id);
+    var hit=document.createElementNS(SN,'circle');hit.setAttribute('cx',s.x);hit.setAttribute('cy',s.y);hit.setAttribute('r','22');hit.setAttribute('fill','transparent');g.appendChild(hit);
+    var c=document.createElementNS(SN,'circle');c.setAttribute('cx',s.x);c.setAttribute('cy',s.y);c.setAttribute('r','9');c.setAttribute('fill','#fff');c.setAttribute('stroke','rgba(0,0,0,.2)');c.setAttribute('stroke-width','1.5');g.appendChild(c);
+    var lw=s.jp.length*10+10,ly=s.y>140?s.y+12:s.y-30;
+    var bg=document.createElementNS(SN,'rect');bg.setAttribute('x',s.x-lw/2);bg.setAttribute('y',ly);bg.setAttribute('width',lw);bg.setAttribute('height',26);bg.setAttribute('rx','4');bg.setAttribute('fill','rgba(7,9,31,.92)');g.appendChild(bg);
+    var tj=document.createElementNS(SN,'text');tj.setAttribute('x',s.x);tj.setAttribute('y',ly+9);tj.setAttribute('text-anchor','middle');tj.setAttribute('dominant-baseline','middle');tj.setAttribute('font-size','10');tj.setAttribute('font-weight','700');tj.setAttribute('fill','#eef0ff');tj.textContent=s.jp;g.appendChild(tj);
+    var tk=document.createElementNS(SN,'text');tk.setAttribute('x',s.x);tk.setAttribute('y',ly+20);tk.setAttribute('text-anchor','middle');tk.setAttribute('dominant-baseline','middle');tk.setAttribute('font-size','8');tk.setAttribute('fill','rgba(238,240,255,.5)');tk.textContent=s.kr;g.appendChild(tk);
+    g.addEventListener('click',(function(sta){return function(){tapSta(sta);};})(s));
+    svg.appendChild(g);
+  });
+  refreshC();
+}
+function refreshC(){
+  docum
