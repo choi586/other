@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>랜덤 일본어 문장 만들기</title>
+  <style>
+    :root{
+      --bg:#f7f2ff;
+      --card:#ffffff;
+      --main:#7c5cff;
+      --main2:#ff8fb3;
+      --ink:#222235;
+      --muted:#6d6a7c;
+      --line:#e3dcf7;
+      --good:#16a34a;
+      --bad:#ef4444;
+      --chip:#fff7d6;
+      --chip-border:#f2d96b;
+      --slot:#eef7ff;
+      --slot-border:#8cc9ff;
+    }
+    *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+    body{
+      margin:0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Noto Sans KR", "Apple SD Gothic Neo", sans-serif;
+      background:linear-gradient(180deg,#f6f0ff 0%,#fff7fb 100%);
+      color:var(--ink);
+      min-height:100vh;
+    }
+    .app{
+      width:100%;
+      max-width:520px;
+      margin:0 auto;
+      padding:16px 14px 28px;
+    }
+    header{
+      position:sticky;
+      top:0;
+      z-index:20;
+      margin:-16px -14px 12px;
+      padding:14px 14px 10px;
+      background:rgba(247,242,255,.94);
+      backdrop-filter:blur(12px);
+      border-bottom:1px solid rgba(124,92,255,.12);
+    }
+    .topline{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+    }
+    h1{
+      margin:0;
+      font-size:21px;
+      line-height:1.2;
+      letter-spacing:-.04em;
+    }
+    .score{
+      display:flex;
+      align-items:center;
+      gap:6px;
+      font-weight:800;
+      color:var(--main);
+      background:#fff;
+      border:1px solid var(--line);
+      border-radius:999px;
+      padding:8px 10px;
+      box-shadow:0 4px 14px rgba(68,43,141,.08);
+      white-space:nowrap;
+    }
+    .sub{
+      margin:7px 0 0;
+      font-size:13px;
+      color:var(--muted);
+      line-height:1.35;
+    }
+    .card{
+      background:var(--card);
+      border:1px solid var(--line);
+      border-radius:22px;
+      box-shadow:0 10px 28px rgba(72,44,137,.10);
+      padding:14px;
+      margin-bottom:12px;
+    }
+    .row{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+      align-items:center;
+      justify-content:space-between;
+    }
+    .mode-group{
+      display:grid;
+      grid-template-columns:1fr 1fr 1fr;
+      gap:7px;
+      width:100%;
+    }
+    button{
+      border:0;
+      border-radius:15px;
+      padding:12px 12px;
+      font-size:15px;
+      font-weight:800;
+      cursor:pointer;
+      touch-action:manipulation;
+    }
+    .mode{
+      background:#f2edff;
+      color:#5b43c8;
+      border:1px solid #ded2ff;
+    }
+    .mode.active{
+      background:var(--main);
+      color:white;
+      border-color:var(--main);
+    }
+    .primary{
+      width:100%;
+      background:linear-gradient(135deg,var(--main),#9d7cff);
+      color:white;
+      box-shadow:0 8px 18px rgba(124,92,255,.28);
+    }
+    .ghost{
+      background:#fff;
+      border:1px solid var(--line);
+      color:#443c66;
+    }
+    .danger{
+      background:#fff1f1;
+      border:1px solid #ffd0d0;
+      color:#b91c1c;
+    }
+    .label{
+      font-size:13px;
+      font-weight:900;
+      color:#4b426c;
+      margin-bottom:8px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+    }
+    .korean{
+      font-size:20px;
+      line-height:1.45;
+      font-weight:900;
+      letter-spacing:-.04em;
+      background:#f8f6ff;
+      border:1px dashed #c9bfff;
+      border-radius:18px;
+      padding:13px;
+      word-break:keep-all;
+    }
+    .hint{
+      margin-top:8px;
+      color:var(--muted);
+      font-size:13px;
+      line-height:1.35;
+    }
+    .answer-zone{
+      min-height:146px;
+      background:#f7fbff;
+      border:2px dashed var(--slot-border);
+      border-radius:20px;
+      padding:10px;
+      display:flex;
+      align-content:flex-start;
+      align-items:flex-start;
+      gap:8px;
+      flex-wrap:wrap;
+      transition:.15s;
+    }
+    .answer-zone.over{
+      background:#e9f6ff;
+      transform:scale(1.01);
+    }
+    .word-bank{
+      min-height:160px;
+      background:#fffdf5;
+      border:1px solid #f4e9b5;
+      border-radius:20px;
+      padding:10px;
+      display:flex;
+      align-content:flex-start;
+      align-items:flex-start;
+      gap:8px;
+      flex-wrap:wrap;
+    }
+    .chip{
+      user-select:none;
+      touch-action:none;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      min-height:44px;
+      padding:10px 13px;
+      border-radius:14px;
+      background:var(--chip);
+      border:1px solid var(--chip-border);
+      font-size:18px;
+      font-weight:900;
+      box-shadow:0 4px 0 rgba(185,147,35,.22);
+      cursor:grab;
+      position:relative;
+      z-index:1;
+    }
+    .chip.small{
+      font-size:16px;
+      padding:9px 11px;
+      min-height:40px;
+    }
+    .chip.dragging{
+      opacity:.92;
+      transform:scale(1.05);
+      z-index:999;
+      box-shadow:0 14px 28px rgba(0,0,0,.18);
+      cursor:grabbing;
+      position:fixed;
+      pointer-events:none;
+    }
+    .chip.correct{
+      background:#dcfce7;
+      border-color:#86efac;
+      box-shadow:0 4px 0 rgba(22,163,74,.18);
+    }
+    .chip.wrong{
+      background:#fee2e2;
+      border-color:#fecaca;
+      box-shadow:0 4px 0 rgba(239,68,68,.18);
+    }
+    .feedback{
+      min-height:32px;
+      margin-top:10px;
+      font-size:15px;
+      font-weight:800;
+      line-height:1.4;
+    }
+    .feedback.good{color:var(--good)}
+    .feedback.bad{color:var(--bad)}
+    .sentence-preview{
+      margin-top:10px;
+      font-size:18px;
+      line-height:1.5;
+      font-weight:900;
+      color:#3d345e;
+      background:#faf7ff;
+      border-radius:14px;
+      padding:10px;
+      word-break:keep-all;
+    }
+    .bottom-actions{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:8px;
+      margin-top:10px;
+    }
+    .history{
+      display:flex;
+      flex-direction:column;
+      gap:7px;
+      max-height:180px;
+      overflow:auto;
+      padding-right:2px;
+    }
+    .history-item{
+      padding:9px 10px;
+      border:1px solid #eee6ff;
+      border-radius:13px;
+      background:#fcfbff;
+      font-size:14px;
+      line-height:1.35;
+    }
+    .history-item b{color:var(--main)}
+    .tiny{
+      font-size:12px;
+      color:var(--muted);
+      font-weight:700;
+    }
+    .overlay{
+      position:fixed;
+      inset:0;
+      pointer-events:none;
+      z-index:1000;
+    }
+    @media (max-width:360px){
+      h1{font-size:19px}
+      .korean{font-size:18px}
+      .chip{font-size:16px}
+      button{font-size:14px;padding:11px 9px}
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div class="topline">
+        <h1>랜덤 일본어 문장 만들기</h1>
+        <div class="score">⭐ <span id="score">0</span></div>
+      </div>
+      <p class="sub">조건을 보고 아래 블록을 끌어와 일본어 문장을 완성하세요.</p>
+    </header>
+
+    <section class="card">
+      <div class="label">문장 유형 선택 <span class="tiny">프린트 범위</span></div>
+      <div class="mode-group">
+        <button class="mode active" data-mode="basic">기본</button>
+        <button class="mode" data-mode="route">출발지</button>
+        <button class="mode" data-mode="time">시간·동반자</button>
+      </div>
+      <div style="height:10px"></div>
+      <button class="primary" id="newBtn">🎲 랜덤 문장 뽑기</button>
+    </section>
+
+    <section class="card">
+      <div class="label">한국어 조건</div>
+      <div class="korean" id="koreanPrompt">랜덤 문장을 뽑아주세요.</div>
+      <div class="hint" id="patternHint">힌트가 여기에 나옵니다.</div>
+    </section>
+
+    <section class="card">
+      <div class="label">내가 만든 문장 <span class="tiny">탭하면 다시 단어창으로 이동</span></div>
+      <div id="answerZone" class="answer-zone" aria-label="answer zone"></div>
+      <div class="sentence-preview" id="preview">문장 미리보기: </div>
+      <div class="feedback" id="feedback"></div>
+      <div class="bottom-actions">
+        <button class="ghost" id="checkBtn">✅ 확인</button>
+        <button class="danger" id="resetBtn">↩️ 다시 놓기</button>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="label">단어 블록</div>
+      <div id="wordBank" class="word-bank"></div>
+    </section>
+
+    <section class="card">
+      <div class="label">성공 기록 <span class="tiny" id="countText">0문장</span></div>
+      <div class="history" id="history"></div>
+    </section>
+  </div>
+  <div class="overlay" id="overlay"></div>
+
+<script>
+const places = [
+  ["학교","がっこう"],["공항","くうこう"],["일본","にほん"],["도쿄","とうきょう"],
+  ["신쥬쿠","しんじゅく"],["시부야","しぶや"],["아키하바라","あきはばら"],["우에노","うえの"],
+  ["오다이바","おだいば"],["긴자","ぎんざ"],["아사쿠사","あさくさ"],["하라쥬쿠","はらじゅく"],
+  ["도쿄타워","とうきょうタワー"]
+];
+const transports = [["전철","でんしゃ"],["버스","バス"],["지하철","ちかてつ"],["택시","タクシー"]];
+const companions = [["친구","ともだち"],["가족","かぞく"]];
+const times = [["7시","7じ"],["8시","8じ"],["8시 반","8じはん"],["10시","10じ"],["12시","12じ"],["2시","2じ"],["4시","4じ"]];
+
+let mode = "basic";
+let current = null;
+let score = 0;
+let successCount = 0;
+
+const $ = sel => document.querySelector(sel);
+const rand = arr => arr[Math.floor(Math.random()*arr.length)];
+const shuffle = arr => arr.map(v=>[Math.random(),v]).sort((a,b)=>a[0]-b[0]).map(x=>x[1]);
+
+function differentPlace(a){
+  let b = rand(places);
+  while(b[1] === a[1]) b = rand(places);
+  return b;
+}
+
+function generate(){
+  let p1 = rand(places), p2 = differentPlace(p1), t = rand(transports), c = rand(companions), tm = rand(times);
+  let type = mode;
+  if(mode === "basic"){
+    const sub = Math.random();
+    if(sub < .45) type = "placeOnly";
+    else type = "transportPlace";
+  }
+  if(mode === "route"){
+    type = Math.random() < .5 ? "fromToHe" : "fromToMade";
+  }
+  if(mode === "time"){
+    type = Math.random() < .5 ? "timeRoute" : "companionRoute";
+  }
+
+  const data = makeQuestion(type, {p1,p2,t,c,tm});
+  current = data;
+  $("#koreanPrompt").textContent = data.ko;
+  $("#patternHint").textContent = "문형 힌트: " + data.hint;
+  $("#feedback").textContent = "";
+  $("#feedback").className = "feedback";
+  renderWords(data.words);
+  renderAnswer([]);
+}
+
+function makeQuestion(type, x){
+  const end = "いきます。";
+  if(type === "placeOnly"){
+    return {
+      ko:`${x.p2[0]}에 갑니다.`,
+      hint:"장소 + へ + いきます",
+      answer:[x.p2[1],"へ",end],
+      words:[x.p2[1],"へ",end, rand(transports)[1], "で", rand(places)[1]]
+    };
+  }
+  if(type === "transportPlace"){
+    return {
+      ko:`${x.p2[0]}에 ${x.t[0]}로 갑니다.`,
+      hint:"장소 + へ + 교통수단 + で + いきます",
+      answer:[x.p2[1],"へ",x.t[1],"で",end],
+      words:[x.p2[1],"へ",x.t[1],"で",end, differentPlace(x.p2)[1], rand(transports)[1]]
+    };
+  }
+  if(type === "fromToHe"){
+    return {
+      ko:`${x.p1[0]}에서 ${x.p2[0]}에 ${x.t[0]}로 갑니다.`,
+      hint:"A から B へ 교통수단 で いきます",
+      answer:[x.p1[1],"から",x.p2[1],"へ",x.t[1],"で",end],
+      words:[x.p1[1],"から",x.p2[1],"へ",x.t[1],"で",end, differentPlace(x.p2)[1]]
+    };
+  }
+  if(type === "fromToMade"){
+    return {
+      ko:`${x.p1[0]}에서 ${x.p2[0]}까지 ${x.t[0]}로 갑니다.`,
+      hint:"A から B まで 교통수단 で いきます",
+      answer:[x.p1[1],"から",x.p2[1],"まで",x.t[1],"で",end],
+      words:[x.p1[1],"から",x.p2[1],"まで",x.t[1],"で",end, "へ"]
+    };
+  }
+  if(type === "timeRoute"){
+    return {
+      ko:`${x.tm[0]}에 ${x.t[0]}로 ${x.p2[0]}에 갑니다.`,
+      hint:"시간 + に 교통수단 + で 장소 + へ いきます",
+      answer:[x.tm[1],"に",x.t[1],"で",x.p2[1],"へ",end],
+      words:[x.tm[1],"に",x.t[1],"で",x.p2[1],"へ",end, rand(times)[1]]
+    };
+  }
+  return {
+    ko:`${x.c[0]}와 ${x.t[0]}로 ${x.p2[0]}에 갑니다.`,
+    hint:"동반자 + と 교통수단 + で 장소 + へ いきます",
+    answer:[x.c[1],"と",x.t[1],"で",x.p2[1],"へ",end],
+    words:[x.c[1],"と",x.t[1],"で",x.p2[1],"へ",end, rand(companions)[1]]
+  };
+}
+
+function chip(word){
+  const el = document.createElement("button");
+  el.className = "chip";
+  el.textContent = word;
+  el.dataset.word = word;
+  el.type = "button";
+  el.addEventListener("pointerdown", startDrag);
+  el.addEventListener("click", () => {
+    if(el.classList.contains("dragging")) return;
+    const parent = el.parentElement;
+    if(parent.id === "wordBank") $("#answerZone").appendChild(el);
+    else $("#wordBank").appendChild(el);
+    updatePreview();
+  });
+  return el;
+}
+
+function renderWords(words){
+  const bank = $("#wordBank");
+  bank.innerHTML = "";
+  shuffle(words).forEach(w => bank.appendChild(chip(w)));
+}
+
+function renderAnswer(words){
+  const zone = $("#answerZone");
+  zone.innerHTML = "";
+  words.forEach(w => zone.appendChild(chip(w)));
+  updatePreview();
+}
+
+function answerWords(){
+  return [...$("#answerZone").querySelectorAll(".chip")].map(el => el.dataset.word);
+}
+function updatePreview(){
+  $("#preview").textContent = "문장 미리보기: " + answerWords().join("");
+}
+
+function resetAnswer(){
+  [...$("#answerZone").querySelectorAll(".chip")].forEach(el => {
+    el.classList.remove("correct","wrong");
+    $("#wordBank").appendChild(el);
+  });
+  $("#feedback").textContent = "";
+  $("#feedback").className = "feedback";
+  updatePreview();
+}
+
+function check(){
+  if(!current) return;
+  const ans = answerWords();
+  const ok = ans.length === current.answer.length && ans.every((w,i)=>w === current.answer[i]);
+  [...$("#answerZone").querySelectorAll(".chip")].forEach((el,i)=>{
+    el.classList.remove("correct","wrong");
+    el.classList.add(current.answer[i] === el.dataset.word ? "correct" : "wrong");
+  });
+  if(ok){
+    score += 10;
+    successCount++;
+    $("#score").textContent = score;
+    $("#countText").textContent = `${successCount}문장`;
+    $("#feedback").textContent = "정답! 다음 랜덤 문장으로 넘어가도 됩니다.";
+    $("#feedback").className = "feedback good";
+    addHistory(current.ko, current.answer.join(""));
+  }else{
+    $("#feedback").textContent = "아직 순서가 달라요. 조사 へ/で/から/まで/に/と 위치를 확인하세요.";
+    $("#feedback").className = "feedback bad";
+  }
+}
+
+function addHistory(ko, jp){
+  const item = document.createElement("div");
+  item.className = "history-item";
+  item.innerHTML = `<b>${successCount}.</b> ${ko}<br>${jp}`;
+  $("#history").prepend(item);
+}
+
+let drag = null;
+function startDrag(e){
+  const original = e.currentTarget;
+  original.setPointerCapture(e.pointerId);
+  const rect = original.getBoundingClientRect();
+  drag = {
+    el: original,
+    originParent: original.parentElement,
+    offsetX: e.clientX - rect.left,
+    offsetY: e.clientY - rect.top,
+    pointerId:e.pointerId
+  };
+  original.style.width = rect.width + "px";
+  original.classList.add("dragging");
+  document.body.appendChild(original);
+  moveAt(e.clientX, e.clientY);
+  window.addEventListener("pointermove", onMove);
+  window.addEventListener("pointerup", endDrag, {once:true});
+}
+function moveAt(x,y){
+  if(!drag) return;
+  drag.el.style.left = (x - drag.offsetX) + "px";
+  drag.el.style.top = (y - drag.offsetY) + "px";
+}
+function onMove(e){
+  if(!drag) return;
+  moveAt(e.clientX, e.clientY);
+  const target = dropTarget(e.clientX, e.clientY);
+  $("#answerZone").classList.toggle("over", target && target.id === "answerZone");
+  $("#wordBank").classList.toggle("over", target && target.id === "wordBank");
+}
+function dropTarget(x,y){
+  const els = document.elementsFromPoint(x,y);
+  return els.find(el => el.id === "answerZone" || el.id === "wordBank");
+}
+function endDrag(e){
+  if(!drag) return;
+  window.removeEventListener("pointermove", onMove);
+  $("#answerZone").classList.remove("over");
+  $("#wordBank").classList.remove("over");
+  const target = dropTarget(e.clientX,e.clientY) || drag.originParent;
+  drag.el.classList.remove("dragging");
+  drag.el.style.left = "";
+  drag.el.style.top = "";
+  drag.el.style.width = "";
+  target.appendChild(drag.el);
+  drag = null;
+  updatePreview();
+}
+
+document.querySelectorAll(".mode").forEach(btn=>{
+  btn.addEventListener("click",()=>{
+    document.querySelectorAll(".mode").forEach(b=>b.classList.remove("active"));
+    btn.classList.add("active");
+    mode = btn.dataset.mode;
+    generate();
+  });
+});
+$("#newBtn").addEventListener("click", generate);
+$("#resetBtn").addEventListener("click", resetAnswer);
+$("#checkBtn").addEventListener("click", check);
+
+generate();
+</script>
+</body>
+</html>
