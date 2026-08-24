@@ -64,9 +64,9 @@
     .topline {
       display: flex;
       align-items: center;
-      justify-content: space-between;
+      justify-content: flex-end;
       min-height: 20px;
-      margin-bottom: 38px;
+      margin-bottom: 28px;
       font-size: 14px;
       font-weight: 800;
       letter-spacing: .13em;
@@ -74,7 +74,7 @@
     }
 
     .topline__brand {
-      display: flex;
+      display: none;
       align-items: center;
       gap: 12px;
     }
@@ -107,7 +107,7 @@
 
     h1 {
       max-width: 1010px;
-      font-size: 76px;
+      font-size: 82px;
       line-height: 1.08;
       letter-spacing: -.052em;
       font-weight: 900;
@@ -115,14 +115,14 @@
 
     h2 {
       max-width: 1040px;
-      font-size: 52px;
+      font-size: 58px;
       line-height: 1.12;
       letter-spacing: -.042em;
       font-weight: 900;
     }
 
     h3 {
-      font-size: 28px;
+      font-size: 32px;
       line-height: 1.25;
       letter-spacing: -.025em;
       font-weight: 850;
@@ -130,7 +130,7 @@
 
     p,
     li {
-      font-size: 24px;
+      font-size: 28px;
       line-height: 1.48;
       letter-spacing: -.018em;
     }
@@ -138,6 +138,7 @@
     ul { margin: 0; padding: 0; list-style: none; }
 
     .section-label {
+      display: none;
       margin-bottom: 14px;
       color: var(--signal);
       font-size: 15px;
@@ -151,7 +152,7 @@
     .subhead {
       margin-top: 18px;
       color: rgba(48, 56, 65, .68);
-      font-size: 25px;
+      font-size: 30px;
       font-weight: 650;
       line-height: 1.45;
     }
@@ -186,7 +187,7 @@
     .soft-signal { background: rgba(255, 87, 34, .12); }
 
     .micro {
-      font-size: 16px;
+      font-size: 24px;
       line-height: 1.4;
       font-weight: 700;
       letter-spacing: -.01em;
@@ -289,7 +290,7 @@
       max-width: 850px;
       margin-top: 24px;
       color: rgba(245, 245, 245, .65);
-      font-size: 27px;
+      font-size: 32px;
       font-weight: 650;
       line-height: 1.45;
     }
@@ -300,7 +301,7 @@
       bottom: 58px;
       left: 72px;
       display: grid;
-      grid-template-columns: repeat(5, 1fr);
+      grid-template-columns: repeat(3, 1fr);
       gap: 0;
       border-top: 1px solid rgba(245, 245, 245, .25);
     }
@@ -309,7 +310,7 @@
       position: relative;
       padding-top: 16px;
       color: rgba(245, 245, 245, .58);
-      font-size: 17px;
+      font-size: 26px;
       font-weight: 750;
     }
 
@@ -352,14 +353,14 @@
     .discover-prompt strong {
       display: block;
       color: var(--aqua);
-      font-size: 66px;
+      font-size: 72px;
       line-height: .95;
       letter-spacing: -.05em;
     }
 
     .discover-prompt p {
       margin-top: 24px;
-      font-size: 25px;
+      font-size: 32px;
       font-weight: 700;
     }
 
@@ -380,7 +381,7 @@
 
     .source-row__no {
       color: var(--signal);
-      font-size: 54px;
+      font-size: 60px;
       font-weight: 900;
       line-height: 1;
       letter-spacing: -.05em;
@@ -411,6 +412,13 @@
       content: "";
     }
 
+    .source-keywords {
+      margin-top: 18px;
+      font-size: 28px;
+      font-weight: 800;
+      line-height: 1.45;
+    }
+
     /* 03 — plan first */
     .plan-first {
       display: grid;
@@ -437,7 +445,7 @@
 
     .bad-start blockquote {
       margin-top: 24px;
-      font-size: 34px;
+      font-size: 40px;
       font-weight: 850;
       line-height: 1.38;
       letter-spacing: -.035em;
@@ -445,7 +453,7 @@
 
     .bad-start p {
       margin-top: 22px;
-      font-size: 19px;
+      font-size: 26px;
       font-weight: 750;
     }
 
@@ -465,14 +473,14 @@
       grid-template-columns: 36px 1fr;
       gap: 14px;
       align-items: baseline;
-      font-size: 23px;
+      font-size: 30px;
       font-weight: 750;
       counter-increment: questions;
     }
 
     .good-start li::before {
       color: var(--signal);
-      font-size: 15px;
+      font-size: 18px;
       font-weight: 900;
       content: "0" counter(questions);
     }
@@ -506,7 +514,7 @@
     }
 
     .chat-claim__formula {
-      font-size: 31px;
+      font-size: 36px;
       font-weight: 850;
       line-height: 1.4;
     }
@@ -523,14 +531,14 @@
 
     .chat-agenda ul {
       display: grid;
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: 1fr;
       border-top: 2px solid var(--ink);
     }
 
     .chat-agenda li {
       padding: 17px 10px 17px 0;
       border-bottom: 1px solid rgba(48, 56, 65, .24);
-      font-size: 24px;
+      font-size: 32px;
       font-weight: 750;
     }
 
@@ -567,15 +575,15 @@
     }
 
     .question-step__key {
-      display: block;
+      display: none;
       margin-bottom: 12px;
-      font-size: 14px;
+      font-size: 18px;
       font-weight: 900;
       letter-spacing: .14em;
     }
 
     .question-step p {
-      font-size: 21px;
+      font-size: 28px;
       font-weight: 750;
       line-height: 1.4;
     }
@@ -610,9 +618,10 @@
 
     .mvp-label {
       writing-mode: vertical-rl;
-      transform: rotate(180deg);
+      text-orientation: upright;
+      transform: none;
       color: var(--signal);
-      font-size: 21px;
+      font-size: 28px;
       font-weight: 900;
       letter-spacing: .16em;
     }
@@ -627,7 +636,7 @@
     .feature-list li {
       position: relative;
       padding-left: 28px;
-      font-size: 27px;
+      font-size: 34px;
       font-weight: 780;
     }
 
@@ -643,7 +652,7 @@
 
     .mvp-later .feature-list li {
       color: rgba(48, 56, 65, .58);
-      font-size: 23px;
+      font-size: 30px;
     }
 
     .mvp-later .feature-list li::before {
@@ -661,7 +670,7 @@
       align-items: center;
       justify-content: center;
       gap: 22px;
-      font-size: 25px;
+      font-size: 30px;
       font-weight: 900;
     }
 
@@ -683,7 +692,7 @@
 
     .handoff-message .display {
       margin-top: 26px;
-      font-size: 42px;
+      font-size: 48px;
       font-weight: 900;
       line-height: 1.22;
       letter-spacing: -.04em;
@@ -722,7 +731,7 @@
 
     .document-col li {
       padding: 7px 0;
-      font-size: 20px;
+      font-size: 28px;
       font-weight: 700;
     }
 
@@ -745,22 +754,23 @@
     .flow-stage:nth-child(5) { border-top-color: var(--signal); }
 
     .flow-stage__no {
+      display: none;
       color: rgba(245, 245, 245, .34);
-      font-size: 17px;
+      font-size: 20px;
       font-weight: 850;
       letter-spacing: .14em;
     }
 
     .flow-stage h3 {
-      margin-top: 54px;
-      font-size: 42px;
+      margin-top: 24px;
+      font-size: 48px;
       color: var(--paper);
     }
 
     .flow-stage p {
       margin-top: 20px;
       color: rgba(245, 245, 245, .62);
-      font-size: 21px;
+      font-size: 30px;
       font-weight: 650;
     }
 
@@ -803,7 +813,7 @@
       align-items: center;
       padding-bottom: 16px;
       border-bottom: 1px solid rgba(48, 56, 65, .24);
-      font-size: 24px;
+      font-size: 30px;
       font-weight: 750;
       counter-increment: rule;
     }
@@ -825,13 +835,14 @@
     }
 
     .work-prompt__label {
-      font-size: 14px;
+      display: none;
+      font-size: 20px;
       font-weight: 900;
       letter-spacing: .14em;
     }
 
     .work-prompt blockquote {
-      font-size: 35px;
+      font-size: 42px;
       font-weight: 900;
       line-height: 1.38;
       letter-spacing: -.04em;
@@ -840,7 +851,7 @@
     .work-prompt__result {
       padding-top: 18px;
       border-top: 2px solid var(--ink);
-      font-size: 21px;
+      font-size: 28px;
       font-weight: 850;
     }
 
@@ -876,7 +887,7 @@
     .test-column li {
       position: relative;
       padding: 9px 0 9px 28px;
-      font-size: 23px;
+      font-size: 30px;
       font-weight: 700;
     }
 
@@ -929,13 +940,14 @@
     }
 
     .loop-step b {
-      font-size: 16px;
+      display: none;
+      font-size: 18px;
       letter-spacing: .08em;
     }
 
     .loop-step span {
       margin-top: 8px;
-      font-size: 19px;
+      font-size: 30px;
       font-weight: 750;
       line-height: 1.35;
     }
@@ -953,7 +965,7 @@
       left: 72px;
       padding-top: 18px;
       border-top: 2px solid var(--ink);
-      font-size: 27px;
+      font-size: 30px;
       font-weight: 900;
       text-align: center;
     }
@@ -984,7 +996,7 @@
     .tool-name {
       padding: 16px 24px;
       background: rgba(118, 171, 174, .2);
-      font-size: 28px;
+      font-size: 34px;
       font-weight: 900;
       letter-spacing: -.03em;
     }
@@ -999,7 +1011,7 @@
     .tool-role span {
       position: relative;
       padding: 0 26px;
-      font-size: 22px;
+      font-size: 31px;
       font-weight: 700;
     }
 
@@ -1020,7 +1032,7 @@
     /* 13 — full workflow */
     .workflow-map {
       display: grid;
-      grid-template-columns: repeat(7, 1fr);
+      grid-template-columns: repeat(5, 1fr);
       align-items: center;
       height: 100%;
       padding: 44px 0 76px;
@@ -1056,21 +1068,21 @@
       display: block;
       margin-bottom: 42px;
       color: var(--signal);
-      font-size: 36px;
+      font-size: 48px;
       font-weight: 950;
       line-height: 1;
     }
 
     .workflow-step b {
-      display: block;
+      display: none;
       margin-bottom: 14px;
-      font-size: 18px;
+      font-size: 24px;
       letter-spacing: .06em;
     }
 
     .workflow-step p {
       color: rgba(48, 56, 65, .65);
-      font-size: 17px;
+      font-size: 34px;
       font-weight: 700;
       line-height: 1.4;
     }
@@ -1096,14 +1108,14 @@
     .role-column h3 {
       margin-bottom: 26px;
       color: var(--paper);
-      font-size: 34px;
+      font-size: 40px;
     }
 
     .role-column h3 span {
-      display: inline-block;
+      display: none;
       margin-right: 14px;
       color: var(--aqua);
-      font-size: 15px;
+      font-size: 18px;
       letter-spacing: .14em;
       vertical-align: middle;
     }
@@ -1112,7 +1124,7 @@
 
     .role-column ul {
       display: grid;
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: 1fr;
       gap: 10px 20px;
     }
 
@@ -1120,7 +1132,7 @@
       position: relative;
       padding: 9px 0 9px 22px;
       color: rgba(245, 245, 245, .72);
-      font-size: 22px;
+      font-size: 30px;
       font-weight: 700;
     }
 
@@ -1144,7 +1156,7 @@
       padding-top: 24px;
       border-top: 1px solid rgba(245, 245, 245, .25);
       color: var(--paper);
-      font-size: 39px;
+      font-size: 44px;
       font-weight: 900;
       letter-spacing: -.035em;
       text-align: center;
@@ -1171,6 +1183,7 @@
     }
 
     .padlet-kicker {
+      display: none;
       margin-bottom: 22px;
       color: var(--signal);
       font-size: 18px;
@@ -1181,7 +1194,7 @@
 
     .padlet-body h2 {
       max-width: none;
-      font-size: 54px;
+      font-size: 64px;
     }
 
     .padlet-link {
@@ -1190,7 +1203,7 @@
       margin-top: 38px;
       padding: 16px 26px 20px;
       color: var(--ink);
-      font-size: 72px;
+      font-size: 92px;
       font-weight: 950;
       line-height: 1;
       letter-spacing: -.055em;
@@ -1221,7 +1234,7 @@
     .padlet-note {
       margin-top: 30px;
       color: rgba(48, 56, 65, .68);
-      font-size: 20px;
+      font-size: 28px;
       font-weight: 750;
     }
 
@@ -1247,11 +1260,11 @@
       </div>
       <div class="cover__body">
         <div class="section-label">The starting point</div>
-        <h1>무엇을 만들까가 아니라<br><span class="underline">무엇을 바꿀까</span>에서 시작한다</h1>
-        <p class="cover__statement">불편을 발견하고, 기획하고, 작게 만들고, 직접 써보며 개선하는 바이브코딩의 전체 흐름</p>
+        <h1>바이브코딩은<br><span class="underline">무엇을 바꿀까</span>에서 시작한다</h1>
+        <p class="cover__statement">문제를 찾고, 작게 만들고, 써보며 고친다.</p>
       </div>
-      <div class="cover__flow" aria-label="발견, 기획, 제작, 테스트, 개선">
-        <span>발견</span><span>기획</span><span>제작</span><span>테스트</span><span>개선</span>
+      <div class="cover__flow" aria-label="문제 찾기, 작게 만들기, 써보고 고치기">
+        <span>문제 찾기</span><span>작게 만들기</span><span>써보고 고치기</span>
       </div>
     </section>
 
@@ -1265,21 +1278,21 @@
       <div class="content discover-layout">
         <div class="discover-prompt">
           <strong>불편을<br>관찰하기</strong>
-          <p>반복되고, 오래 걸리고,<br>자꾸 잊게 되는 순간을 찾는다.</p>
+          <p>자주 불편한 순간을 찾는다.</p>
         </div>
         <div class="discover-sources">
           <div class="source-row">
             <div class="source-row__no">01</div>
             <div>
               <h3>불편 → 편리하게</h3>
-              <ul><li>자꾸 잊는 것</li><li>시간이 오래 걸리는 것</li><li>귀찮은 것</li><li>반복하는 것</li><li>선택하기 어려운 것</li></ul>
+              <p class="source-keywords">반복 · 시간 낭비 · 어려운 선택</p>
             </div>
           </div>
           <div class="source-row">
             <div class="source-row__no">02</div>
             <div>
               <h3>평범함 → 새롭게</h3>
-              <ul><li>기록 → 게임</li><li>공부 → 성장 시스템</li><li>선택 → 랜덤 미션</li><li>일상 → 데이터</li><li>경험 → 공유</li></ul>
+              <p class="source-keywords">기록 → 게임 · 공부 → 성장 · 경험 → 공유</p>
             </div>
           </div>
         </div>
@@ -1297,16 +1310,14 @@
         <div class="bad-start">
           <div class="micro">✕ 바로 제작</div>
           <blockquote>“약속 장소<br>추천 앱 만들어줘.”</blockquote>
-          <p>문제 · 사용자 · 판단 기준이 아직 없다.</p>
+          <p>사용자와 문제가 보이지 않는다.</p>
         </div>
         <div class="good-start">
           <div class="micro">✓ 먼저 기획</div>
           <ol>
             <li>누구를 위한 것인가?</li>
-            <li>어떤 상황에서 사용하는가?</li>
             <li>진짜 문제는 무엇인가?</li>
-            <li>어떤 변화가 필요한가?</li>
-            <li>다른 해결 방법은 무엇인가?</li>
+            <li>무엇이 달라져야 하는가?</li>
           </ol>
         </div>
       </div>
@@ -1326,7 +1337,7 @@
         </div>
         <div class="chat-agenda">
           <h3>AI와 함께 할 일</h3>
-          <ul><li>아이디어 제안</li><li>질문과 답변</li><li>문제 구체화</li><li>대안 탐색</li><li>장단점 비교</li><li>아이디어 수정</li></ul>
+          <ul><li>질문한다</li><li>비교한다</li><li>결정한다</li></ul>
         </div>
       </div>
     </section>
@@ -1339,11 +1350,11 @@
       <div class="section-label">Five questions</div>
       <h2>기획은 다섯 가지 질문에<br>답하는 일이다</h2>
       <div class="content five-questions">
-        <div class="question-step"><span class="question-step__no">1</span><span class="question-step__key">USER</span><p>누가<br>사용하는가?</p></div>
-        <div class="question-step"><span class="question-step__no">2</span><span class="question-step__key">PROBLEM</span><p>무엇이<br>문제인가?</p></div>
-        <div class="question-step"><span class="question-step__no">3</span><span class="question-step__key">CHANGE</span><p>무엇을 바꾸고<br>싶은가?</p></div>
-        <div class="question-step"><span class="question-step__no">4</span><span class="question-step__key">SOLUTION</span><p>어떻게<br>바꿀 것인가?</p></div>
-        <div class="question-step"><span class="question-step__no">5</span><span class="question-step__key">MVP</span><p>가장 먼저 필요한<br>기능은?</p></div>
+        <div class="question-step"><span class="question-step__no">1</span><span class="question-step__key">USER</span><p>누가?</p></div>
+        <div class="question-step"><span class="question-step__no">2</span><span class="question-step__key">PROBLEM</span><p>어떤 문제?</p></div>
+        <div class="question-step"><span class="question-step__no">3</span><span class="question-step__key">CHANGE</span><p>무엇을 바꿀까?</p></div>
+        <div class="question-step"><span class="question-step__no">4</span><span class="question-step__key">SOLUTION</span><p>어떻게 바꿀까?</p></div>
+        <div class="question-step"><span class="question-step__no">5</span><span class="question-step__key">MVP</span><p>무엇부터?</p></div>
       </div>
     </section>
 
@@ -1356,12 +1367,12 @@
       <h2>첫 버전에는 핵심 경험만 남긴다</h2>
       <div class="content mvp-layout">
         <div class="mvp-now">
-          <div class="mvp-label">FIRST VERSION</div>
-          <ul class="feature-list"><li>조건 선택</li><li>장소 추천</li><li>추천 이유</li><li>다시 하기</li></ul>
+          <div class="mvp-label">지금</div>
+          <ul class="feature-list"><li>조건 선택</li><li>장소 추천</li><li>다시 하기</li></ul>
         </div>
         <div class="mvp-later">
-          <div class="mvp-label">LATER</div>
-          <ul class="feature-list"><li>회원가입</li><li>친구 초대</li><li>채팅</li><li>저장</li><li>공유</li></ul>
+          <div class="mvp-label">나중</div>
+          <ul class="feature-list"><li>회원가입</li><li>채팅</li><li>공유</li></ul>
         </div>
       </div>
       <div class="mvp-mantra"><span>작게 만들고</span><i></i><span>사용하고</span><i></i><span>확장한다</span></div>
@@ -1376,17 +1387,17 @@
       <h2>대화를 제작 가능한 기획서로 바꾼다</h2>
       <div class="content handoff-doc-layout">
         <div class="handoff-message">
-          <p class="subhead">Chat에서 논의한 내용을<br>하나의 기준 문서로 정리한다.</p>
+          <p class="subhead">결정한 내용만 문서로 남긴다.</p>
           <div class="display">Chat의 최종 산출물<br><span>= 기획서</span></div>
         </div>
         <div class="document-sheet" aria-label="앱 기획서 구성">
           <div class="document-col">
             <h3>APP 기획서</h3>
-            <ul><li>서비스명</li><li>한 줄 설명</li><li>사용자</li><li>문제</li><li>목표</li><li>해결 방법</li></ul>
+            <ul><li>사용자</li><li>문제</li><li>목표</li></ul>
           </div>
           <div class="document-col">
             <h3>제작 기준</h3>
-            <ul><li>핵심 기능</li><li>사용 흐름</li><li>화면 구성</li><li>제외 기능</li><li>완료 기준</li></ul>
+            <ul><li>핵심 기능</li><li>사용 흐름</li><li>완료 기준</li></ul>
           </div>
         </div>
       </div>
@@ -1400,11 +1411,11 @@
       <div class="section-label">Three spaces</div>
       <h2>생각은 Chat에서,<br>결정은 기획서에, 제작은 Work에서</h2>
       <div class="content handoff-flow" aria-label="Chat에서 기획서를 거쳐 Work로 이어지는 흐름">
-        <div class="flow-stage"><span class="flow-stage__no">01 · THINK</span><h3>CHAT</h3><p>생각 · 질문<br>비교 · 결정</p></div>
+        <div class="flow-stage"><span class="flow-stage__no">01 · THINK</span><h3>CHAT</h3><p>질문 · 비교</p></div>
         <div class="flow-arrow">→</div>
-        <div class="flow-stage"><span class="flow-stage__no">02 · DEFINE</span><h3>기획서</h3><p>우리가 합의한<br>제품의 설계도</p></div>
+        <div class="flow-stage"><span class="flow-stage__no">02 · DEFINE</span><h3>기획서</h3><p>합의한 기준</p></div>
         <div class="flow-arrow">→</div>
-        <div class="flow-stage"><span class="flow-stage__no">03 · BUILD</span><h3>WORK</h3><p>결과물 제작<br>검토 · 수정</p></div>
+        <div class="flow-stage"><span class="flow-stage__no">03 · BUILD</span><h3>WORK</h3><p>제작 · 수정</p></div>
       </div>
     </section>
 
@@ -1418,11 +1429,11 @@
       <div class="content work-layout">
         <div class="work-rules">
           <h3>제작 요청의 세 가지 원칙</h3>
-          <ol><li>완성된 기획서를 입력한다</li><li>핵심 기능부터 구현한다</li><li>합의하지 않은 기능은 추가하지 않는다</li></ol>
+          <ol><li>기획서를 입력한다</li><li>핵심부터 구현한다</li><li>기능을 더하지 않는다</li></ol>
         </div>
         <div class="work-prompt">
           <div class="work-prompt__label">PROMPT</div>
-          <blockquote>“이 기획서를 바탕으로<br>실제로 사용할 수 있는<br>웹앱을 만들어줘.”</blockquote>
+          <blockquote>“이 기획서로<br>작동하는 웹앱을<br>만들어줘.”</blockquote>
           <div class="work-prompt__result">아이디어 → 작동하는 결과물</div>
         </div>
       </div>
@@ -1439,12 +1450,12 @@
         <div class="test-column">
           <div class="test-column__mark">✓</div>
           <h3>먼저 작동을 확인한다</h3>
-          <ul><li>핵심 기능이 작동하는가?</li><li>입력에서 결과까지 이어지는가?</li><li>모바일 화면이 자연스러운가?</li><li>사용 흐름이 막히지 않는가?</li><li>다른 사람도 사용할 수 있는가?</li></ul>
+          <ul><li>핵심 기능이 작동하는가?</li><li>입력 → 결과가 이어지는가?</li><li>다른 사람도 사용할 수 있는가?</li></ul>
         </div>
         <div class="test-column">
           <div class="test-column__mark">?</div>
           <h3>그다음 불편을 찾는다</h3>
-          <ul><li>불편한가?</li><li>헷갈리는가?</li><li>의도와 다른가?</li><li>필요 없는가?</li><li>무엇이 부족한가?</li></ul>
+          <ul><li>불편한가?</li><li>헷갈리는가?</li><li>무엇이 부족한가?</li></ul>
         </div>
       </div>
     </section>
@@ -1457,11 +1468,11 @@
       <div class="section-label">The real workflow</div>
       <h2>바이브코딩의 품질은<br>한 번의 생성보다 반복에서 나온다</h2>
       <div class="content loop-track" aria-label="제작, 사용, 판단, 요청, 수정의 반복">
-        <div class="loop-step"><b>BUILD</b><span>AI 제작</span></div><div class="loop-arrow">→</div>
-        <div class="loop-step"><b>USE</b><span>직접 사용</span></div><div class="loop-arrow">→</div>
-        <div class="loop-step"><b>THINK</b><span>문제 발견<br>판단</span></div><div class="loop-arrow">→</div>
-        <div class="loop-step"><b>TALK</b><span>자연어<br>수정 요청</span></div><div class="loop-arrow">→</div>
-        <div class="loop-step"><b>REBUILD</b><span>AI 수정</span></div>
+        <div class="loop-step"><b>BUILD</b><span>제작</span></div><div class="loop-arrow">→</div>
+        <div class="loop-step"><b>USE</b><span>사용</span></div><div class="loop-arrow">→</div>
+        <div class="loop-step"><b>THINK</b><span>판단</span></div><div class="loop-arrow">→</div>
+        <div class="loop-step"><b>TALK</b><span>요청</span></div><div class="loop-arrow">→</div>
+        <div class="loop-step"><b>REBUILD</b><span>수정</span></div>
       </div>
       <div class="loop-mantra">한 번에 완성하는 대신, <span>사용하며 계속 개선한다.</span></div>
     </section>
@@ -1474,10 +1485,10 @@
       <div class="section-label">Choose the right space</div>
       <h2>도구마다 잘하는 일이 다르다</h2>
       <div class="content tool-matrix" aria-label="ChatGPT 도구별 역할">
-        <div class="tool-name">Chat</div><div class="tool-role"><span>생각</span><span>질문</span><span>기획</span></div>
-        <div class="tool-name">Work</div><div class="tool-role"><span>작업 수행</span><span>결과물 제작</span><span>수정</span></div>
-        <div class="tool-name">Codex</div><div class="tool-role"><span>전문 코딩</span><span>디버깅</span><span>소프트웨어 개발</span></div>
-        <div class="tool-name">Sites</div><div class="tool-role"><span>웹사이트 공개</span><span>URL 공유</span><span>결과 확인</span></div>
+        <div class="tool-name">Chat</div><div class="tool-role"><span>생각과 기획</span></div>
+        <div class="tool-name">Work</div><div class="tool-role"><span>실행과 결과물</span></div>
+        <div class="tool-name">Codex</div><div class="tool-role"><span>개발과 디버깅</span></div>
+        <div class="tool-name">Sites</div><div class="tool-role"><span>공개와 공유</span></div>
       </div>
     </section>
 
@@ -1488,14 +1499,12 @@
       </div>
       <div class="section-label">End-to-end</div>
       <h2>오늘은 문제 발견부터 공개까지<br>하나의 흐름으로 완주한다</h2>
-      <div class="content workflow-map" aria-label="발견부터 공개까지 7단계">
-        <div class="workflow-step"><span class="workflow-step__no">01</span><b>DISCOVER</b><p>일상의 문제와<br>바꿀 점 찾기</p></div>
-        <div class="workflow-step"><span class="workflow-step__no">02</span><b>CHAT</b><p>AI와<br>기획 회의</p></div>
-        <div class="workflow-step"><span class="workflow-step__no">03</span><b>PLAN</b><p>기획서<br>완성</p></div>
-        <div class="workflow-step"><span class="workflow-step__no">04</span><b>WORK</b><p>웹앱<br>제작</p></div>
-        <div class="workflow-step"><span class="workflow-step__no">05</span><b>TEST</b><p>직접<br>사용</p></div>
-        <div class="workflow-step"><span class="workflow-step__no">06</span><b>IMPROVE</b><p>수정하고<br>개선</p></div>
-        <div class="workflow-step"><span class="workflow-step__no">07</span><b>SITE</b><p>공개하고<br>공유</p></div>
+      <div class="content workflow-map" aria-label="발견부터 공개까지 5단계">
+        <div class="workflow-step"><span class="workflow-step__no">01</span><b>DISCOVER</b><p>문제 찾기</p></div>
+        <div class="workflow-step"><span class="workflow-step__no">02</span><b>PLAN</b><p>기획하기</p></div>
+        <div class="workflow-step"><span class="workflow-step__no">03</span><b>BUILD</b><p>만들기</p></div>
+        <div class="workflow-step"><span class="workflow-step__no">04</span><b>IMPROVE</b><p>써보고 고치기</p></div>
+        <div class="workflow-step"><span class="workflow-step__no">05</span><b>SHARE</b><p>공개하기</p></div>
       </div>
     </section>
 
@@ -1509,11 +1518,11 @@
       <div class="content roles-layout">
         <div class="role-column">
           <h3><span>01</span>HUMAN</h3>
-          <ul><li>문제 발견</li><li>목표 설정</li><li>선택</li><li>판단</li><li>평가</li><li>방향 결정</li></ul>
+          <ul><li>문제와 목표</li><li>선택과 판단</li><li>방향 결정</li></ul>
         </div>
         <div class="role-column">
           <h3><span>02</span>AI</h3>
-          <ul><li>아이디어 확장</li><li>대안 제안</li><li>기획 정리</li><li>제작</li><li>수정</li><li>반복 작업</li></ul>
+          <ul><li>아이디어 확장</li><li>제작과 수정</li><li>반복 작업</li></ul>
         </div>
       </div>
       <div class="closing-line">AI가 만든다. <span>사람이 방향을 결정한다.</span></div>
@@ -1528,7 +1537,7 @@
         <p class="padlet-kicker">Open now</p>
         <h2>오늘 수업용 패들렛에 접속하세요</h2>
         <a class="padlet-link" href="https://joo.is/26gphigh" target="_blank" rel="noopener noreferrer" aria-label="수업용 패들렛 새 창에서 열기">joo.is/26gphigh</a>
-        <p class="padlet-note">주소를 클릭하거나 브라우저 주소창에 입력하세요</p>
+        <p class="padlet-note">클릭해서 바로 접속</p>
       </div>
     </section>
 
