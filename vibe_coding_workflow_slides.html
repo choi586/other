@@ -1164,7 +1164,101 @@
 
     .closing-line span { color: var(--signal); }
 
-    /* 15 — class Padlet */
+    /* Example — vibe-coded mini games */
+    .example-site {
+      overflow: hidden;
+      background: var(--ink);
+      color: var(--paper);
+    }
+
+    .example-site::before {
+      position: absolute;
+      top: 108px;
+      right: -74px;
+      width: 340px;
+      height: 340px;
+      border: 54px solid var(--aqua);
+      border-radius: 50%;
+      content: "";
+      opacity: .92;
+    }
+
+    .example-site::after {
+      position: absolute;
+      right: 186px;
+      bottom: -96px;
+      width: 210px;
+      height: 210px;
+      background: var(--signal);
+      content: "";
+      transform: rotate(18deg);
+    }
+
+    .example-site__body {
+      position: relative;
+      display: flex;
+      flex: 1;
+      flex-direction: column;
+      justify-content: center;
+      max-width: 940px;
+      padding-bottom: 36px;
+      z-index: 1;
+    }
+
+    .example-site__eyebrow {
+      margin-bottom: 22px;
+      color: var(--aqua);
+      font-size: 30px;
+      font-weight: 900;
+      letter-spacing: .08em;
+    }
+
+    .example-site h2 {
+      max-width: 850px;
+      color: var(--paper);
+      font-size: 72px;
+      line-height: 1.08;
+      letter-spacing: -.055em;
+    }
+
+    .example-site__link {
+      position: relative;
+      align-self: flex-start;
+      margin-top: 46px;
+      color: var(--paper);
+      font-size: 86px;
+      font-weight: 950;
+      line-height: 1;
+      letter-spacing: -.055em;
+      text-decoration: none;
+      transition: color .18s ease;
+      z-index: 0;
+    }
+
+    .example-site__link::after {
+      position: absolute;
+      right: -8px;
+      bottom: -7px;
+      left: -8px;
+      height: 15px;
+      background: var(--signal);
+      content: "";
+      z-index: -1;
+      transition: height .18s ease;
+    }
+
+    .example-site__link:hover::after,
+    .example-site__link:focus-visible::after { height: calc(100% + 10px); }
+
+    .example-site__link:hover,
+    .example-site__link:focus-visible { color: var(--ink); }
+
+    .example-site__link:focus-visible {
+      outline: 3px solid var(--aqua);
+      outline-offset: 12px;
+    }
+
+    /* Class Padlet */
     .padlet-slide {
       background: var(--aqua);
       color: var(--ink);
@@ -1296,6 +1390,18 @@
             </div>
           </div>
         </div>
+      </div>
+    </section>
+
+    <section class="slide example-site dark" aria-label="3 / 16">
+      <div class="topline">
+        <div class="topline__brand">Vibe Coding Example</div>
+        <div class="topline__page">03 / 16</div>
+      </div>
+      <div class="example-site__body">
+        <p class="example-site__eyebrow">예시 사이트 · 웹 미니게임 10종</p>
+        <h2>바이브코딩으로<br>미니게임도 만든다</h2>
+        <a class="example-site__link" href="https://kimgamdo.com/" target="_blank" rel="noopener noreferrer" aria-label="김감도 미니게임 사이트 새 창에서 열기">kimgamdo.com</a>
       </div>
     </section>
 
@@ -1553,6 +1659,7 @@
     (() => {
       const deck = document.getElementById("deck");
       const slides = Array.from(document.querySelectorAll(".slide"));
+      const totalSlides = slides.length;
       const previousButton = document.getElementById("prev");
       const nextButton = document.getElementById("next");
       const progress = document.getElementById("progress");
@@ -1560,6 +1667,15 @@
       const deckHeight = 720;
       let index = 0;
       let touchStartX = null;
+
+      slides.forEach((slide, slideIndex) => {
+        const pageNumber = slideIndex + 1;
+        slide.setAttribute("aria-label", `${pageNumber} / ${totalSlides}`);
+        const pageLabel = slide.querySelector(".topline__page");
+        if (pageLabel) {
+          pageLabel.textContent = `${String(pageNumber).padStart(2, "0")} / ${String(totalSlides).padStart(2, "0")}`;
+        }
+      });
 
       function fitDeck() {
         const viewportWidth = window.visualViewport ? window.visualViewport.width : window.innerWidth;
