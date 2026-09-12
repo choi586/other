@@ -1,0 +1,877 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>샤프심 빼기 대결 - 비주얼 버전</title>
+<style>
+  *{
+    box-sizing:border-box;
+    -webkit-user-select:none;
+    user-select:none;
+    -webkit-tap-highlight-color:transparent;
+  }
+
+  html, body{
+    margin:0;
+    width:100%;
+    height:100%;
+    overflow:hidden;
+    background:#2f42b8;
+    font-family: Arial, "Pretendard", "Noto Sans KR", sans-serif;
+
+    /* 전자칠판 멀티터치 시 확대/스크롤/제스처 방지 */
+    touch-action:none !important;
+    -ms-touch-action:none !important;
+    overscroll-behavior:none;
+    -webkit-user-select:none;
+    user-select:none;
+    -webkit-touch-callout:none;
+  }
+
+  .game, .arena, .side, .panel, .sharp-scene{
+    touch-action:none !important;
+    -ms-touch-action:none !important;
+    overscroll-behavior:none;
+  }
+
+  body{
+    background:
+      radial-gradient(circle at 20% 20%, rgba(255,255,255,.10) 0 2px, transparent 2px 100%),
+      linear-gradient(180deg, #4b56c1 0%, #3544a8 100%);
+  }
+
+  .game{
+    position:relative;
+    width:100vw;
+    height:100vh;
+    overflow:hidden;
+  }
+
+  .center-line{
+    position:absolute;
+    left:50%;
+    top:0;
+    width:6px;
+    height:100%;
+    transform:translateX(-50%);
+    background:rgba(255,255,255,.8);
+    z-index:20;
+    pointer-events:none;
+  }
+
+  .bg-words{
+    position:absolute;
+    inset:0;
+    display:grid;
+    grid-template-columns: repeat(5, 1fr);
+    grid-template-rows: repeat(4, 1fr);
+    pointer-events:none;
+    opacity:.13;
+    z-index:0;
+  }
+
+  .bg-words span{
+    align-self:center;
+    justify-self:center;
+    color:#fff;
+    font-weight:1000;
+    font-size:clamp(20px, 2.5vw, 44px);
+    line-height:.9;
+    text-align:center;
+    text-transform:uppercase;
+  }
+
+  .arena{
+    position:relative;
+    z-index:2;
+    display:flex;
+    width:100%;
+    height:100%;
+  }
+
+  .side{
+    position:relative;
+    width:50%;
+    height:100%;
+    overflow:hidden;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    touch-action:none;
+    cursor:pointer;
+  }
+
+  .side.left{
+    background:linear-gradient(160deg, #2388ff 0%, #1555c8 55%, #103a98 100%);
+  }
+
+  .side.right{
+    background:linear-gradient(200deg, #ff5b66 0%, #dc3949 55%, #a91f32 100%);
+  }
+
+  .player-label{
+    position:absolute;
+    top:2vh;
+    font-size:clamp(26px, 3.2vw, 56px);
+    font-weight:1000;
+    color:#fff;
+    text-shadow: 0 4px 0 rgba(0,0,0,.35);
+  }
+
+  .score-badge{
+    position:absolute;
+    top:3vh;
+    left:2vw;
+    min-width:160px;
+    padding:10px 18px;
+    border-radius:10px;
+    background:#16b9ad;
+    color:#fff;
+    border:5px solid rgba(255,255,255,.95);
+    box-shadow:0 6px 0 rgba(0,0,0,.28);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:10px;
+    transform:rotate(-1deg);
+  }
+
+  .right .score-badge{
+    left:auto;
+    right:2vw;
+    transform:rotate(1deg);
+  }
+
+  .score-value{
+    font-size:clamp(34px, 4vw, 68px);
+    font-weight:1000;
+    line-height:1;
+  }
+
+  .score-unit{
+    font-size:clamp(22px, 2vw, 34px);
+    font-weight:1000;
+    line-height:1;
+    margin-top:6px;
+  }
+
+  .panel{
+    position:relative;
+    width:100%;
+    height:100%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+
+  .sharp-scene{
+    position:relative;
+    width:min(44vw, 420px);
+    height:min(80vh, 720px);
+  }
+
+  .tap-zone{
+    position:absolute;
+    left:50%;
+    top:7%;
+    transform:translateX(-50%);
+    width:50%;
+    height:22%;
+    border-radius:36px;
+    z-index:25;
+    background:rgba(255,255,255,.06);
+    border:3px dashed rgba(255,255,255,.22);
+    display:flex;
+    align-items:flex-start;
+    justify-content:center;
+    padding-top:8px;
+    pointer-events:none;
+  }
+
+  .tap-zone span{
+    color:rgba(255,255,255,.95);
+    font-weight:1000;
+    font-size:clamp(16px, 1.5vw, 24px);
+    background:rgba(0,0,0,.25);
+    padding:6px 12px;
+    border-radius:999px;
+  }
+
+  .hand{
+    position:absolute;
+    left:50%;
+    top:16%;
+    transform:translateX(-50%);
+    width:48%;
+    height:34%;
+    z-index:8;
+    pointer-events:none;
+  }
+
+  .palm{
+    position:absolute;
+    left:24%;
+    top:20%;
+    width:42%;
+    height:50%;
+    background:linear-gradient(180deg, #f2b487, #db9369);
+    border-radius:36% 34% 38% 38%;
+    transform:rotate(-4deg);
+    box-shadow: inset -8px -10px 18px rgba(120,60,30,.15);
+  }
+
+  .thumb{
+    position:absolute;
+    right:16%;
+    top:10%;
+    width:18%;
+    height:44%;
+    background:linear-gradient(180deg, #f2b487, #db9369);
+    border-radius:50px;
+    transform:rotate(-18deg);
+    box-shadow: inset -6px -6px 10px rgba(120,60,30,.12);
+  }
+
+  .finger{
+    position:absolute;
+    left:10%;
+    width:26%;
+    height:14%;
+    background:linear-gradient(180deg, #efb085, #d48b62);
+    border-radius:999px;
+    box-shadow: inset -6px -6px 10px rgba(120,60,30,.12);
+  }
+
+  .f1{ top:22%; transform:rotate(8deg); }
+  .f2{ top:36%; transform:rotate(5deg); }
+  .f3{ top:50%; transform:rotate(2deg); }
+  .f4{ top:64%; transform:rotate(-2deg); }
+
+  .wrist{
+    position:absolute;
+    left:33%;
+    bottom:-4%;
+    width:26%;
+    height:26%;
+    background:linear-gradient(180deg, #e09a70, #ce835f);
+    border-radius:30px 30px 14px 14px;
+  }
+
+  .sleeve{
+    position:absolute;
+    left:26%;
+    bottom:-8%;
+    width:40%;
+    height:24%;
+    background:#e74b4b;
+    border-radius:24px 24px 12px 12px;
+    box-shadow: inset 0 10px 0 rgba(255,255,255,.12);
+  }
+
+  .sharp{
+    position:absolute;
+    left:50%;
+    top:8%;
+    transform:translateX(-50%);
+    width:26%;
+    height:78%;
+    z-index:12;
+    pointer-events:none;
+  }
+
+  .clicker{
+    position:absolute;
+    left:50%;
+    top:0;
+    transform:translateX(-50%);
+    width:26%;
+    height:8%;
+    background:linear-gradient(180deg, #ff7d7d, #d32f2f);
+    border-radius:16px 16px 10px 10px;
+    box-shadow:0 4px 0 rgba(0,0,0,.25);
+    transition: transform .05s ease, top .05s ease;
+  }
+
+  .clicker::after{
+    content:"";
+    position:absolute;
+    left:50%;
+    transform:translateX(-50%);
+    bottom:-18%;
+    width:58%;
+    height:30%;
+    background:#333;
+    border-radius:8px;
+  }
+
+  .sharp.pressed .clicker{
+    top:1.5%;
+    transform:translateX(-50%) scaleY(.92);
+  }
+
+  .barrel{
+    position:absolute;
+    left:50%;
+    top:6%;
+    transform:translateX(-50%);
+    width:18%;
+    height:62%;
+    background:linear-gradient(180deg, #333 0%, #1c1c1c 50%, #3b3b3b 100%);
+    border-radius:18px;
+    box-shadow: inset 6px 0 0 rgba(255,255,255,.12), inset -4px 0 0 rgba(0,0,0,.24);
+  }
+
+  .grip{
+    position:absolute;
+    left:50%;
+    top:23%;
+    transform:translateX(-50%);
+    width:22%;
+    height:18%;
+    background:linear-gradient(180deg, #e53b3b 0%, #b81f1f 100%);
+    border-radius:18px;
+    box-shadow: inset 4px 0 0 rgba(255,255,255,.16), inset -4px 0 0 rgba(0,0,0,.2);
+  }
+
+  .tip{
+    position:absolute;
+    left:50%;
+    top:66%;
+    transform:translateX(-50%);
+    width:0;
+    height:0;
+    border-left:18px solid transparent;
+    border-right:18px solid transparent;
+    border-top:80px solid #dadada;
+    filter:drop-shadow(0 4px 1px rgba(0,0,0,.2));
+  }
+
+  .lead{
+    position:absolute;
+    left:50%;
+    top:calc(66% + 78px);
+    transform:translateX(-50%);
+    width:4px;
+    height:0px;
+    background:#f4f4f4;
+    box-shadow:0 0 0 1px rgba(255,255,255,.4);
+    transform-origin:top center;
+    transition:height .06s linear;
+  }
+
+  .counter-shadow{
+    position:absolute;
+    left:50%;
+    bottom:4%;
+    transform:translateX(-50%);
+    width:38%;
+    height:4%;
+    border-radius:50%;
+    background:rgba(0,0,0,.25);
+    filter:blur(8px);
+  }
+
+  .effect-text{
+    position:absolute;
+    left:50%;
+    top:28%;
+    transform:translateX(-50%);
+    color:#ffe656;
+    text-shadow:
+      -2px -2px 0 #000,
+       2px -2px 0 #000,
+      -2px  2px 0 #000,
+       2px  2px 0 #000,
+       0  6px 0 rgba(0,0,0,.2);
+    font-weight:1000;
+    font-size:clamp(22px, 2.6vw, 42px);
+    opacity:0;
+    pointer-events:none;
+  }
+
+  .effect-text.show{
+    animation:pop .22s ease-out;
+  }
+
+  @keyframes pop{
+    0%{ opacity:0; transform:translateX(-50%) translateY(10px) scale(.6); }
+    30%{ opacity:1; transform:translateX(-50%) translateY(0) scale(1.16); }
+    100%{ opacity:0; transform:translateX(-50%) translateY(-16px) scale(1); }
+  }
+
+  .top-ui{
+    position:absolute;
+    top:1.8vh;
+    left:50%;
+    transform:translateX(-50%);
+    z-index:50;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:10px;
+    pointer-events:none;
+  }
+
+  .timer{
+    min-width:140px;
+    text-align:center;
+    padding:10px 22px;
+    background:#111;
+    color:#fff;
+    border:4px solid #fff;
+    border-radius:999px;
+    font-size:clamp(30px, 4vw, 58px);
+    font-weight:1000;
+    box-shadow:0 8px 0 rgba(0,0,0,.22);
+  }
+
+  .status{
+    background:rgba(255,255,255,.92);
+    color:#111;
+    font-size:clamp(15px, 1.7vw, 24px);
+    font-weight:1000;
+    padding:8px 16px;
+    border-radius:999px;
+  }
+
+  .overlay{
+    position:absolute;
+    inset:0;
+    z-index:100;
+    background:rgba(0,0,0,.52);
+    backdrop-filter:blur(4px);
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+    padding:24px;
+  }
+
+  .hidden{ display:none !important; }
+
+  .title{
+    font-size:clamp(44px, 6vw, 96px);
+    color:#fff;
+    font-weight:1000;
+    line-height:1.04;
+    text-shadow:0 8px 0 rgba(0,0,0,.24);
+  }
+
+  .subtitle{
+    margin-top:20px;
+    font-size:clamp(20px, 2vw, 34px);
+    color:#fff;
+    font-weight:800;
+    line-height:1.45;
+  }
+
+  .btn{
+    margin-top:28px;
+    border:0;
+    border-radius:18px;
+    padding:18px 34px;
+    background:#ffe656;
+    color:#111;
+    font-size:clamp(24px, 2.8vw, 42px);
+    font-weight:1000;
+    box-shadow:0 7px 0 #c9aa00;
+    cursor:pointer;
+    touch-action:manipulation;
+  }
+
+  .btn:active{
+    transform:translateY(4px);
+    box-shadow:0 3px 0 #c9aa00;
+  }
+
+  .countdown{
+    font-size:clamp(120px, 22vw, 340px);
+    color:#ffe656;
+    font-weight:1000;
+    text-shadow:0 12px 0 rgba(0,0,0,.2);
+  }
+
+  .result-title{
+    font-size:clamp(42px, 6vw, 96px);
+    color:#fff;
+    font-weight:1000;
+    text-shadow:0 8px 0 rgba(0,0,0,.24);
+  }
+
+  .result-body{
+    margin-top:18px;
+    color:#fff;
+    font-size:clamp(22px, 2.4vw, 42px);
+    font-weight:900;
+    line-height:1.6;
+  }
+
+  .mini-help{
+    position:absolute;
+    bottom:2vh;
+    left:50%;
+    transform:translateX(-50%);
+    z-index:40;
+    background:rgba(0,0,0,.35);
+    color:#fff;
+    padding:8px 14px;
+    border-radius:999px;
+    font-size:clamp(14px, 1.3vw, 20px);
+    font-weight:800;
+    white-space:nowrap;
+  }
+
+  @media (max-width: 1200px){
+    .score-badge{ min-width:130px; }
+    .sharp-scene{ width:min(42vw, 340px); }
+  }
+</style>
+</head>
+<body>
+<div class="game">
+
+  <div class="bg-words">
+    <span>SHARP<br>BATTLE</span><span>CLICK<br>CLICK</span><span>LEAD<br>RUSH</span><span>SHARP<br>BATTLE</span><span>CLICK<br>CLICK</span>
+    <span>LEAD<br>RUSH</span><span>SHARP<br>BATTLE</span><span>CLICK<br>CLICK</span><span>LEAD<br>RUSH</span><span>SHARP<br>BATTLE</span>
+    <span>CLICK<br>CLICK</span><span>LEAD<br>RUSH</span><span>SHARP<br>BATTLE</span><span>CLICK<br>CLICK</span><span>LEAD<br>RUSH</span>
+    <span>SHARP<br>BATTLE</span><span>CLICK<br>CLICK</span><span>LEAD<br>RUSH</span><span>SHARP<br>BATTLE</span><span>CLICK<br>CLICK</span>
+  </div>
+
+  <div class="top-ui">
+    <div class="timer" id="timer">10.0</div>
+    <div class="status" id="status">준비</div>
+  </div>
+
+  <div class="arena">
+    <section class="side left" id="p1Side">
+      <div class="player-label">1P</div>
+      <div class="score-badge">
+        <div class="score-value" id="p1Count">0</div>
+        <div class="score-unit">개</div>
+      </div>
+      <div class="panel">
+        <div class="sharp-scene">
+          <div class="tap-zone" id="p1Tap"><span>내 영역 어디든 다다다다 터치!</span></div>
+
+          <div class="hand">
+            <div class="thumb"></div>
+            <div class="palm"></div>
+            <div class="finger f1"></div>
+            <div class="finger f2"></div>
+            <div class="finger f3"></div>
+            <div class="finger f4"></div>
+            <div class="wrist"></div>
+            <div class="sleeve"></div>
+          </div>
+
+          <div class="sharp" id="p1Sharp">
+            <div class="clicker"></div>
+            <div class="barrel"></div>
+            <div class="grip"></div>
+            <div class="tip"></div>
+            <div class="lead" id="p1Lead"></div>
+          </div>
+
+          <div class="effect-text" id="p1Fx">딸깍!</div>
+          <div class="counter-shadow"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="side right" id="p2Side">
+      <div class="player-label">2P</div>
+      <div class="score-badge">
+        <div class="score-value" id="p2Count">0</div>
+        <div class="score-unit">개</div>
+      </div>
+      <div class="panel">
+        <div class="sharp-scene">
+          <div class="tap-zone" id="p2Tap"><span>내 영역 어디든 다다다다 터치!</span></div>
+
+          <div class="hand">
+            <div class="thumb"></div>
+            <div class="palm"></div>
+            <div class="finger f1"></div>
+            <div class="finger f2"></div>
+            <div class="finger f3"></div>
+            <div class="finger f4"></div>
+            <div class="wrist"></div>
+            <div class="sleeve"></div>
+          </div>
+
+          <div class="sharp" id="p2Sharp">
+            <div class="clicker"></div>
+            <div class="barrel"></div>
+            <div class="grip"></div>
+            <div class="tip"></div>
+            <div class="lead" id="p2Lead"></div>
+          </div>
+
+          <div class="effect-text" id="p2Fx">딸깍!</div>
+          <div class="counter-shadow"></div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <div class="center-line"></div>
+
+  <div class="mini-help">왼쪽 1P / 오른쪽 2P · 자기 영역 전체를 여러 손가락으로 동시에 터치 가능</div>
+
+  <div class="overlay" id="startOverlay">
+    <div class="title">샤프심 빼기 대결</div>
+    <div class="subtitle">
+      자기 쪽 화면 어디든 빠르게 터치!<br>
+      10초 동안 샤프심을 가장 많이 빼면 승리!
+    </div>
+    <button class="btn" id="startBtn">게임 시작</button>
+  </div>
+
+  <div class="overlay hidden" id="countdownOverlay">
+    <div class="countdown" id="countdownText">3</div>
+  </div>
+
+  <div class="overlay hidden" id="resultOverlay">
+    <div class="result-title" id="resultTitle">승리!</div>
+    <div class="result-body" id="resultBody"></div>
+    <button class="btn" id="againBtn">한 판 더!</button>
+  </div>
+
+</div>
+
+<script>
+(() => {
+  const GAME_MS = 10000;
+  const LEAD_PER_TOUCH = 3.2;  // 터치 1회당 샤프심 길이(px)
+
+  const p1CountEl = document.getElementById('p1Count');
+  const p2CountEl = document.getElementById('p2Count');
+  const p1Lead = document.getElementById('p1Lead');
+  const p2Lead = document.getElementById('p2Lead');
+  const p1Sharp = document.getElementById('p1Sharp');
+  const p2Sharp = document.getElementById('p2Sharp');
+  const p1Fx = document.getElementById('p1Fx');
+  const p2Fx = document.getElementById('p2Fx');
+
+  const p1Tap = document.getElementById('p1Tap');
+  const p2Tap = document.getElementById('p2Tap');
+  const p1Side = document.getElementById('p1Side');
+  const p2Side = document.getElementById('p2Side');
+
+  const timerEl = document.getElementById('timer');
+  const statusEl = document.getElementById('status');
+
+  const startOverlay = document.getElementById('startOverlay');
+  const countdownOverlay = document.getElementById('countdownOverlay');
+  const countdownText = document.getElementById('countdownText');
+  const resultOverlay = document.getElementById('resultOverlay');
+  const resultTitle = document.getElementById('resultTitle');
+  const resultBody = document.getElementById('resultBody');
+
+  const startBtn = document.getElementById('startBtn');
+  const againBtn = document.getElementById('againBtn');
+
+  let running = false;
+  let p1 = 0;
+  let p2 = 0;
+  let startTime = 0;
+  let rafId = null;
+
+  document.addEventListener('contextmenu', e => e.preventDefault());
+  document.addEventListener('dragstart', e => e.preventDefault());
+
+  // ------------------------------------------------------------
+  // 전자칠판 멀티터치 안전장치
+  // 핀치 줌, 두 손가락 스크롤, 더블탭 확대 등을 최대한 차단한다.
+  // 시작/재시작 버튼은 정상 터치 가능.
+  // ------------------------------------------------------------
+
+  const isGameButton = (target) => !!target.closest?.('button');
+
+  ['touchstart','touchmove','touchend','touchcancel'].forEach(type => {
+    document.addEventListener(type, e => {
+      if (isGameButton(e.target)) return;
+
+      // 멀티터치 및 게임 영역 터치의 브라우저 기본 제스처 차단
+      e.preventDefault();
+    }, { passive: false });
+  });
+
+  // Safari / 일부 터치 브라우저의 핀치 제스처 차단
+  ['gesturestart','gesturechange','gestureend'].forEach(type => {
+    document.addEventListener(type, e => {
+      e.preventDefault();
+    }, { passive: false });
+  });
+
+  // 더블탭 / 더블클릭 확대 방지
+  document.addEventListener('dblclick', e => {
+    e.preventDefault();
+  }, { passive: false });
+
+  // Ctrl + 휠 / 트랙패드 핀치에 의한 브라우저 확대 방지
+  document.addEventListener('wheel', e => {
+    if (e.ctrlKey || e.metaKey) {
+      e.preventDefault();
+    }
+  }, { passive: false });
+
+  // 키보드 확대 단축키 방지 (전자칠판에 키보드가 연결된 경우 포함)
+  document.addEventListener('keydown', e => {
+    if ((e.ctrlKey || e.metaKey) && ['+','=','-','0'].includes(e.key)) {
+      e.preventDefault();
+    }
+  });
+
+  function pulseFx(el){
+    el.classList.remove('show');
+    void el.offsetWidth;
+    el.classList.add('show');
+  }
+
+  function clickAnim(sharpEl){
+    sharpEl.classList.remove('pressed');
+    void sharpEl.offsetWidth;
+    sharpEl.classList.add('pressed');
+    setTimeout(() => sharpEl.classList.remove('pressed'), 70);
+  }
+
+  function updateLead(player){
+    if(player === 1){
+      p1Lead.style.height = (p1 * LEAD_PER_TOUCH) + 'px';
+    } else {
+      p2Lead.style.height = (p2 * LEAD_PER_TOUCH) + 'px';
+    }
+  }
+
+  function score(player){
+    if(!running) return;
+
+    if(player === 1){
+      p1++;
+      p1CountEl.textContent = p1;
+      updateLead(1);
+      clickAnim(p1Sharp);
+      pulseFx(p1Fx);
+    } else {
+      p2++;
+      p2CountEl.textContent = p2;
+      updateLead(2);
+      clickAnim(p2Sharp);
+      pulseFx(p2Fx);
+    }
+  }
+
+  function bindTapZone(el, player){
+    el.addEventListener('pointerdown', e => {
+      if(!running) return;
+      e.preventDefault();
+      try { el.setPointerCapture(e.pointerId); } catch(_) {}
+      score(player);
+    }, { passive:false });
+  }
+
+  bindTapZone(p1Side, 1);
+  bindTapZone(p2Side, 2);
+
+  // 키보드 테스트용
+  document.addEventListener('keydown', e => {
+    if(!running || e.repeat) return;
+    const k = e.key.toLowerCase();
+    if(['a','s','d','f'].includes(k)) score(1);
+    if(['j','k','l',';'].includes(k)) score(2);
+  });
+
+  function resetGame(){
+    running = false;
+    p1 = 0;
+    p2 = 0;
+    p1CountEl.textContent = '0';
+    p2CountEl.textContent = '0';
+    p1Lead.style.height = '0px';
+    p2Lead.style.height = '0px';
+    timerEl.textContent = '10.0';
+    statusEl.textContent = '준비';
+    if(rafId) cancelAnimationFrame(rafId);
+  }
+
+  function startCountdown(){
+    resetGame();
+    resultOverlay.classList.add('hidden');
+    startOverlay.classList.add('hidden');
+    countdownOverlay.classList.remove('hidden');
+
+    let n = 3;
+    countdownText.textContent = '3';
+
+    const interval = setInterval(() => {
+      n--;
+      if(n > 0){
+        countdownText.textContent = String(n);
+      } else if(n === 0){
+        countdownText.textContent = 'GO!';
+      } else {
+        clearInterval(interval);
+        countdownOverlay.classList.add('hidden');
+        startGame();
+      }
+    }, 700);
+  }
+
+  function startGame(){
+    running = true;
+    statusEl.textContent = '다다다다다!';
+    startTime = performance.now();
+    tick();
+  }
+
+  function tick(now = performance.now()){
+    if(!running) return;
+
+    const elapsed = now - startTime;
+    const left = Math.max(0, GAME_MS - elapsed);
+
+    timerEl.textContent = (left / 1000).toFixed(1);
+
+    if(left <= 0){
+      finishGame();
+      return;
+    }
+
+    rafId = requestAnimationFrame(tick);
+  }
+
+  function finishGame(){
+    running = false;
+    if(rafId) cancelAnimationFrame(rafId);
+    timerEl.textContent = '0.0';
+    statusEl.textContent = '끝!';
+
+    if(p1 > p2){
+      resultTitle.textContent = '🏆 1P 승리!';
+    } else if(p2 > p1){
+      resultTitle.textContent = '🏆 2P 승리!';
+    } else {
+      resultTitle.textContent = '🤝 무승부!';
+    }
+
+    resultBody.innerHTML = `
+      1P : <strong>${p1}개</strong><br>
+      2P : <strong>${p2}개</strong><br>
+      차이 : <strong>${Math.abs(p1 - p2)}개</strong>
+    `;
+
+    setTimeout(() => {
+      resultOverlay.classList.remove('hidden');
+    }, 250);
+  }
+
+  startBtn.addEventListener('click', startCountdown);
+  againBtn.addEventListener('click', startCountdown);
+})();
+</script>
+</body>
+</html>
