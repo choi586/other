@@ -1,0 +1,268 @@
+<!doctype html>
+<html lang="ja" data-lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="description" content="2027年2月 学術大会（ソウル）・現地学術踏査（群山）のご案内">
+<title>学術大会・現地学術踏査のご案内 | 2027</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Serif+KR:wght@500;700&family=Newsreader:opsz,wght@6..72,500;6..72,600&family=Noto+Sans+JP:wght@400;500;700&family=Noto+Sans+KR:wght@400;500;700&display=swap">
+<style>
+/* Layout: a quiet single-column programme leaflet; Seoul (ink blue) and Gunsan (brick) as two chapters, Gunsan sites as photo cards */
+:root{
+  --bg:#fbfaf8; --surface:#ffffff; --fg:#1f2430; --muted:#5d6472; --line:#e3e1dc;
+  --seoul:#2d4a6b; --seoul-soft:#eaeff5;
+  --gunsan:#8a4a34; --gunsan-soft:#f4ebe6;
+  --display-ja:"Shippori Mincho","Noto Serif CJK JP","Hiragino Mincho ProN","Yu Mincho",serif;
+  --display-ko:"Noto Serif KR","Noto Serif CJK KR","AppleMyungjo",serif;
+  --display-en:"Newsreader","Georgia",serif;
+  --body-ja:"Noto Sans JP","Hiragino Sans","Yu Gothic",sans-serif;
+  --body-ko:"Noto Sans KR","Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+  --body-en:"Noto Sans JP","Helvetica Neue",Arial,sans-serif;
+  --display:var(--display-ja); --body:var(--body-ja);
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#15181e; --surface:#1c2028; --fg:#e9e7e3; --muted:#a3a8b3; --line:#2e333d;
+  --seoul:#8fb0d6; --seoul-soft:#1e2a3a; --gunsan:#d99a80; --gunsan-soft:#33231d; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#15181e; --surface:#1c2028; --fg:#e9e7e3; --muted:#a3a8b3; --line:#2e333d;
+  --seoul:#8fb0d6; --seoul-soft:#1e2a3a; --gunsan:#d99a80; --gunsan-soft:#33231d; color-scheme:dark}
+html[data-lang="ko"]{--display:var(--display-ko);--body:var(--body-ko)}
+html[data-lang="en"]{--display:var(--display-en);--body:var(--body-en)}
+
+body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:15px;line-height:1.8;margin:0}
+html[data-lang="ko"] body{word-break:keep-all}
+.wrap{max-width:860px;margin:0 auto;padding-inline:20px;padding-block:28px 56px}
+[data-l]{display:none}
+html:not([data-lang]) [data-l="ja"],html[data-lang="ja"] [data-l="ja"],html[data-lang="en"] [data-l="en"],html[data-lang="ko"] [data-l="ko"]{display:revert}
+h1,h2,h3{font-family:var(--display);font-weight:700;margin:0;text-wrap:balance;line-height:1.35}
+
+.top{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.org{font-size:12.5px;color:var(--muted);letter-spacing:.06em}
+.lang{display:flex;border:1px solid var(--line);border-radius:999px;padding:3px;background:var(--surface)}
+.lang button{font:inherit;font-size:13px;border:0;background:transparent;color:var(--muted);padding:4px 13px;border-radius:999px;cursor:pointer}
+.lang button[aria-pressed="true"]{background:var(--fg);color:var(--bg)}
+.lang button:focus-visible{outline:2px solid var(--seoul);outline-offset:2px}
+
+.hero{margin-top:36px}
+.hero h1{font-size:clamp(28px,5.4vw,44px);letter-spacing:.02em}
+.meta{display:flex;flex-wrap:wrap;gap:8px 28px;margin-top:14px;font-size:16px}
+.meta span{display:flex;gap:10px;align-items:baseline}
+.meta small{font-size:11.5px;letter-spacing:.14em;color:var(--muted);text-transform:uppercase}
+.meta b{font-weight:700;font-variant-numeric:tabular-nums}
+.lead{margin-top:20px;padding-top:18px;border-top:1.5px solid var(--fg);max-width:44em;color:var(--fg)}
+
+.chapters{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:26px}
+.chap{display:block;text-decoration:none;color:inherit;padding:16px 18px;border-radius:6px}
+.chap.s{background:var(--seoul-soft)} .chap.g{background:var(--gunsan-soft)}
+.chap .k{font-size:11.5px;letter-spacing:.16em;font-weight:700}
+.chap.s .k{color:var(--seoul)} .chap.g .k{color:var(--gunsan)}
+.chap .t{font-family:var(--display);font-size:18px;font-weight:700;margin-top:4px;line-height:1.4}
+
+section.part{margin-top:64px}
+.label{display:flex;align-items:center;gap:12px;font-size:12px;font-weight:700;letter-spacing:.16em}
+.label i{font-style:normal;color:#fff;padding:2px 10px;border-radius:3px}
+.label::after{content:"";flex:1;height:1px;background:var(--line)}
+.part.s .label{color:var(--seoul)} .part.s .label i{background:var(--seoul)}
+.part.g .label{color:var(--gunsan)} .part.g .label i{background:var(--gunsan)}
+:root[data-theme="dark"] .label i{color:#15181e}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .label i{color:#15181e}}
+.part h2{font-size:clamp(24px,4.2vw,32px);margin-top:18px}
+.sub{font-family:var(--display);font-size:16.5px;margin-top:6px;color:var(--fg)}
+.desc{margin-top:16px;max-width:44em}
+
+.rows{display:grid;grid-template-columns:auto 1fr;gap:6px 22px;margin-top:20px;font-size:14.5px}
+.rows dt{font-variant-numeric:tabular-nums;font-weight:500;white-space:nowrap}
+.rows dd{margin:0;min-width:0}
+.facts{display:flex;flex-wrap:wrap;gap:6px 24px;margin-top:14px;font-size:14px;color:var(--muted)}
+.facts b{color:var(--fg);font-weight:500;margin-left:6px}
+
+figure{margin:0}
+.wide{margin-top:24px;display:grid;grid-template-columns:1.25fr 1fr;gap:20px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:6px;overflow:hidden}
+.wide img{width:100%;height:100%;max-height:340px;object-fit:cover;display:block}
+.wide .cap{padding:18px 20px 18px 0;min-width:0}
+.cap h3{font-size:17px}
+.cap p{font-size:14px;color:var(--muted);margin:8px 0 0}
+.tag{display:inline-block;font-size:11.5px;letter-spacing:.08em;color:var(--muted);border:1px solid var(--line);border-radius:3px;padding:0 7px;margin-bottom:6px}
+
+.sites{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:22px}
+.site{background:var(--surface);border:1px solid var(--line);border-radius:6px;overflow:hidden;display:flex;flex-direction:column}
+.site img{width:100%;aspect-ratio:4/3;object-fit:cover;display:block;max-width:100%}
+.site .cap{padding:14px 16px 16px}
+.site.feature{grid-column:1 / -1;flex-direction:row}
+.site.feature img{width:46%;aspect-ratio:auto;height:auto;max-height:420px;object-position:center 30%}
+.site.feature .cap{flex:1;align-self:center;padding:22px 24px}
+
+.rt{margin-top:22px;padding:18px 20px;border-radius:6px;background:var(--gunsan-soft)}
+.rt h3{font-size:17px;color:var(--fg)}
+.rt p{margin:6px 0 0;font-size:14.5px}
+
+footer{margin-top:64px;padding-top:16px;border-top:1px solid var(--line);font-size:13px;color:var(--muted);display:flex;flex-wrap:wrap;gap:6px 26px}
+footer b{color:var(--fg);font-weight:700;margin-right:8px;letter-spacing:.06em}
+
+@media (max-width:640px){
+  .chapters,.sites{grid-template-columns:1fr}
+  .wide{grid-template-columns:1fr}
+  .wide .cap{padding:4px 18px 18px}
+  .site.feature{flex-direction:column}
+  .site.feature img{width:100%;max-height:360px}
+  .site.feature .cap{padding:14px 16px 16px}
+}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <div class="top">
+    <div class="org">
+      <span data-l="ja">慶熙大学校 グローバル琉球・沖縄研究所</span>
+      <span data-l="en">Global Ryukyu-Okinawa Research Institute, Kyung Hee University</span>
+      <span data-l="ko">경희대학교 글로벌류큐·오키나와연구소</span>
+    </div>
+    <div class="lang" role="group" aria-label="Language">
+      <button type="button" id="l-ja" data-set="ja" lang="ja">日本語</button>
+      <button type="button" id="l-en" data-set="en" lang="en">EN</button>
+      <button type="button" id="l-ko" data-set="ko" lang="ko">한국어</button>
+    </div>
+  </div>
+
+  <header class="hero">
+    <h1>
+      <span data-l="ja">学術大会・現地学術踏査のご案内</span>
+      <span data-l="en">Symposium and Field Study, Seoul and Gunsan</span>
+      <span data-l="ko">학술대회·현지 학술답사 안내</span>
+    </h1>
+    <div class="meta">
+      <span><small data-l="ja">日程</small><small data-l="en">Dates</small><small data-l="ko">일정</small>
+        <b data-l="ja">2027年2月13日前後</b><b data-l="en">Around 13 February 2027</b><b data-l="ko">2027년 2월 13일 전후</b></span>
+      <span><small data-l="ja">場所</small><small data-l="en">Venue</small><small data-l="ko">장소</small>
+        <b data-l="ja">ソウル・群山</b><b data-l="en">Seoul · Gunsan</b><b data-l="ko">서울·군산</b></span>
+    </div>
+    <p class="lead">
+      <span data-l="ja">早稲田大学の五味渕典嗣先生をお迎えし、ソウルでの学術大会と、群山での現地学術踏査・ラウンドテーブルを予定しています。詳しい日程は追ってご案内いたします。</span>
+      <span data-l="en">Welcoming Professor Noritsugu Gomibuchi of Waseda University, we will hold a symposium in Seoul, followed by a field study and roundtable in Gunsan. A detailed schedule will follow.</span>
+      <span data-l="ko">와세다대학교 고미부치 노리쓰구 교수를 모시고 서울에서 학술대회를, 군산에서 현지 학술답사와 라운드테이블을 진행할 예정입니다. 상세 일정은 추후 안내드리겠습니다.</span>
+    </p>
+    <nav class="chapters">
+      <a class="chap s" href="#seoul"><div class="k"><span data-l="ja">Ⅰ　ソウル</span><span data-l="en">I　SEOUL</span><span data-l="ko">Ⅰ　서울</span></div>
+        <div class="t"><span data-l="ja">学術大会・現地調査</span><span data-l="en">Symposium and site visit</span><span data-l="ko">학술대회·현장조사</span></div></a>
+      <a class="chap g" href="#gunsan"><div class="k"><span data-l="ja">Ⅱ　群山</span><span data-l="en">II　GUNSAN</span><span data-l="ko">Ⅱ　군산</span></div>
+        <div class="t"><span data-l="ja">現地学術踏査・ラウンドテーブル</span><span data-l="en">Field study and roundtable</span><span data-l="ko">현지 학술답사·라운드테이블</span></div></a>
+    </nav>
+  </header>
+
+  <!-- I. SEOUL -->
+  <section class="part s" id="seoul">
+    <div class="label"><i>Ⅰ</i><span data-l="ja">ソウル｜学術大会</span><span data-l="en">SEOUL｜SYMPOSIUM</span><span data-l="ko">서울｜학술대회</span></div>
+    <h2><span data-l="ja">排除された者たちの声</span><span data-l="en">Voices of the Excluded</span><span data-l="ko">배제된 자들의 목소리</span></h2>
+    <div class="sub">
+      <span data-l="ja">国家暴力下における日韓マイノリティの社会的孤立と語り</span>
+      <span data-l="en">Social isolation and narratives of minorities in Japan and Korea under state violence</span>
+      <span data-l="ko">국가폭력 속 한·일 마이너리티의 사회적 고립과 서사</span>
+    </div>
+    <p class="desc">
+      <span data-l="ja">戦時に動員された日本国内のマイノリティと、隔離政策によって孤立させられた韓国のハンセン病患者とその家族。「国家暴力と排除」という共通の文脈から、日韓の文学と歴史に現れた社会的孤立を比較し、排除された者たちの語りが今日もつ意味を考えます。</span>
+      <span data-l="en">Minorities in Japan mobilized during the war, and Hansen's disease patients and their families in Korea isolated by segregation policy, share a common context of state violence and exclusion. Comparing how social isolation appears in Japanese and Korean literature and history, the symposium asks what the narratives of the excluded mean today.</span>
+      <span data-l="ko">전시에 동원된 일본 내 마이너리티와, 격리 정책으로 고립된 한국의 한센병 환자와 가족. ‘국가폭력과 배제’라는 공통의 맥락에서 한·일 문학과 역사 속 사회적 고립을 비교하고, 배제된 자들의 서사가 오늘날 갖는 의미를 조명합니다.</span>
+    </p>
+    <dl class="rows">
+      <dt>09:00 – 12:00</dt><dd><span data-l="ja">学術大会</span><span data-l="en">Symposium</span><span data-l="ko">학술대회</span></dd>
+      <dt>13:50 – 16:00</dt><dd><span data-l="ja">現地調査</span><span data-l="en">Site visit</span><span data-l="ko">현장조사</span></dd>
+    </dl>
+    <div class="facts">
+      <span><span data-l="ja">会場</span><span data-l="en">Venue</span><span data-l="ko">장소</span><b><span data-l="ja">ソウル駅周辺（予定）</span><span data-l="en">Near Seoul Station (tentative)</span><span data-l="ko">서울역 인근(예정)</span></b></span>
+      <span><span data-l="ja">発表</span><span data-l="en">Speakers</span><span data-l="ko">발표</span><b><span data-l="ja">五味渕典嗣（早稲田大学）ほか</span><span data-l="en">Noritsugu Gomibuchi (Waseda University) and others</span><span data-l="ko">고미부치 노리쓰구(와세다대학교) 외</span></b></span>
+    </div>
+
+    <figure class="wide">
+      <img src="img/namyeong.jpg" alt="民主化運動記念館の外観 / Exterior of the Democracy Movement Memorial Hall / 민주화운동기념관 외관" loading="lazy">
+      <figcaption class="cap">
+        <span class="tag"><span data-l="ja">現地調査（予定）</span><span data-l="en">Site visit (tentative)</span><span data-l="ko">현장조사(예정)</span></span>
+        <h3><span data-l="ja">民主化運動記念館（旧南営洞対共分室）</span><span data-l="en">Democracy Movement Memorial Hall (former Namyeong-dong Anti-Communist Bureau)</span><span data-l="ko">민주화운동기념관(옛 남영동 대공분실)</span></h3>
+        <p><span data-l="ja">かつて国家暴力の象徴であった南営洞対共分室に設けられた施設。独裁政権期の歴史と、それを乗り越えた民主主義の歩みを伝えます。</span><span data-l="en">Housed in the former Namyeong-dong anti-communist bureau, once a symbol of state violence, it tells the history of the dictatorship era and of the democracy that overcame it.</span><span data-l="ko">과거 국가폭력의 상징이었던 남영동 대공분실에 조성된 공간으로, 독재정권의 역사와 이를 극복한 민주주의의 이야기를 담고 있습니다.</span></p>
+      </figcaption>
+    </figure>
+  </section>
+
+  <!-- II. GUNSAN -->
+  <section class="part g" id="gunsan">
+    <div class="label"><i>Ⅱ</i><span data-l="ja">群山｜現地学術踏査・ラウンドテーブル</span><span data-l="en">GUNSAN｜FIELD STUDY &amp; ROUNDTABLE</span><span data-l="ko">군산｜현지 학술답사·라운드테이블</span></div>
+    <h2><span data-l="ja">残された空間、消された語り</span><span data-l="en">Spaces Left Behind, Narratives Erased</span><span data-l="ko">남겨진 공간, 지워진 서사</span></h2>
+    <div class="sub">
+      <span data-l="ja">群山の「敵産家屋」と戦後残留日本人の社会的孤立</span>
+      <span data-l="en">Gunsan's "enemy property" houses and the social isolation of the Japanese who remained after 1945</span>
+      <span data-l="ko">군산 적산가옥과 전후 잔류 일본인의 사회적 고립</span>
+    </div>
+    <p class="desc">
+      <span data-l="ja">解放を迎えた人々にとっての「解放空間」は、そこに暮らしていた日本人にとって「離散」の空間でもありました。敗戦直後の地位の逆転が生んだもう一つの社会的孤立を、日韓の大学院生・若手研究者が現場でともにたどり、互いのまなざしを交わします。</span>
+      <span data-l="en">What was a "space of liberation" for Koreans was also a space of dispersal for the Japanese who lived there. Graduate students and early-career researchers from Japan and Korea will trace together, on site, the other form of social isolation created by the reversal of status after 1945, and exchange their perspectives.</span>
+      <span data-l="ko">한국인에게 ‘해방 공간’이었던 곳은 그곳에 살던 일본인에게 ‘이산’의 공간이기도 했습니다. 패전 직후 지위의 역전이 만들어낸 또 다른 사회적 고립을 한일 학문후속세대가 현장에서 함께 살펴보고 서로의 시선을 나눕니다.</span>
+    </p>
+    <dl class="rows">
+      <dt>09:00 – 11:30</dt><dd><span data-l="ja">ソウルから群山へ移動（車両）</span><span data-l="en">Seoul to Gunsan by car</span><span data-l="ko">서울 → 군산 이동(차량)</span></dd>
+      <dt>11:30 – 13:00</dt><dd><span data-l="ja">昼食</span><span data-l="en">Lunch</span><span data-l="ko">점심</span></dd>
+      <dt>13:00 –</dt><dd><span data-l="ja">現地学術踏査（下記4か所）</span><span data-l="en">Field study (four sites below)</span><span data-l="ko">현지 답사(아래 네 곳)</span></dd>
+      <dt><span data-l="ja">踏査後</span><span data-l="en">Afterwards</span><span data-l="ko">답사 후</span></dt><dd><span data-l="ja">ラウンドテーブル</span><span data-l="en">Roundtable</span><span data-l="ko">라운드테이블</span></dd>
+    </dl>
+
+    <div class="sites">
+      <figure class="site feature">
+        <img src="img/hirotsu.jpg" alt="新興洞日本式家屋 / Sinheung-dong Japanese-style House / 신흥동 일본식 가옥" loading="lazy">
+        <figcaption class="cap">
+          <h3><span data-l="ja">新興洞日本式家屋（旧広津家住宅）</span><span data-l="en">Sinheung-dong Japanese-style House (former Hirotsu residence)</span><span data-l="ko">신흥동 일본식 가옥(옛 히로쓰 가옥)</span></h3>
+          <p><span data-l="ja">日本人高級住宅地に建てられた広津吉三郎の邸宅。解放後に「敵産家屋」に分類され、持ち主を変えて今に残ります。</span><span data-l="en">The residence of Kichisaburō Hirotsu in the former Japanese upper-class quarter. Classified as "enemy property" after liberation, it still stands under new ownership.</span><span data-l="ko">일본인 고급 주택지에 지어진 히로쓰 기치사부로의 저택. 해방 후 적산가옥으로 분류되어 주인이 바뀐 채 지금까지 남아 있습니다.</span></p>
+        </figcaption>
+      </figure>
+      <figure class="site">
+        <img src="img/museum.jpg" alt="群山近代歴史博物館 / Gunsan Modern History Museum / 군산근대역사박물관" loading="lazy">
+        <figcaption class="cap">
+          <h3><span data-l="ja">群山近代歴史博物館</span><span data-l="en">Gunsan Modern History Museum</span><span data-l="ko">군산근대역사박물관</span></h3>
+          <p><span data-l="ja">植民地期の群山の社会と歴史を概観し、踏査の背景をつかむ場所です。</span><span data-l="en">An overview of Gunsan's society and history in the colonial period, giving background for the walk.</span><span data-l="ko">식민지기 군산의 사회상과 역사를 조망하며 답사의 배경지식을 얻는 곳입니다.</span></p>
+        </figcaption>
+      </figure>
+      <figure class="site">
+        <img src="img/customs.jpg" alt="旧群山税関 / Former Gunsan Customs House / 옛 군산세관" loading="lazy">
+        <figcaption class="cap">
+          <h3><span data-l="ja">旧群山税関</span><span data-l="en">Former Gunsan Customs House</span><span data-l="ko">옛 군산세관</span></h3>
+          <p><span data-l="ja">1908年建立。植民地期、湖南地方の穀物流出の主要ルートの一つでした。</span><span data-l="en">Built in 1908, it was one of the main routes through which grain left the Honam region in the colonial period.</span><span data-l="ko">1908년 건립. 식민지기 호남 지역 곡물 유출의 주요 경로 가운데 하나였습니다.</span></p>
+        </figcaption>
+      </figure>
+      <figure class="site feature">
+        <img src="img/dongguk.jpg" alt="東国寺 / Dongguksa Temple / 동국사" loading="lazy" style="object-position:center 60%">
+        <figcaption class="cap">
+          <h3><span data-l="ja">東国寺</span><span data-l="en">Dongguksa Temple</span><span data-l="ko">동국사</span></h3>
+          <p><span data-l="ja">韓国に唯一残る日本式寺院建築。1913年完成の曹洞宗系寺院で、戦後に接収・移管されました。</span><span data-l="en">The only Japanese-style temple building left in Korea. Completed in 1913 as a Sōtō Zen temple, it was confiscated and transferred after the war.</span><span data-l="ko">국내에 유일하게 남은 일본식 사찰 건축물. 1913년 완공된 조동종 계열 사찰로, 종전 후 압류·이관되었습니다.</span></p>
+        </figcaption>
+      </figure>
+    </div>
+
+    <div class="rt">
+      <h3><span data-l="ja">ラウンドテーブル</span><span data-l="en">Roundtable</span><span data-l="ko">라운드테이블</span></h3>
+      <p><span data-l="ja">敵産家屋を改装したカフェ（予定）で、日韓の大学院生・若手研究者が自由に意見を交わし、今後の研究課題を探ります。</span><span data-l="en">At a café converted from an "enemy property" house (tentative), graduate students and early-career researchers from both countries exchange views freely and look for research questions to pursue.</span><span data-l="ko">적산가옥을 개조한 카페(예정)에서 한일 학문후속세대가 자유롭게 의견을 나누고 앞으로의 연구 과제를 도출합니다.</span></p>
+    </div>
+  </section>
+
+  <footer>
+    <span><b><span data-l="ja">主催</span><span data-l="en">Organized by</span><span data-l="ko">주최</span></b><span data-l="ja">慶熙大学校 グローバル琉球・沖縄研究所</span><span data-l="en">Global Ryukyu-Okinawa Research Institute, Kyung Hee University</span><span data-l="ko">경희대학교 글로벌류큐·오키나와연구소</span></span>
+    <span><b><span data-l="ja">後援</span><span data-l="en">Supported by</span><span data-l="ko">후원</span></b><span data-l="ja">韓国研究財団</span><span data-l="en">National Research Foundation of Korea</span><span data-l="ko">한국연구재단</span></span>
+  </footer>
+</div>
+
+<script>
+(function(){
+  var root=document.documentElement, langs=["ja","en","ko"];
+  function set(l){
+    if(langs.indexOf(l)<0) l="ja";
+    root.setAttribute("data-lang",l); root.setAttribute("lang",l);
+    document.querySelectorAll(".lang button").forEach(function(b){b.setAttribute("aria-pressed",b.dataset.set===l?"true":"false")});
+    try{localStorage.setItem("lang",l)}catch(e){}
+  }
+  var init="ja", h=(location.hash||"").slice(1);
+  if(langs.indexOf(h)>=0) init=h; else { try{var s=localStorage.getItem("lang"); if(s) init=s;}catch(e){} }
+  set(init);
+  document.querySelectorAll(".lang button").forEach(function(b){b.addEventListener("click",function(){set(b.dataset.set)})});
+})();
+</script>
+</body>
+</html>
