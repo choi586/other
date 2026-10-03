@@ -94,6 +94,13 @@ figure{margin:0}
 .site.feature img{width:46%;aspect-ratio:auto;height:auto;max-height:420px;object-position:center 30%}
 .site.feature .cap{flex:1;align-self:center;padding:22px 24px}
 
+.seoulbox{margin-top:24px;padding:18px 20px;border-radius:6px;background:var(--seoul-soft)}
+.seoulbox h3{font-size:16px;margin-top:2px}
+.cands{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:12px}
+.cand{background:var(--surface);border-radius:4px;padding:12px 14px;min-width:0}
+.cand h4{margin:0;font-family:var(--display);font-size:15px;line-height:1.4}
+.cand p{margin:4px 0 0;font-size:13.5px;color:var(--muted);line-height:1.65}
+@media (max-width:640px){.cands{grid-template-columns:1fr}}
 .rt{margin-top:22px;padding:18px 20px;border-radius:6px;background:var(--gunsan-soft)}
 .rt h3{font-size:17px;color:var(--fg)}
 .rt p{margin:6px 0 0;font-size:14.5px}
@@ -233,14 +240,15 @@ footer b{color:var(--fg);font-weight:700;margin-right:8px;letter-spacing:.06em}
       <span><span data-l="ja">発表</span><span data-l="en">Speakers</span><span data-l="ko">발표</span><b><span data-l="ja">五味渕典嗣（早稲田大学）ほか</span><span data-l="en">Noritsugu Gomibuchi (Waseda University) and others</span><span data-l="ko">고미부치 노리쓰구(와세다대학교) 외</span></b></span>
     </div>
 
-    <figure class="wide">
-      <img src="img/namyeong.jpg" alt="民主化運動記念館の外観 / Exterior of the Democracy Movement Memorial Hall / 민주화운동기념관 외관" loading="lazy">
-      <figcaption class="cap">
-        <span class="tag"><span data-l="ja">現地調査（候補地・調整中）</span><span data-l="en">Site visit (candidate, to be confirmed)</span><span data-l="ko">현장조사(후보지·조정 중)</span></span>
-        <h3><span data-l="ja">民主化運動記念館（旧南営洞対共分室）</span><span data-l="en">Democracy Movement Memorial Hall (former Namyeong-dong Anti-Communist Bureau)</span><span data-l="ko">민주화운동기념관(옛 남영동 대공분실)</span></h3>
-        <p><span data-l="ja">かつて国家暴力の象徴であった南営洞対共分室に設けられた施設。独裁政権期の歴史と、それを乗り越えた民主主義の歩みを伝えます。月曜日は休館の施設が多いため、訪問先は現在調整中です。</span><span data-l="en">Housed in the former Namyeong-dong anti-communist bureau, once a symbol of state violence, it tells the history of the dictatorship era and of the democracy that overcame it. As many sites close on Mondays, the destination is still being arranged.</span><span data-l="ko">과거 국가폭력의 상징이었던 남영동 대공분실에 조성된 공간으로, 독재정권의 역사와 이를 극복한 민주주의의 이야기를 담고 있습니다. 월요일에는 휴관하는 시설이 많아 방문지는 현재 조정 중입니다.</span></p>
-      </figcaption>
-    </figure>
+    <div class="seoulbox">
+      <span class="tag"><span data-l="ja">現地調査の候補地</span><span data-l="en">Site visit options</span><span data-l="ko">현장조사 후보지</span></span>
+      <h3><span data-l="ja">ご希望に応じてお選びいただけます</span><span data-l="en">Choose the site you would like to visit</span><span data-l="ko">원하시는 곳을 선택하실 수 있습니다</span></h3>
+      <div class="cands">
+        <div class="cand"><h4><span data-l="ja">南山の歴史探訪路（国恥の道）</span><span data-l="en">Namsan historical trail</span><span data-l="ko">남산 국치길</span></h4><p><span data-l="ja">統監府・統監官邸・朝鮮神宮などの跡地をたどる約1.7kmの道です。</span><span data-l="en">A 1.7 km trail linking the sites of the Residency-General, the Resident-General's residence and the Chōsen Shrine.</span><span data-l="ko">통감부·통감관저·조선신궁 터 등을 잇는 약 1.7km의 탐방로입니다.</span></p></div>
+        <div class="cand"><h4><span data-l="ja">大韓民国歴史博物館</span><span data-l="en">National Museum of Korean Contemporary History</span><span data-l="ko">대한민국역사박물관</span></h4><p><span data-l="ja">開港期から現代までの韓国近現代史を展示しています。</span><span data-l="en">Exhibits Korean history from the opening of the ports to the present.</span><span data-l="ko">개항기부터 현대까지의 한국 근현대사를 전시합니다.</span></p></div>
+        <div class="cand"><h4><span data-l="ja">景福宮</span><span data-l="en">Gyeongbokgung Palace</span><span data-l="ko">경복궁</span></h4><p><span data-l="ja">植民地期に損なわれ、旧朝鮮総督府庁舎の撤去を経て復元が進む王宮です。</span><span data-l="en">A royal palace damaged in the colonial period and restored after the former Government-General building was removed.</span><span data-l="ko">식민지기에 훼손되었다가 옛 조선총독부 건물 철거 이후 복원이 이어지고 있는 궁궐입니다.</span></p></div>
+      </div>
+    </div>
   </section>
 
   <footer>
